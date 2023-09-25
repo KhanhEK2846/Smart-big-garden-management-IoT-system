@@ -10,8 +10,7 @@
 #include <esp_wifi.h>
 #include <HTTPClient.h>
 #include <Arduino_JSON.h>
-#include "DataPackage.h"
-#include <esp_mesh.h>
+#include "Transmit.h"
 //Firebase Server
 #define API_KEY "AIzaSyCs-_UEbcWTW9ANFJ-igucZPCbS7XclUIk"
 #define DATABASE_URL "https://gradentiots-default-rtdb.firebaseio.com/"
@@ -90,7 +89,6 @@ String IPGateway;
 wifi_sta_list_t wifi_sta_list; //List of sta connect include MAC
 tcpip_adapter_sta_list_t adapter_sta_list; // List of Mac and IP
 String NodeIP[3];
-
 int MAX_Clients = 3;
 int Num_Clients = 0;
 //Firebase Variable
@@ -129,18 +127,14 @@ boolean sta_flag = false;
 boolean first_sta = true;
 boolean valueChange_flag = false;
 //Type of server
-int gateway_node = 2; // 0:default 1: gateway 2:node
+int gateway_node = 0; // 0:default 1: gateway 2:node
 //Task Delivery Data
 TaskHandle_t DeliveryTask = NULL;
 QueueHandle_t Queue = NULL;
-typedef struct Data{
-  String NextIP;
-  DataPackage Data;
-}Data;
+Transmit Data;
 const int Queue_Length = 10;
-const unsigned long long Queue_item_size = sizeof(Data);
+const unsigned long long Queue_item_size = sizeof(Transmit);
 
-Data Package_Prepare_Send;
 //Sercurity
 String http_username = "admin";
 String http_password = "admin";
@@ -1834,6 +1828,12 @@ void Make_Day()//Counter Day
     Days ++;
   }
 }
+String MACAddressCovert(uint8_t* mac)// Convert unit8_t to String MAC
+{
+    char macStr[18] = { 0 };
+    sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0],mac[1], mac[2],mac[3],mac[4],mac[5]);
+    return String(macStr);
+}
 #pragma endregion
 #pragma region Check Internet Connected from Wifi
 void Ping()// Ping to host
@@ -2028,7 +2028,7 @@ void initWebSocket() //Initialize the WebSocket protocol
 void Delivery(void * pvParameters) //Task Delivery from node to gateway and reverse
 {
   Serial.println("Delivery Task");
-  Data data;
+  Transmit data;
   UBaseType_t uxHighWaterMark;
   uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
   Serial.println(uxHighWaterMark);
@@ -2039,11 +2039,13 @@ void Delivery(void * pvParameters) //Task Delivery from node to gateway and reve
     HTTPClient http;
     DeliveryIP.clear();
     DeliveryIP = "http://";
-    DeliveryIP += data.NextIP;
+    DeliveryIP += data.GetNextIP();
     DeliveryIP += "/Delivery";
     http.begin(node,DeliveryIP);
-    http.POST(data.Data.toString());
+    http.POST(data.GetData().toString());
     http.end();
+    // Serial.println(DeliveryIP);
+    // Serial.println(data.GetData().toString());
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);
   }
@@ -2370,28 +2372,43 @@ void Init_Server() // FIXME: Fix backend server
   server.on("/Delivery",HTTP_POST,[](AsyncWebServerRequest *request){ //Receive data from Node
   },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
     request->send(200);
-    Data package;
-    package.Data.fromString(String((char*) data));
-    //package.Data = String((char*) data);
+    Transmit package;
+    package.DataFromString(String((char*) data));
     if(request->client()->remoteIP().toString() == IPGateway) //Mess from gateway //TODO: Delivery mess
     {
-      if(ID == package.Data.GetID())
+      if(ID == package.GetData().GetID())//TODO: Solve command from gateway
       {
         
       }
       else
       {
+        int flag = -1;
+        for(i = 0; i <adapter_sta_list.num;i++)//TODO: Know where to send
+        {
+          tcpip_adapter_sta_info_t station = adapter_sta_list.sta[i];
+          if(MACAddressCovert(station.mac) == package.GetData().GetID())
+          {
+            flag = i;
+            break;
+          }
+        }
+        if( flag != -1)
+        {
+          package.SetNextIP(IPAddress(adapter_sta_list.sta[flag].ip.addr).toString());
+          xQueueSend(Queue,&package,pdMS_TO_TICKS(100));
+        }
+        else
+        {
+          
+        }
 
       }
     }
     else //Mess from Node
     {
-      package.NextIP=IPGateway;
+      package.SetNextIP(IPGateway);
       xQueueSend(Queue,&package,pdMS_TO_TICKS(100));
     }
-    // Serial.print("Node received: ");
-    // Serial.println(String((char*) data));
-    // request->send(200);
   });
   server.onNotFound([](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request)) //Only for client from AP Mode
@@ -2530,9 +2547,9 @@ void SendMess() //Send mess prepared to who
       notifyClients(messanger);
     if(gateway_node == 2) //Send to Gateway only if It's a node
     {
-      Package_Prepare_Send.NextIP=IPGateway;
-      Package_Prepare_Send.Data.SetDataPackage(ID,messanger);
-      xQueueSend(Queue,&Package_Prepare_Send,pdMS_TO_TICKS(100));
+      Data.SetNextIP(IPGateway);
+      Data.SetData(ID,messanger);
+      xQueueSend(Queue,&Data,pdMS_TO_TICKS(100));
     }
     if(WiFi.status() == WL_CONNECTED && ping_flag && !first_sta && Firebase.ready()) //Send to database
       Firebase.RTDB.updateNodeSilentAsync(&firebaseData,Parent_Path.c_str() , &json);
