@@ -88,7 +88,7 @@ String IPGateway;
 //List Device Connected
 wifi_sta_list_t wifi_sta_list; //List of sta connect include MAC
 tcpip_adapter_sta_list_t adapter_sta_list; // List of Mac and IP
-String NodeIP[3];
+String NodeIP[3] = {"","",""};
 int MAX_Clients = 3;
 int Num_Clients = 0;
 //Firebase Variable
@@ -1832,7 +1832,35 @@ String MACAddressCovert(uint8_t* mac)// Convert unit8_t to String MAC
 {
     char macStr[18] = { 0 };
     sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0],mac[1], mac[2],mac[3],mac[4],mac[5]);
+    // Serial.print("MAC Convert: ");
+    // Serial.println(String(macStr));
     return String(macStr);
+}
+void RefreshNodeIP(String locate = "0")
+{
+  if(locate == "0")
+  {
+    NodeIP[0] = "";
+    NodeIP[1] = "";
+    NodeIP[2] = "";
+    return;
+  }
+  for(int index = 0;index<adapter_sta_list.num; index++)//Find where is mac 
+  {
+    if(locate == MACAddressCovert(adapter_sta_list.sta[index].mac)) 
+    {
+      for (int index1 =0; index1 <MAX_Clients;index1++) //Find where is IP relative that MAC
+      {
+        if(NodeIP[index1] == IPAddress(adapter_sta_list.sta[index].ip.addr).toString())
+        {
+          NodeIP[index1] = "";
+          --Num_Clients;
+          break;
+        }
+      }
+      break;
+    }
+  }
 }
 #pragma endregion
 #pragma region Check Internet Connected from Wifi
@@ -2050,7 +2078,7 @@ void Delivery(void * pvParameters) //Task Delivery from node to gateway and reve
     Serial.println(uxHighWaterMark);
   }
 }
-void First_Mess_To_Node(String IP)
+void First_Mess_To_Node(String IP)// Init client as node
 {
   if(Num_Clients < MAX_Clients)
   {
@@ -2060,12 +2088,18 @@ void First_Mess_To_Node(String IP)
     URL += IP;
     URL += "/YouAreNode";
     http.begin(client,URL);
-    http.addHeader("Content-Type", "text/plain");
     int httpResponseCode = http.POST("You are Node");
     if(httpResponseCode == 202)
     {
-      NodeIP[Num_Clients] = IP;
-      Num_Clients ++;
+      for(int index = 0; index < MAX_Clients; index++)
+      {
+        if(NodeIP[index] == "")
+        {
+          NodeIP[index] = IP;
+          ++Num_Clients;
+          break;
+        }
+      }
     }
     http.end();
   }
@@ -2087,11 +2121,14 @@ void Client_Connected(WiFiEvent_t event, WiFiEventInfo_t info)
 void Client_IP(WiFiEvent_t event, WiFiEventInfo_t info)
 {
   First_Mess_To_Node(IPAddress(info.wifi_ap_staipassigned.ip.addr).toString());
+  RefreshNodeIP();
   List_Connected_Update();
 }
 void Client_Disconnected(WiFiEvent_t event, WiFiEventInfo_t info)
-{
+{ //BUG: Can't handle power off client
+  RefreshNodeIP(MACAddressCovert(info.wifi_ap_stadisconnected.mac));
   List_Connected_Update();
+  Serial.println("Client disconnect");
 }
 void Init_WiFi_Event()
 {
@@ -2225,6 +2262,7 @@ void Connect_Network()//Connect to Wifi Router
         ApIP[3] = WiFi.localIP()[3] + 1;
       WiFi.softAPConfig(ApIP,ApIP,NMask);
       gateway_node = 2; //It become node
+      Serial.println("I become Node");
       Person = 0;
       Serial.println(WiFi.softAPIP().toString());
     }else 
@@ -2263,10 +2301,10 @@ void Init_Server() // FIXME: Fix backend server
       return request->redirect("/NothingHereForYou");
     if(!request->authenticate(http_username.c_str(), http_password.c_str()))
       return request->requestAuthentication();
-    if(gateway_node != 2)
+    //if(gateway_node != 2)
       request->send_P(200, "text/html", main_html);
-    else
-      request->send_P(200, "text/plain", "Coming soon");
+    //else
+      //request->send_P(200, "text/plain", "Coming soon");
   });//Home Page Server
   server.on("/Test",HTTP_GET,[](AsyncWebServerRequest *request){
     request->send_P(200,"text/plain","I am node");
@@ -2374,6 +2412,10 @@ void Init_Server() // FIXME: Fix backend server
     request->send(200);
     Transmit package;
     package.DataFromString(String((char*) data));
+    
+    Serial.println(package.GetData().toString());
+    if(gateway_node == 0)
+      return;
     if(request->client()->remoteIP().toString() == IPGateway) //Mess from gateway //TODO: Delivery mess
     {
       if(ID == package.GetData().GetID())//TODO: Solve command from gateway
@@ -2382,26 +2424,15 @@ void Init_Server() // FIXME: Fix backend server
       }
       else
       {
-        int flag = -1;
-        for(i = 0; i <adapter_sta_list.num;i++)//TODO: Know where to send
+        for(i =0; i< MAX_Clients; i++)
         {
-          tcpip_adapter_sta_info_t station = adapter_sta_list.sta[i];
-          if(MACAddressCovert(station.mac) == package.GetData().GetID())
-          {
-            flag = i;
-            break;
-          }
-        }
-        if( flag != -1)
-        {
-          package.SetNextIP(IPAddress(adapter_sta_list.sta[flag].ip.addr).toString());
+          if(NodeIP[i] == "")
+            continue;
+          package.SetNextIP(NodeIP[i]);
+          Serial.print("Node IP:");
+          Serial.println(NodeIP[i]);
           xQueueSend(Queue,&package,pdMS_TO_TICKS(100));
         }
-        else
-        {
-          
-        }
-
       }
     }
     else //Mess from Node
@@ -2719,6 +2750,7 @@ void setup()
   Connect_Network();
   initWebSocket();
   Init_Server();
+  Init_WiFi_Event();
   pinMode(Pumps,OUTPUT);
   pinMode(Light,OUTPUT);
   digitalWrite(Pumps,LOW);
