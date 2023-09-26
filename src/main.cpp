@@ -1832,13 +1832,8 @@ String MACAddressCovert(uint8_t* mac)// Convert unit8_t to String MAC
 {
     char macStr[18] = { 0 };
     sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0],mac[1], mac[2],mac[3],mac[4],mac[5]);
-<<<<<<< HEAD
     // Serial.print("MAC Convert: ");
     // Serial.println(String(macStr));
-=======
-    Serial.print("MAC Convert: ");
-    Serial.println(String(macStr));
->>>>>>> 2cd1fc92c0893a1cb35a6b48b787bd6d545797f5
     return String(macStr);
 }
 void RefreshNodeIP(String locate = "0")
