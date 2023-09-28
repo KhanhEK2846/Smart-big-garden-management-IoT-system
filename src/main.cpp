@@ -2123,7 +2123,6 @@ void Client_Connected(WiFiEvent_t event, WiFiEventInfo_t info)
 void Client_IP(WiFiEvent_t event, WiFiEventInfo_t info)
 {
   First_Mess_To_Node(IPAddress(info.wifi_ap_staipassigned.ip.addr).toString());
-  RefreshNodeIP();
   List_Connected_Update();
 }
 void Client_Disconnected(WiFiEvent_t event, WiFiEventInfo_t info)
@@ -2759,7 +2758,6 @@ void setup()
   digitalWrite(Light,LOW);
   dht.begin();
   Time_Passed = millis();
-  //Queue = xQueueCreate(10,sizeof(Data)+1);
   Queue = xQueueCreate(Queue_Length,Queue_item_size+1);
   xTaskCreate(
     Delivery,
