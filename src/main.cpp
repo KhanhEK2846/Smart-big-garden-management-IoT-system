@@ -71,6 +71,7 @@ String sta_password ;
 String ap_ssid = "ESP32_Client";
 String ap_password = "123456789";
 const long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
+int WiFi_Surround = 0;
 //Ping
 WiFiClient PingClient;
 const unsigned long time_delay_to_ping = 300000; // 5 minutes/ping
@@ -134,10 +135,9 @@ QueueHandle_t Queue = NULL;
 Transmit Data;
 const int Queue_Length = 10;
 const unsigned long long Queue_item_size = sizeof(Transmit);
-
 //Sercurity
 String http_username = "admin";
-String http_password = "admin";
+String http_password = "admin";;
 String aut_username = "admin";
 String aut_password = "admin";
 boolean sercurity_backend_key = false;
@@ -1832,10 +1832,6 @@ String MACAddressCovert(uint8_t* mac)// Convert unit8_t to String MAC
 {
     char macStr[18] = { 0 };
     sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0],mac[1], mac[2],mac[3],mac[4],mac[5]);
-    // Serial.print("MAC Convert: ");
-    // Serial.println(String(macStr));
-
-
     return String(macStr);
 }
 void RefreshNodeIP(String locate = "0")
@@ -2002,7 +1998,6 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) //Handle messa
       if(gateway_node != 0) //If it's not in dafault state
       {
         WiFi.mode(WIFI_AP);
-        WiFi.softAP(ap_ssid,ap_password);
         gateway_node = 0;
         server.removeHandler(InitWaitGateway);
         InitWaitGateway = NULL;
@@ -2072,10 +2067,11 @@ void Delivery(void * pvParameters) //Task Delivery from node to gateway and reve
     DeliveryIP += data.GetNextIP();
     DeliveryIP += "/Delivery";
     http.begin(node,DeliveryIP);
-    http.POST(data.GetData().toString());
+    int httpResponseCode = http.POST(data.GetData().toString());
     http.end();
     // Serial.println(DeliveryIP);
     // Serial.println(data.GetData().toString());
+    //FIXME: Need delay
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);
   }
@@ -2108,7 +2104,6 @@ void First_Mess_To_Node(String IP)// Init client as node
 }
 #pragma endregion
 #pragma region Device Connected Manager
-
 void List_Connected_Update() //Update the list of device connected to ap wifi
 {
   memset(&wifi_sta_list, 0, sizeof(wifi_sta_list));
@@ -2235,6 +2230,24 @@ void DeleteOldData(int mode = 0)//Delete Old Record on database
 }
 #pragma endregion
 #pragma region Network
+void Scan_Wifi_Arround() //TODO: plan for healing
+{
+  WiFi.disconnect();
+  WiFi_Surround = WiFi.scanNetworks(false,true);
+  Serial.print("WiFi scan: ");
+  Serial.println(WiFi_Surround);
+  for(int i =0; i< WiFi_Surround;i++)
+  {
+    Serial.print(i + 1);
+    Serial.print(": ");
+    Serial.print(WiFi.SSID(i));
+    Serial.print(" (");
+    Serial.print(WiFi.RSSI(i));
+    Serial.print(")");
+    Serial.println((WiFi.encryptionType(i) == WIFI_AUTH_OPEN)?" ":"*");
+    delay(10);
+  }
+}
 void Setup_Server()//Initiate connection to the servers
 {
   if(!first_sta)
@@ -2269,6 +2282,7 @@ void Connect_Network()//Connect to Wifi Router
     }else 
       request->send(403);
     });
+    //Scan_Wifi_Arround();
     WiFi.begin(sta_ssid.c_str(), sta_password.c_str());
     long current = millis();
     while (WiFi.status() != WL_CONNECTED && (unsigned long) (millis()- current) < Network_TimeOut)
@@ -2413,27 +2427,24 @@ void Init_Server() // FIXME: Fix backend server
     request->send(200);
     Transmit package;
     package.DataFromString(String((char*) data));
-    
     Serial.println(package.GetData().toString());
     if(gateway_node == 0)
       return;
+    if(ID == package.GetData().GetID()) //TODO: Solve order to this
+    {
+      
+      return;
+    }
     if(request->client()->remoteIP().toString() == IPGateway) //Mess from gateway //TODO: Delivery mess
     {
-      if(ID == package.GetData().GetID())//TODO: Solve command from gateway
+      for(i =0; i< MAX_Clients; i++)
       {
-        
-      }
-      else
-      {
-        for(i =0; i< MAX_Clients; i++)
-        {
-          if(NodeIP[i] == "")
-            continue;
-          package.SetNextIP(NodeIP[i]);
-          Serial.print("Node IP:");
-          Serial.println(NodeIP[i]);
-          xQueueSend(Queue,&package,pdMS_TO_TICKS(100));
-        }
+        if(NodeIP[i] == "")
+          continue;
+        package.SetNextIP(NodeIP[i]);
+        Serial.print("Node IP:");
+        Serial.println(NodeIP[i]);
+        xQueueSend(Queue,&package,pdMS_TO_TICKS(100));
       }
     }
     else //Mess from Node
@@ -2447,7 +2458,6 @@ void Init_Server() // FIXME: Fix backend server
       return request->redirect("https://youtu.be/dQw4w9WgXcQ");
     request->send_P(404,"text/html",Error_html);
   });
-  
   // Start server
   server.begin();
 }
