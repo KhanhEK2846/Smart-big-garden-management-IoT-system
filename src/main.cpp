@@ -1,6 +1,7 @@
 ﻿#include <Arduino.h>
 #include <DHT.h>
 #include <WiFi.h>
+
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <PubSubClient.h>
@@ -131,10 +132,13 @@ boolean valueChange_flag = false;
 int gateway_node = 0; // 0:default 1: gateway 2:node
 //Task Delivery Data
 TaskHandle_t DeliveryTask = NULL;
-QueueHandle_t Queue = NULL;
+QueueHandle_t Queue_Delivery = NULL;
+QueueHandle_t Queue_Command = NULL;
 Transmit Data;
+String Command;
 const int Queue_Length = 10;
-const unsigned long long Queue_item_size = sizeof(Transmit);
+const unsigned long long Queue_item_delivery_size = sizeof(Transmit);
+const unsigned long long Queue_item_command_size = sizeof(String);
 //Sercurity
 String http_username = "admin";
 String http_password = "admin";;
@@ -1997,7 +2001,6 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) //Handle messa
       WiFi.mode(WIFI_AP);
       if(gateway_node != 0) //If it's not in dafault state
       {
-        WiFi.mode(WIFI_AP);
         gateway_node = 0;
         server.removeHandler(InitWaitGateway);
         InitWaitGateway = NULL;
@@ -2060,7 +2063,7 @@ void Delivery(void * pvParameters) //Task Delivery from node to gateway and reve
   WiFiClient node;
   while(true)
   {
-    xQueueReceive(Queue,&data,portMAX_DELAY);
+    xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
     HTTPClient http;
     DeliveryIP.clear();
     DeliveryIP = "http://";
@@ -2282,7 +2285,6 @@ void Connect_Network()//Connect to Wifi Router
     }else 
       request->send(403);
     });
-    //Scan_Wifi_Arround();
     WiFi.begin(sta_ssid.c_str(), sta_password.c_str());
     long current = millis();
     while (WiFi.status() != WL_CONNECTED && (unsigned long) (millis()- current) < Network_TimeOut)
@@ -2444,13 +2446,13 @@ void Init_Server() // FIXME: Fix backend server
         package.SetNextIP(NodeIP[i]);
         Serial.print("Node IP:");
         Serial.println(NodeIP[i]);
-        xQueueSend(Queue,&package,pdMS_TO_TICKS(100));
+        xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
       }
     }
     else //Mess from Node
     {
       package.SetNextIP(IPGateway);
-      xQueueSend(Queue,&package,pdMS_TO_TICKS(100));
+      xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
     }
   });
   server.onNotFound([](AsyncWebServerRequest *request){
@@ -2591,7 +2593,7 @@ void SendMess() //Send mess prepared to who
     {
       Data.SetNextIP(IPGateway);
       Data.SetData(ID,messanger);
-      xQueueSend(Queue,&Data,pdMS_TO_TICKS(100));
+      xQueueSend(Queue_Delivery,&Data,pdMS_TO_TICKS(100));
     }
     if(WiFi.status() == WL_CONNECTED && ping_flag && !first_sta && Firebase.ready()) //Send to database
       Firebase.RTDB.updateNodeSilentAsync(&firebaseData,Parent_Path.c_str() , &json);
@@ -2711,6 +2713,10 @@ void Light_Up()//Light up choice
 }
 #pragma endregion
 #pragma region Main System
+void Solve_Command()
+{
+
+}
 void Network()// Netword Part
 {
   ws.cleanupClients();
@@ -2768,7 +2774,8 @@ void setup()
   digitalWrite(Light,LOW);
   dht.begin();
   Time_Passed = millis();
-  Queue = xQueueCreate(Queue_Length,Queue_item_size+1);
+  Queue_Delivery = xQueueCreate(Queue_Length,Queue_item_delivery_size+1);
+  Queue_Command = xQueueCreate(Queue_Length,Queue_item_command_size+1);
   xTaskCreate(
     Delivery,
     "Delivery",
