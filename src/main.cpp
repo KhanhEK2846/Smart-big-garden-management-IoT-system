@@ -2281,7 +2281,7 @@ void Connect_Network()//Connect to Wifi Router
       Person = 0;
       Serial.println(WiFi.softAPIP().toString());
     }else 
-      request->send(403);
+      request->send(Forbidden_Code);
     });
     WiFi.begin(sta_ssid.c_str(), sta_password.c_str());
     long current = millis();
@@ -2339,37 +2339,37 @@ void Init_Server() // FIXME: Fix backend server
       return request->requestAuthentication();
     if(!sercurity_backend_key)
       return request->redirect("/WrongDoor");
-    request->send(100);
+    request->send(Continue_Code);
   },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
     if(!sercurity_backend_key)
-      return request->send(410);
+      return request->send(Gone_Code);
     String TmpID = String((char*) data).substring(String((char*) data).indexOf(' ')+1,String((char*) data).indexOf('/'));
     String TmpPass = String((char*) data).substring(String((char*) data).indexOf('/')+1,String((char*) data).lastIndexOf('/'));
     if(TmpID.length() > 63 || TmpID == NULL || TmpPass.indexOf(' ') >= 0 || ( TmpPass.length() < 8 && TmpPass != NULL))
-      return request->send(400);
+      return request->send(Bad_Request_Code);
      
     if(String((char*) data).indexOf("Authentication: ")>=0)
     {
       http_username = TmpID;
       http_password = TmpPass;
-      request->send(204);
+      request->send(No_Content_Code);
     }
     if(String((char*) data).indexOf("Authorization: ")>=0)
     {
       aut_username = TmpID;
       aut_password = TmpPass;
-      request->send(204);
+      request->send(No_Content_Code);
     }
     else if(String((char*) data).indexOf("AP: ")>=0)
     {
       ap_ssid = TmpID;
       ap_password = TmpPass;
-      request->send(511);
+      request->send(Network_Authentication_Required);
       Person = 0;
       WiFi.softAP(ap_ssid.c_str(),ap_password.c_str());
     }
     else
-      request->send(444);
+      request->send(No_Response_Code);
     sercurity_backend_key = false;
   });
   server.on("/Tolerance",HTTP_GET,[](AsyncWebServerRequest *request){
@@ -2387,10 +2387,10 @@ void Init_Server() // FIXME: Fix backend server
       return request->requestAuthentication();
     if(!sercurity_backend_key)
       return request->redirect("/WrongDoor");
-    request->send(100);
+    request->send(Continue_Code);
   },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
     if(!tolerance_backend_key)
-      return request->send(410);
+      return request->send(Gone_Code);
     sscanf(strtok((char*)data,"/"),"%d",&Danger_Temp);
     sscanf(strtok(NULL,"/"),"%d",&Save_Temp);
     sscanf(strtok(NULL,"/"),"%d",&Danger_Humi);
@@ -2456,7 +2456,7 @@ void Init_Server() // FIXME: Fix backend server
   server.onNotFound([](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request)) //Only for client from AP Mode
       return request->redirect("https://youtu.be/dQw4w9WgXcQ");
-    request->send_P(404,"text/html",Error_html);
+    request->send_P(Not_Found_Code,"text/html",Error_html);
   });
   // Start server
   server.begin();
