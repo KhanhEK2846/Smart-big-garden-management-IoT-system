@@ -12,7 +12,7 @@ public:
     void SetNextIP(String dest);
     String GetNextIP() const;
     void SetData(const DataPackage data);
-    void SetData (const String t_id, const String t_data);
+    void SetData (const String t_id, const String t_data, const String t_mode);
     void DataFromString(const String data);
     DataPackage GetData() const;
 };

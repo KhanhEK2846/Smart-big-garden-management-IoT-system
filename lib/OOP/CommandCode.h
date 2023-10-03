@@ -11,5 +11,6 @@
 #define Network_Authentication_Required 511
 //MD5
 #define Init_Node_Code "45ef6ef895e5639e9f8f06c686d46e5c"
-#define Broadcast "be55b6387170df0ca68f41225268e842" 
-#define Infection "f0ddc0838281faf6d55e2cf840a2a8ef"
+#define Default "7a1920d61156abc05a60135aefe8bc67" //Node -> Gateway
+#define Broadcast "be55b6387170df0ca68f41225268e842" // Send both except from sender
+#define Infection "f0ddc0838281faf6d55e2cf840a2a8ef" // Handle command & Broadcast

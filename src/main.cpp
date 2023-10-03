@@ -69,7 +69,7 @@ boolean LightStatus = false; //Current Status Light
 //WIFI Variable
 String sta_ssid ; 
 String sta_password ;
-String ap_ssid = "ESP32_Client";
+String ap_ssid = "ESP32_Server";
 String ap_password = "123456789";
 const long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
 int WiFi_Surround = 0;
@@ -2429,29 +2429,58 @@ void Init_Server() // FIXME: Fix backend server
     package.DataFromString(String((char*) data));
     Serial.println(package.GetData().toString());
     if(gateway_node == 0)
-      return;
-    if(ID == package.GetData().GetID()) //TODO: Solve order to this
+      return;  
+    if(package.GetData().GetID() == ID || package.GetData().GetMode() == Infection ) //TODO: Solve order to this
     {
-      
-      return;
+      //xQueueSend(Queue_Command,&package.GetData().GetData(),pdMS_TO_TICKS(100));
+      if(package.GetData().GetMode() != Infection)
+        return;
     }
-    if(request->client()->remoteIP().toString() == IPGateway) //Mess from gateway //TODO: Delivery mess
+    if (package.GetData().GetMode() == Broadcast || package.GetData().GetMode() == Infection)
     {
       for(i =0; i< MAX_Clients; i++)
       {
         if(NodeIP[i] == "")
           continue;
         package.SetNextIP(NodeIP[i]);
-        Serial.print("Node IP:");
-        Serial.println(NodeIP[i]);
         xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
       }
-    }
-    else //Mess from Node
+    } 
+    if(package.GetData().GetMode() == Default)
     {
-      package.SetNextIP(IPGateway);
-      xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
+      switch (gateway_node)
+      {
+      case 1: //If it's a Gateway -> Send to Database
+        /* code */
+        break;
+      case 2: //If it's a node -> Delivery to Gateway
+        package.SetNextIP(IPGateway);
+        xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
+        break;
+      default:
+        Serial.println(package.GetData().toString());
+        break;
+      }
+      
     }
+
+    // if(request->client()->remoteIP().toString() == IPGateway) //Mess from gateway //TODO: Delivery mess
+    // {
+    //   for(i =0; i< MAX_Clients; i++)
+    //   {
+    //     if(NodeIP[i] == "")
+    //       continue;
+    //     package.SetNextIP(NodeIP[i]);
+    //     Serial.print("Node IP:");
+    //     Serial.println(NodeIP[i]);
+    //     xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
+    //   }
+    // }
+    // else //Mess from Node
+    // {
+    //   package.SetNextIP(IPGateway);
+    //   xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
+    // }
   });
   server.onNotFound([](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request)) //Only for client from AP Mode
@@ -2590,7 +2619,7 @@ void SendMess() //Send mess prepared to who
     if(gateway_node == 2) //Send to Gateway only if It's a node
     {
       Data.SetNextIP(IPGateway);
-      Data.SetData(ID,messanger);
+      Data.SetData(ID,messanger,Default);
       xQueueSend(Queue_Delivery,&Data,pdMS_TO_TICKS(100));
     }
     if(WiFi.status() == WL_CONNECTED && ping_flag && !first_sta && Firebase.ready()) //Send to database

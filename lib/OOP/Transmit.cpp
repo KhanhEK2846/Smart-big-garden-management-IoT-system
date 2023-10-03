@@ -25,9 +25,9 @@ void Transmit::SetData(const DataPackage data)
     this->Data = data;
 }
 
-void Transmit::SetData (const String t_id, const String t_data)
+void Transmit::SetData (const String t_id, const String t_data,const String t_mode)
 {
-    this->Data.SetDataPackage(t_id,t_data);
+    this->Data.SetDataPackage(t_id,t_data,t_mode);
 }
 
 DataPackage Transmit::GetData() const
