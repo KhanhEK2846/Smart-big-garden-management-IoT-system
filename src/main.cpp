@@ -1,7 +1,6 @@
 ﻿#include <Arduino.h>
 #include <DHT.h>
 #include <WiFi.h>
-
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <PubSubClient.h>
@@ -12,6 +11,7 @@
 #include <HTTPClient.h>
 #include <Arduino_JSON.h>
 #include "Transmit.h"
+#include "CommandCode.h"
 //Firebase Server
 #define API_KEY "AIzaSyCs-_UEbcWTW9ANFJ-igucZPCbS7XclUIk"
 #define DATABASE_URL "https://gradentiots-default-rtdb.firebaseio.com/"
@@ -117,7 +117,6 @@ AsyncWebHandler* InitWaitGateway = NULL;
 int Person = 0; // Number clients access local host
 String messanger;
 String MessLimit;
-DataPackage a;
 const String Local_Path[11] = {"StatusD","StatusL","StatusM","Day","humi","temp","ligh","mois","LED","Pump","MQTT"};
 //Command from client
 int Command_Pump = 0; // 0: Nothing, 1:ON, 2:OFF
@@ -2089,8 +2088,8 @@ void First_Mess_To_Node(String IP)// Init client as node
     URL += IP;
     URL += "/YouAreNode";
     http.begin(client,URL);
-    int httpResponseCode = http.POST("You are Node");
-    if(httpResponseCode == 202)
+    int httpResponseCode = http.POST(Init_Node_Code);
+    if(httpResponseCode == Init_Gateway_Code)
     {
       for(int index = 0; index < MAX_Clients; index++)
       {
@@ -2268,9 +2267,9 @@ void Connect_Network()//Connect to Wifi Router
     return;
   InitWaitGateway = &server.on("/YouAreNode",HTTP_POST,[](AsyncWebServerRequest *request){},NULL,
   [](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
-    if(String((char*)data) == "You are Node")
+    if(String((char*)data) == Init_Node_Code)
     {
-      request->send(202);
+      request->send(Init_Gateway_Code);
       IPGateway = request->client()->remoteIP().toString();
       esp_wifi_deauth_sta(0);
       if(WiFi.localIP()[3] == 254)
@@ -2279,7 +2278,6 @@ void Connect_Network()//Connect to Wifi Router
         ApIP[3] = WiFi.localIP()[3] + 1;
       WiFi.softAPConfig(ApIP,ApIP,NMask);
       gateway_node = 2; //It become node
-      Serial.println("I become Node");
       Person = 0;
       Serial.println(WiFi.softAPIP().toString());
     }else 
@@ -2319,12 +2317,12 @@ void Init_Server() // FIXME: Fix backend server
     if(!request->authenticate(http_username.c_str(), http_password.c_str()))
       return request->requestAuthentication();
     //if(gateway_node != 2)
-      request->send_P(200, "text/html", main_html);
+      request->send_P(Received_Code, "text/html", main_html);
     //else
       //request->send_P(200, "text/plain", "Coming soon");
   });//Home Page Server
   server.on("/Test",HTTP_GET,[](AsyncWebServerRequest *request){
-    request->send_P(200,"text/plain","I am node");
+    request->send_P(Received_Code,"text/plain","I am node");
   });// BUG: Remove it after done
   server.on("/Sercurity",HTTP_GET,[](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request) ) //Only for client from AP Mode
@@ -2332,7 +2330,7 @@ void Init_Server() // FIXME: Fix backend server
     if(!request->authenticate(http_username.c_str(), http_password.c_str()))
       return request->requestAuthentication();
     sercurity_backend_key = true;
-    request->send_P(200,"text/html",Sercurity_html);
+    request->send_P(Received_Code,"text/html",Sercurity_html);
   });
   server.on("/BackEndSercure",HTTP_POST,[](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request)) //Only for client from AP Mode
@@ -2380,7 +2378,7 @@ void Init_Server() // FIXME: Fix backend server
     if(!request->authenticate(http_username.c_str(), http_password.c_str()))
       return request->requestAuthentication();
     tolerance_backend_key = true;
-    request->send_P(200,"text/html",Tolerance_html);
+    request->send_P(Received_Code,"text/html",Tolerance_html);
   });
   server.on("/BackEndTolerance",HTTP_POST,[](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request)) //Only for client from AP Mode
@@ -2400,7 +2398,7 @@ void Init_Server() // FIXME: Fix backend server
     sscanf(strtok(NULL,"/"),"%d",&WET_SOIL);
     sscanf(strtok(NULL,"/"),"%d",&DRY_SOIL);
     sscanf(strtok(NULL,"/"),"%d",&DARK_LIGHT);
-    return request->send(200);
+    return request->send(Received_Code);
   });
   server.on("/BackEndTolerance",HTTP_GET,[](AsyncWebServerRequest *request){
     if(!request->authenticate(http_username.c_str(), http_password.c_str()))
@@ -2419,14 +2417,14 @@ void Init_Server() // FIXME: Fix backend server
     MessLimit += "/";
     MessLimit += String(DARK_LIGHT);
     MessLimit += "/";
-    return request->send_P(200,"text/plain",MessLimit.c_str());
+    return request->send_P(Received_Code,"text/plain",MessLimit.c_str());
   });
   server.on("/logout",HTTP_GET,[](AsyncWebServerRequest *request){
     request->send(401);
   });
   server.on("/Delivery",HTTP_POST,[](AsyncWebServerRequest *request){ //Receive data from Node
   },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
-    request->send(200);
+    request->send(Received_Code);
     Transmit package;
     package.DataFromString(String((char*) data));
     Serial.println(package.GetData().toString());
@@ -2715,7 +2713,13 @@ void Light_Up()//Light up choice
 #pragma region Main System
 void Solve_Command()
 {
+  if(xQueueReceive(Queue_Command,&Command,0))
+  {
+    Serial.print("Command: ");
+    Serial.println(Command);
+  }
 
+  Command.clear();
 }
 void Network()// Netword Part
 {
@@ -2751,6 +2755,7 @@ void Network()// Netword Part
 void Auto()//Auto Part
 {
   Make_Day();
+  Solve_Command();
   Read_Sensor();
   Check();
   Pump();
