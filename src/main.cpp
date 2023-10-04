@@ -1831,38 +1831,6 @@ void Make_Day()//Counter Day
     Days ++;
   }
 }
-String MACAddressCovert(uint8_t* mac)// Convert unit8_t to String MAC
-{
-    char macStr[18] = { 0 };
-    sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0],mac[1], mac[2],mac[3],mac[4],mac[5]);
-    return String(macStr);
-}
-void RefreshNodeIP(String locate = "0")
-{
-  if(locate == "0")
-  {
-    NodeIP[0] = "";
-    NodeIP[1] = "";
-    NodeIP[2] = "";
-    return;
-  }
-  for(int index = 0;index<adapter_sta_list.num; index++)//Find where is mac 
-  {
-    if(locate == MACAddressCovert(adapter_sta_list.sta[index].mac)) 
-    {
-      for (int index1 =0; index1 <MAX_Clients;index1++) //Find where is IP relative that MAC
-      {
-        if(NodeIP[index1] == IPAddress(adapter_sta_list.sta[index].ip.addr).toString())
-        {
-          NodeIP[index1] = "";
-          --Num_Clients;
-          break;
-        }
-      }
-      break;
-    }
-  }
-}
 #pragma endregion
 #pragma region Check Internet Connected from Wifi
 void Ping()// Ping to host
@@ -2113,6 +2081,48 @@ void List_Connected_Update() //Update the list of device connected to ap wifi
   esp_wifi_ap_get_sta_list(&wifi_sta_list); 
   tcpip_adapter_get_sta_list(&wifi_sta_list, &adapter_sta_list);//Get IP information for stations connected to the Wi-Fi AP interface.
 }
+String MACAddressCovert(uint8_t* mac)// Convert unit8_t to String MAC
+{
+    char macStr[18] = { 0 };
+    sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0],mac[1], mac[2],mac[3],mac[4],mac[5]);
+    return String(macStr);
+}
+int IsNode(String IP)
+{
+  for(int i = 0; i<MAX_Clients;i++)
+  {
+    if(NodeIP[i] == IP)
+      return i;
+  }
+  return -1;
+}
+void RefreshNodeIP(String locate = "0")
+{
+  if(locate == "0")
+  {
+    NodeIP[0] = "";
+    NodeIP[1] = "";
+    NodeIP[2] = "";
+    return;
+  }
+  for(int index = 0;index<adapter_sta_list.num; index++)//Find where is mac 
+  {
+    if(locate == MACAddressCovert(adapter_sta_list.sta[index].mac)) 
+    {
+      for (int index1 =0; index1 <MAX_Clients;index1++) //Find where is IP relative that MAC
+      {
+        if(NodeIP[index1] == IPAddress(adapter_sta_list.sta[index].ip.addr).toString())
+        {
+          NodeIP[index1] = "";
+          --Num_Clients;
+          break;
+        }
+      }
+      break;
+    }
+  }
+}
+
 void Client_Connected(WiFiEvent_t event, WiFiEventInfo_t info)
 {
   Serial.println("Client connect");
@@ -2432,18 +2442,36 @@ void Init_Server() // FIXME: Fix backend server
       return;  
     if(package.GetData().GetID() == ID || package.GetData().GetMode() == Infection ) //TODO: Solve order to this
     {
-      //xQueueSend(Queue_Command,&package.GetData().GetData(),pdMS_TO_TICKS(100));
+      String t_command = package.GetData().GetData();
+      xQueueSend(Queue_Command,&t_command,pdMS_TO_TICKS(100));
       if(package.GetData().GetMode() != Infection)
         return;
     }
     if (package.GetData().GetMode() == Broadcast || package.GetData().GetMode() == Infection)
     {
-      for(i =0; i< MAX_Clients; i++)
+      if(IPGateway == request->client()->remoteIP().toString())
       {
-        if(NodeIP[i] == "")
-          continue;
-        package.SetNextIP(NodeIP[i]);
+        for(int i =0; i< MAX_Clients; i++)
+        {
+          if(NodeIP[i] == "")
+            continue;
+          package.SetNextIP(NodeIP[i]);
+          xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
+        }
+        return;
+      }
+      int t_flag = IsNode(request->client()->remoteIP().toString());
+      if(t_flag != -1)
+      {
+        package.SetNextIP(IPGateway);
         xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
+        for(int i =0; i< MAX_Clients ;i++)
+        {
+          if(i == t_flag)
+            continue;
+          package.SetNextIP(NodeIP[i]);
+          xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
+        }
       }
     } 
     if(package.GetData().GetMode() == Default)
