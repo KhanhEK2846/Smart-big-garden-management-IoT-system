@@ -2440,14 +2440,14 @@ void Init_Server() // FIXME: Fix backend server
     Serial.println(package.GetData().toString());
     if(gateway_node == 0)
       return;  
-    if(package.GetData().GetID() == ID || package.GetData().GetMode() == Infection ) //TODO: Solve order to this
+    if(package.GetData().GetID() == ID || package.GetData().GetMode() == Infection ) //ReceiveIP & Infection mode 
     {
       String t_command = package.GetData().GetData();
       xQueueSend(Queue_Command,&t_command,pdMS_TO_TICKS(100));
       if(package.GetData().GetMode() != Infection)
         return;
     }
-    if (package.GetData().GetMode() == Broadcast || package.GetData().GetMode() == Infection)
+    if (package.GetData().GetMode() == Broadcast || package.GetData().GetMode() == Infection) //Broadcast & Infection mode
     {
       if(IPGateway == request->client()->remoteIP().toString())
       {
@@ -2474,7 +2474,11 @@ void Init_Server() // FIXME: Fix backend server
         }
       }
     } 
-    if(package.GetData().GetMode() == Default)
+    if(package.GetData().GetMode() == Query) //Query mode
+    {
+
+    }
+    if(package.GetData().GetMode() == Default) // Default mode
     {
       switch (gateway_node)
       {
