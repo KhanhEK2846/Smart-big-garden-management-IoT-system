@@ -12,6 +12,7 @@
 #include <Arduino_JSON.h>
 #include "Transmit.h"
 #include "CommandCode.h"
+#include "Plant.h"
 //Firebase Server
 #define API_KEY "AIzaSyCs-_UEbcWTW9ANFJ-igucZPCbS7XclUIk"
 #define DATABASE_URL "https://gradentiots-default-rtdb.firebaseio.com/"
@@ -38,24 +39,18 @@
 DHT dht(DHTPIN, DHTTYPE);
 float Humidity = 0; 
 float Temperature = 0;
-int Save_Temp = 25; //Limit Temperature Low
-int Danger_Temp = 40; //Limit Temperature High
-int Save_Humi = 0;
-int Danger_Humi = 0;
-boolean DHT_Err = false;
 //Light Sensor Variable
 int lumen = 0; //Store value from LDR
-int DARK_LIGHT = 65; //Change Point
-boolean LDR_Err = false;
 //Soild Sensor Variable
 int soilMoist = 0; //Store value from Moisure
-int DRY_SOIL = 55; //Limit soilMoist Low
-int WET_SOIL = 80; //Limit soilMoist High
+//Sensor Check
 boolean Soil_Err = false;
-//Catch Error Sensor
-boolean Err = false;
+boolean Err = false;//Catch Error Sensor
+boolean DHT_Err = false;
+boolean LDR_Err = false;
+//Plant
+Plant Tree;
 //Days
-int Days = 0; 
 unsigned long Time_Passed = 0;
 const unsigned long A_Day_milis = 24*60*60*1000;//24 hours
 const unsigned long A_Day_timestamp = 60 * 60 * 24;//24 hours
@@ -72,7 +67,13 @@ String sta_password ;
 String ap_ssid = "ESP32_Server";
 String ap_password = "123456789";
 const long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
-int WiFi_Surround = 0;
+//Manage WiFi
+typedef struct
+{
+  String SSID;
+  String PASSWORD;
+}WiFiManage;
+WiFiManage Local_WiFi[5];
 //Ping
 WiFiClient PingClient;
 const unsigned long time_delay_to_ping = 300000; // 5 minutes/ping
@@ -131,13 +132,16 @@ boolean valueChange_flag = false;
 int gateway_node = 0; // 0:default 1: gateway 2:node
 //Task Delivery Data
 TaskHandle_t DeliveryTask = NULL;
+TaskHandle_t DatabaseTask = NULL;
 QueueHandle_t Queue_Delivery = NULL;
 QueueHandle_t Queue_Command = NULL;
+QueueHandle_t Queue_Database = NULL;
 Transmit Data;
 String Command;
 const int Queue_Length = 10;
 const unsigned long long Queue_item_delivery_size = sizeof(Transmit);
 const unsigned long long Queue_item_command_size = sizeof(String);
+const unsigned long long Queue_item_database_size = sizeof(FirebaseJson);
 //Sercurity
 String http_username = "admin";
 String http_password = "admin";;
@@ -1828,7 +1832,7 @@ void Make_Day()//Counter Day
 {
   if((unsigned long) (millis()-Time_Passed) >= A_Day_milis){
     Time_Passed = millis();
-    Days ++;
+    Tree.Days ++;
   }
 }
 #pragma endregion
@@ -2059,15 +2063,23 @@ void First_Mess_To_Node(String IP)// Init client as node
     int httpResponseCode = http.POST(Init_Node_Code);
     if(httpResponseCode == Init_Gateway_Code)
     {
-      for(int index = 0; index < MAX_Clients; index++)
+      String payload = http.getString();
+      if(payload.indexOf("SSID: ") >= 0 && payload.indexOf("Password: ") >= 0)
       {
-        if(NodeIP[index] == "")
+        String temp = payload.substring(payload.indexOf("{\n") + 3, payload.lastIndexOf("\n}"));
+        Local_WiFi[0].SSID = temp.substring(temp.indexOf("SSID: ")+6,temp.indexOf("\nPassword:"));
+        Local_WiFi[0].PASSWORD = temp.substring(temp.indexOf("Password: ")+10,temp.length());
+        for(int index = 0; index < MAX_Clients; index++)
         {
-          NodeIP[index] = IP;
-          ++Num_Clients;
-          break;
+          if(NodeIP[index] == "")
+          {
+            NodeIP[index] = IP;
+            ++Num_Clients;
+            break;
+          }
         }
       }
+
     }
     http.end();
   }
@@ -2146,6 +2158,21 @@ void Init_WiFi_Event()
 }
 #pragma endregion Device Connected Manager
 #pragma region Cloud Database
+void Log(void * pvParameters)
+{
+  Serial.println("Database Task");
+  UBaseType_t uxHighWaterMark;
+  uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+  Serial.println(uxHighWaterMark);
+  FirebaseJson data;
+  while(true)
+  {
+    xQueueReceive(Queue_Database,&data,portMAX_DELAY); 
+    Firebase.RTDB.updateNodeSilentAsync(&firebaseData,Parent_Path.c_str() , &data);
+    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+    Serial.println(uxHighWaterMark);  
+  }
+}
 void Setup_RTDB()//Initiate Realtime Database Firebase
 {
   Firebase.begin(DATABASE_URL,Database_Secrets);
@@ -2242,24 +2269,6 @@ void DeleteOldData(int mode = 0)//Delete Old Record on database
 }
 #pragma endregion
 #pragma region Network
-void Scan_Wifi_Arround() //TODO: plan for healing
-{
-  WiFi.disconnect();
-  WiFi_Surround = WiFi.scanNetworks(false,true);
-  Serial.print("WiFi scan: ");
-  Serial.println(WiFi_Surround);
-  for(int i =0; i< WiFi_Surround;i++)
-  {
-    Serial.print(i + 1);
-    Serial.print(": ");
-    Serial.print(WiFi.SSID(i));
-    Serial.print(" (");
-    Serial.print(WiFi.RSSI(i));
-    Serial.print(")");
-    Serial.println((WiFi.encryptionType(i) == WIFI_AUTH_OPEN)?" ":"*");
-    delay(10);
-  }
-}
 void Setup_Server()//Initiate connection to the servers
 {
   if(!first_sta)
@@ -2279,7 +2288,13 @@ void Connect_Network()//Connect to Wifi Router
   [](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
     if(String((char*)data) == Init_Node_Code)
     {
-      request->send(Init_Gateway_Code);
+      String dataWiFi = "{\n";
+      dataWiFi += "SSID: ";
+      dataWiFi += ap_ssid;
+      dataWiFi += "\nPassword: ";
+      dataWiFi += ap_password;
+      dataWiFi += "\n}";
+      request->send(Init_Gateway_Code,"text/plain",dataWiFi);
       IPGateway = request->client()->remoteIP().toString();
       esp_wifi_deauth_sta(0);
       if(WiFi.localIP()[3] == 254)
@@ -2401,31 +2416,31 @@ void Init_Server() // FIXME: Fix backend server
   },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
     if(!tolerance_backend_key)
       return request->send(Gone_Code);
-    sscanf(strtok((char*)data,"/"),"%d",&Danger_Temp);
-    sscanf(strtok(NULL,"/"),"%d",&Save_Temp);
-    sscanf(strtok(NULL,"/"),"%d",&Danger_Humi);
-    sscanf(strtok(NULL,"/"),"%d",&Save_Humi);
-    sscanf(strtok(NULL,"/"),"%d",&WET_SOIL);
-    sscanf(strtok(NULL,"/"),"%d",&DRY_SOIL);
-    sscanf(strtok(NULL,"/"),"%d",&DARK_LIGHT);
+    sscanf(strtok((char*)data,"/"),"%d",&Tree.Danger_Temp);
+    sscanf(strtok(NULL,"/"),"%d",&Tree.Save_Temp);
+    sscanf(strtok(NULL,"/"),"%d",&Tree.Danger_Humi);
+    sscanf(strtok(NULL,"/"),"%d",&Tree.Save_Humi);
+    sscanf(strtok(NULL,"/"),"%d",&Tree.WET_SOIL);
+    sscanf(strtok(NULL,"/"),"%d",&Tree.DRY_SOIL);
+    sscanf(strtok(NULL,"/"),"%d",&Tree.DARK_LIGHT);
     return request->send(Received_Code);
   });
   server.on("/BackEndTolerance",HTTP_GET,[](AsyncWebServerRequest *request){
     if(!request->authenticate(http_username.c_str(), http_password.c_str()))
       return request->requestAuthentication();
-    MessLimit = String(Danger_Temp);
+    MessLimit = String(Tree.Danger_Temp);
     MessLimit += "/";
-    MessLimit += String(Save_Temp);
+    MessLimit += String(Tree.Save_Temp);
     MessLimit += "/";
-    MessLimit += String(Danger_Humi);
+    MessLimit += String(Tree.Danger_Humi);
     MessLimit += "/";
-    MessLimit += String(Save_Humi);
+    MessLimit += String(Tree.Save_Humi);
     MessLimit += "/";
-    MessLimit += String(WET_SOIL);
+    MessLimit += String(Tree.WET_SOIL);
     MessLimit += "/";
-    MessLimit += String(DRY_SOIL);
+    MessLimit += String(Tree.DRY_SOIL);
     MessLimit += "/";
-    MessLimit += String(DARK_LIGHT);
+    MessLimit += String(Tree.DARK_LIGHT);
     MessLimit += "/";
     return request->send_P(Received_Code,"text/plain",MessLimit.c_str());
   });
@@ -2476,7 +2491,7 @@ void Init_Server() // FIXME: Fix backend server
     } 
     if(package.GetData().GetMode() == Query) //Query mode
     {
-
+      
     }
     if(package.GetData().GetMode() == Default) // Default mode
     {
@@ -2495,24 +2510,6 @@ void Init_Server() // FIXME: Fix backend server
       }
       
     }
-
-    // if(request->client()->remoteIP().toString() == IPGateway) //Mess from gateway //TODO: Delivery mess
-    // {
-    //   for(i =0; i< MAX_Clients; i++)
-    //   {
-    //     if(NodeIP[i] == "")
-    //       continue;
-    //     package.SetNextIP(NodeIP[i]);
-    //     Serial.print("Node IP:");
-    //     Serial.println(NodeIP[i]);
-    //     xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
-    //   }
-    // }
-    // else //Mess from Node
-    // {
-    //   package.SetNextIP(IPGateway);
-    //   xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
-    // }
   });
   server.onNotFound([](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request)) //Only for client from AP Mode
@@ -2561,15 +2558,15 @@ void PrepareMess() //Decide what to send
     json.set(Child_Path[2].c_str(),Soil_Err);
     Temp[2] = (int)Soil_Err;
   }
-  if(Temp[3] != (int)Days )
+  if(Temp[3] != (int)Tree.Days )
   {
     valueChange_flag = true;
     messanger += Local_Path[3];
     messanger += " ";
-    messanger += String(Days);
+    messanger += String(Tree.Days);
     messanger += "/";
-    json.set(Child_Path[3].c_str(),Days);
-    Temp[3] = (int)Days;
+    json.set(Child_Path[3].c_str(),Tree.Days);
+    Temp[3] = (int)Tree.Days;
   }
   if(Temp[4] != (int)Humidity)
   {
@@ -2655,7 +2652,7 @@ void SendMess() //Send mess prepared to who
       xQueueSend(Queue_Delivery,&Data,pdMS_TO_TICKS(100));
     }
     if(WiFi.status() == WL_CONNECTED && ping_flag && !first_sta && Firebase.ready()) //Send to database
-      Firebase.RTDB.updateNodeSilentAsync(&firebaseData,Parent_Path.c_str() , &json);
+      xQueueSend(Queue_Database,&json,pdMS_TO_TICKS(100));
   }
 }
 #pragma endregion Send Message
@@ -2710,7 +2707,7 @@ void Read_Sensor()//Get Data from All Sensors
 #pragma region Controlled Things
 void Condition_Pump()//Check watering conditions
 {
-  if(((soilMoist < DRY_SOIL && !Err ||(unsigned long)(millis()-Times_Pumps) >= Next_Pump) || Command_Pump == 1) && !PumpsStatus) //Đang tắt
+  if(((soilMoist < Tree.DRY_SOIL && !Err ||(unsigned long)(millis()-Times_Pumps) >= Next_Pump) || Command_Pump == 1) && !PumpsStatus) //Đang tắt
   {
     Times_Pumps = millis();
     PumpsStatus = true;
@@ -2719,7 +2716,7 @@ void Condition_Pump()//Check watering conditions
     if(Command_Pump == 1)
       return;
   }
-  if((((Temperature >= Danger_Temp || Temperature <= Save_Temp || soilMoist > WET_SOIL) && !Err || ((unsigned long)(millis()- Times_Pumps) >= Still_Pumps)) || Command_Pump == 2) && PumpsStatus) //Đang bật
+  if((((Temperature >= Tree.Danger_Temp || Temperature <= Tree.Save_Temp || soilMoist > Tree.WET_SOIL) && !Err || ((unsigned long)(millis()- Times_Pumps) >= Still_Pumps)) || Command_Pump == 2) && PumpsStatus) //Đang bật
   {
     Times_Pumps = millis(); 
     PumpsStatus = false;
@@ -2742,7 +2739,7 @@ void Pump()//Pump Choice
 }
 void Condition_Light()//Check lighting up conditions
 {
-  if((lumen <= DARK_LIGHT && !Err ||  Command_Light == 1 )&& !LightStatus) //Đang tắt
+  if((lumen <= Tree.DARK_LIGHT && !Err ||  Command_Light == 1 )&& !LightStatus) //Đang tắt
     {
       LightStatus = true;
       if(Command_Light == 2)
@@ -2750,7 +2747,7 @@ void Condition_Light()//Check lighting up conditions
       if(Command_Light ==1)
         return;
     }
-  if((lumen > DARK_LIGHT && !Err || Command_Light == 2) && LightStatus) // Đang bật
+  if((lumen > Tree.DARK_LIGHT && !Err || Command_Light == 2) && LightStatus) // Đang bật
     {
       LightStatus = false;
       if(Command_Light == 1)
@@ -2842,6 +2839,7 @@ void setup()
   Time_Passed = millis();
   Queue_Delivery = xQueueCreate(Queue_Length,Queue_item_delivery_size+1);
   Queue_Command = xQueueCreate(Queue_Length,Queue_item_command_size+1);
+  Queue_Database = xQueueCreate(Queue_Length,Queue_item_database_size+1);
   xTaskCreate(
     Delivery,
     "Delivery",
@@ -2850,6 +2848,15 @@ void setup()
     0,
     &DeliveryTask
   );//TODO: Delete Task when not use
+  xTaskCreate(
+    Log,
+    "Log",
+    4000,
+    NULL,
+    0,
+    &DatabaseTask
+  );
+
 }
 void loop() 
 {
