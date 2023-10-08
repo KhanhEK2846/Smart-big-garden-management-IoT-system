@@ -9,7 +9,6 @@
 #include <time.h>
 #include <esp_wifi.h>
 #include <HTTPClient.h>
-#include <Arduino_JSON.h>
 #include "Transmit.h"
 #include "CommandCode.h"
 #include "Plant.h"
@@ -97,16 +96,13 @@ int Num_Clients = 0;
 //Firebase Variable
 FirebaseData firebaseData;
 FirebaseJson json;
-FirebaseJson Djson;
-const String Child_Path[11] = {"Error/DHT11","Error/LDR","Error/Soil","Plant/Days","Sensor/DHT11/Humi","Sensor/DHT11/Temp","Sensor/Light","Sensor/Solid","Status/Led","Status/Pump","Status/MQTT"};
-const String Parent_Path = "ESP32/";
+FirebaseJson Ljson;
+const String Child_Path[12] = {"Error/DHT11","Error/LDR","Error/Soil","Plant/Days","Sensor/DHT11/Humi","Sensor/DHT11/Temp","Sensor/Light","Sensor/Solid","Status/Led","Status/Pump","Status/MQTT","Name"};
 String Destinate;
 const int total_key = 17; //Total number of key in DataLogging
 const unsigned long time_delay_send_datalogging = 180000; //3 minutes/Send
 const unsigned long expired_data = 30 * 60 * 60 * 24; //30 days
 unsigned long Last_datalogging_time = 0;
-unsigned long Delay_Delete_Data = 0;
-unsigned long Wait_Delete = 0;
 //MQTT Variable
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
@@ -2165,10 +2161,13 @@ void Log(void * pvParameters)
   uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
   Serial.println(uxHighWaterMark);
   FirebaseJson data;
+  String Root;
   while(true)
   {
     xQueueReceive(Queue_Database,&data,portMAX_DELAY); 
-    Firebase.RTDB.updateNodeSilentAsync(&firebaseData,Parent_Path.c_str() , &data);
+    Root = ID;
+    Root += "/";
+    Firebase.RTDB.updateNodeSilentAsync(&firebaseData,Root.c_str(), &data);
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);  
   }
@@ -2181,92 +2180,46 @@ void Setup_RTDB()//Initiate Realtime Database Firebase
 }
 void DataLogging()//Store a record to database
 {
-  if(WiFi.status() != WL_CONNECTED || !ping_flag || first_sta)
-    return;
-  if(Firebase.ready() && ((unsigned long)(millis()- Last_datalogging_time)>time_delay_send_datalogging)||Last_datalogging_time == 0){
-    timestamp = getTime();
-    if(timestamp == 0)
-    {
-      Last_datalogging_time = 0;
-      return;
-    }
-    Last_datalogging_time = millis();
-    Destinate = Parent_Path;
-    Destinate += "DataLog/";
-    Destinate += String(timestamp);
-    Destinate += "/";
-    Firebase.RTDB.setJSON(&firebaseData, Destinate.c_str(), &json);
-  }
-}
-void DeleteOldData(int mode = 0)//Delete Old Record on database
-{
-  if(Delay_Delete_Data != 0)
+  switch (gateway_node)
   {
-    if ((unsigned long)(millis() - Wait_Delete) >= (unsigned long)(Delay_Delete_Data * 1000))
-    {
-      Wait_Delete = 0;
-      Delay_Delete_Data = 0;
-    }
-    else
+  case 1:
+    if(WiFi.status() != WL_CONNECTED || !ping_flag || first_sta)
       return;
-  }
-  if(WiFi.status() != WL_CONNECTED || !ping_flag || first_sta)
-    return;
-  timestamp = getTime();
-  if(timestamp == 0)
-    return;
-  QueryFilter query;
-  timestamp -= expired_data;
-  if(mode == 0)
-    query.orderBy("$key").startAt("0").endAt(String(timestamp)).limitToFirst(4);
-  else
-    query.orderBy("$key").limitToFirst(1);
-
-  if(Firebase.ready())
-  {
-    Destinate = Parent_Path;
-    Destinate += "DataLog";
-    if(Firebase.RTDB.getJSON(&firebaseData,Destinate,&query))
-    {
-      if(firebaseData.dataType() == "null" || firebaseData.dataType() == "array")
+    if(Firebase.ready() && ((unsigned long)(millis()- Last_datalogging_time)>time_delay_send_datalogging)||Last_datalogging_time == 0){
+      timestamp = getTime();
+      if(timestamp == 0)
       {
-        query.clear();
-        if (mode == 0)
-          DeleteOldData(1);
+        Last_datalogging_time = 0;
         return;
       }
-      if (firebaseData.dataType() == "json" && firebaseData.jsonString().length() > 4)
-      {
-        Djson = firebaseData.jsonObject();
-        size_t len = Djson.iteratorBegin();
-        String key, value;
-        int otype = 0;
-        for(size_t i = 0; i < len; i += total_key)
-        {
-          Djson.iteratorGet(i,otype,key,value);
-          if (mode == 0)
-          {
-            String path = Destinate;
-            path += "/";
-            path += key;
-            Firebase.RTDB.deleteNode(&firebaseData, path);
-          }
-          else
-          {
-            sscanf(key.c_str(),"%lu",&Delay_Delete_Data);
-            Delay_Delete_Data -= timestamp;
-            Wait_Delete = millis();
-            break;
-          }
-
-        }
-        Djson.iteratorEnd();
-        Djson.clear();
-      }
+      Ljson.set(Child_Path[0].c_str(),DHT_Err);
+      Ljson.set(Child_Path[1].c_str(),LDR_Err);
+      Ljson.set(Child_Path[2].c_str(),Soil_Err);
+      Ljson.set(Child_Path[3].c_str(),Tree.Days);
+      Ljson.set(Child_Path[4].c_str(),String(Humidity));
+      Ljson.set(Child_Path[5].c_str(),String(Temperature));
+      Ljson.set(Child_Path[6].c_str(),lumen);
+      Ljson.set(Child_Path[7].c_str(),soilMoist);
+      Ljson.set(Child_Path[8].c_str(),LightStatus);
+      Ljson.set(Child_Path[9].c_str(),PumpsStatus);
+      Ljson.set(Child_Path[10].c_str(),MQTTStatus);
+      Last_datalogging_time = millis();
+      Destinate = ID;
+      Destinate += "/DataLog/";
+      Destinate += String(timestamp);
+      Destinate += "/";
+      //Firebase.RTDB.setJSON(&firebaseData, Destinate.c_str(), &json);
+      Ljson.clear();
     }
+    break;
+  case 2:
+
+    break;
+  default:
+    break;
   }
-  query.clear();
 }
+
 #pragma endregion
 #pragma region Network
 void Setup_Server()//Initiate connection to the servers
@@ -2489,10 +2442,6 @@ void Init_Server() // FIXME: Fix backend server
         }
       }
     } 
-    if(package.GetData().GetMode() == Query) //Query mode
-    {
-      
-    }
     if(package.GetData().GetMode() == Default) // Default mode
     {
       switch (gateway_node)
@@ -2526,8 +2475,8 @@ void PrepareMess() //Decide what to send
   valueChange_flag = false;
   messanger.clear();
   messanger = "/";
-  messanger += ID;
-  messanger = "/";
+  messanger += Tree.Name;
+  messanger += "/";
   if(Temp[0] != (int)DHT_Err)
   {
     valueChange_flag = true;
@@ -2638,6 +2587,7 @@ void PrepareMess() //Decide what to send
     json.set(Child_Path[10].c_str(),MQTTStatus);
     Temp[10] = (int)MQTTStatus;
   }
+  
 }
 void SendMess() //Send mess prepared to who
 {
@@ -2784,11 +2734,7 @@ void Network()// Netword Part
   ws.cleanupClients();
   PrepareMess();
   SendMess();
-  if(gateway_node == 1) //If Is a gateway
-  {   
-    DataLogging();
-    DeleteOldData();
-  }
+  //DataLogging();
 
   if(sta_flag)
   {
@@ -2851,7 +2797,7 @@ void setup()
   xTaskCreate(
     Log,
     "Log",
-    4000,
+    8000,
     NULL,
     0,
     &DatabaseTask

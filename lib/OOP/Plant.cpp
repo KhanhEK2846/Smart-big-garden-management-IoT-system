@@ -17,3 +17,4 @@ Plant::~Plant()
 {
     Name.remove(0);
 }
+
