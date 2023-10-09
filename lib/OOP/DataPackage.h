@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <WString.h>
-
+#include <FirebaseESP32.h>
 class DataPackage
 {
 private:
@@ -16,5 +16,6 @@ public:
     ~DataPackage();
     DataPackage& operator=(const DataPackage temp);
     String toString() const;
+    void DataToJson(FirebaseJson * slave);
     void fromString(const String data);
 };

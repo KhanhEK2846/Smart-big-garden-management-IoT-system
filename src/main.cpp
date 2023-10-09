@@ -61,8 +61,8 @@ boolean PumpsStatus = false; //Current Status Pump
 //Light
 boolean LightStatus = false; //Current Status Light
 //WIFI Variable
-String sta_ssid ; 
-String sta_password ;
+String sta_ssid = "Sieu Viet 1" ; 
+String sta_password = "02838474844" ;
 String ap_ssid = "ESP32_Server";
 String ap_password = "123456789";
 const long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
@@ -96,13 +96,13 @@ int Num_Clients = 0;
 //Firebase Variable
 FirebaseData firebaseData;
 FirebaseJson json;
-FirebaseJson Ljson;
 const String Child_Path[12] = {"Error/DHT11","Error/LDR","Error/Soil","Plant/Days","Sensor/DHT11/Humi","Sensor/DHT11/Temp","Sensor/Light","Sensor/Solid","Status/Led","Status/Pump","Status/MQTT","Name"};
 String Destinate;
 const int total_key = 17; //Total number of key in DataLogging
 const unsigned long time_delay_send_datalogging = 180000; //3 minutes/Send
 const unsigned long expired_data = 30 * 60 * 60 * 24; //30 days
 unsigned long Last_datalogging_time = 0;
+DataPackage Pack;
 //MQTT Variable
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
@@ -137,7 +137,7 @@ String Command;
 const int Queue_Length = 10;
 const unsigned long long Queue_item_delivery_size = sizeof(Transmit);
 const unsigned long long Queue_item_command_size = sizeof(String);
-const unsigned long long Queue_item_database_size = sizeof(FirebaseJson);
+const unsigned long long Queue_item_database_size = sizeof(DataPackage);
 //Sercurity
 String http_username = "admin";
 String http_password = "admin";;
@@ -2154,20 +2154,22 @@ void Init_WiFi_Event()
 }
 #pragma endregion Device Connected Manager
 #pragma region Cloud Database
-void Log(void * pvParameters)
+void DataLog(void * pvParameters)
 {
   Serial.println("Database Task");
   UBaseType_t uxHighWaterMark;
   uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
   Serial.println(uxHighWaterMark);
-  FirebaseJson data;
+  DataPackage data;
+  FirebaseJson t_data;
   String Root;
   while(true)
   {
     xQueueReceive(Queue_Database,&data,portMAX_DELAY); 
     Root = ID;
     Root += "/";
-    Firebase.RTDB.updateNodeSilentAsync(&firebaseData,Root.c_str(), &data);
+    data.DataToJson(&t_data);
+    Firebase.RTDB.updateNodeSilentAsync(&firebaseData, Root, &t_data);
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);  
   }
@@ -2178,45 +2180,43 @@ void Setup_RTDB()//Initiate Realtime Database Firebase
   Firebase.reconnectWiFi(true);
   firebaseData.setResponseSize(4096);
 }
+
 void DataLogging()//Store a record to database
 {
-  switch (gateway_node)
-  {
-  case 1:
-    if(WiFi.status() != WL_CONNECTED || !ping_flag || first_sta)
+  if(WiFi.status() != WL_CONNECTED || !ping_flag || first_sta)
+    return;
+  if(Firebase.ready() && ((unsigned long)(millis()- Last_datalogging_time)>time_delay_send_datalogging)||Last_datalogging_time == 0){
+    timestamp = getTime();
+    if(timestamp == 0)
+    {
+      Last_datalogging_time = 0;
       return;
-    if(Firebase.ready() && ((unsigned long)(millis()- Last_datalogging_time)>time_delay_send_datalogging)||Last_datalogging_time == 0){
-      timestamp = getTime();
-      if(timestamp == 0)
-      {
-        Last_datalogging_time = 0;
-        return;
-      }
-      Ljson.set(Child_Path[0].c_str(),DHT_Err);
-      Ljson.set(Child_Path[1].c_str(),LDR_Err);
-      Ljson.set(Child_Path[2].c_str(),Soil_Err);
-      Ljson.set(Child_Path[3].c_str(),Tree.Days);
-      Ljson.set(Child_Path[4].c_str(),String(Humidity));
-      Ljson.set(Child_Path[5].c_str(),String(Temperature));
-      Ljson.set(Child_Path[6].c_str(),lumen);
-      Ljson.set(Child_Path[7].c_str(),soilMoist);
-      Ljson.set(Child_Path[8].c_str(),LightStatus);
-      Ljson.set(Child_Path[9].c_str(),PumpsStatus);
-      Ljson.set(Child_Path[10].c_str(),MQTTStatus);
-      Last_datalogging_time = millis();
+    }
+    Last_datalogging_time = millis();
+    String tmp;
+    switch (gateway_node)
+    {
+    case 1:
       Destinate = ID;
       Destinate += "/DataLog/";
       Destinate += String(timestamp);
       Destinate += "/";
-      //Firebase.RTDB.setJSON(&firebaseData, Destinate.c_str(), &json);
-      Ljson.clear();
-    }
-    break;
-  case 2:
+      Firebase.RTDB.setJSON(&firebaseData, Destinate.c_str(), &json);
+      break;
+    case 2:
+      Data.SetNextIP(IPGateway);
+      Data.SetData(ID,messanger,Default);
+      xQueueSend(Queue_Delivery,&Data,pdMS_TO_TICKS(100));
+      // Ljson.clear();
+      // Ljson.set(messanger);
+      // messanger.clear();
+      // json.toString(messanger);
+      // Serial.println(messanger);
 
-    break;
-  default:
-    break;
+      break;
+    default:
+      break;
+    }
   }
 }
 
@@ -2444,18 +2444,22 @@ void Init_Server() // FIXME: Fix backend server
     } 
     if(package.GetData().GetMode() == Default) // Default mode
     {
-      switch (gateway_node)
+      if(gateway_node == 0)
       {
-      case 1: //If it's a Gateway -> Send to Database
-        /* code */
-        break;
-      case 2: //If it's a node -> Delivery to Gateway
+        Serial.println(package.GetData().toString());
+        return;
+      }
+      if(gateway_node == 1) // If it's a gateway -> Send to Database
+      {
+
+
+        return;
+      }
+      if(gateway_node == 2)//If it's a node -> Delivery to Gateway
+      {
         package.SetNextIP(IPGateway);
         xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
-        break;
-      default:
-        Serial.println(package.GetData().toString());
-        break;
+        return;
       }
       
     }
@@ -2477,103 +2481,104 @@ void PrepareMess() //Decide what to send
   messanger = "/";
   messanger += Tree.Name;
   messanger += "/";
+  messanger += Local_Path[0];
+  messanger += " ";
+  messanger += String(DHT_Err);
+  messanger += "/";
+  messanger += Local_Path[1];
+  messanger += " ";
+  messanger += String(LDR_Err);
+  messanger += "/";
+  messanger += Local_Path[2];
+  messanger += " ";
+  messanger += String(Soil_Err);
+  messanger += "/";
+  messanger += Local_Path[3];
+  messanger += " ";
+  messanger += String(Tree.Days);
+  messanger += "/";
+  messanger += Local_Path[4];
+  messanger += " ";
+  messanger += String(Humidity);
+  messanger += "/";
+  messanger += Local_Path[5];
+  messanger += " ";
+  messanger += String(Temperature);
+  messanger += "/";
+  messanger += Local_Path[6];
+  messanger += " ";
+  messanger += String(lumen);
+  messanger += "/";
+  messanger += Local_Path[7];
+  messanger += " ";
+  messanger += String(soilMoist);
+  messanger += "/";
+  messanger += Local_Path[8];
+  messanger += " ";
+  messanger += String(LightStatus);
+  messanger += "/";
+  messanger += Local_Path[9];
+  messanger += " ";
+  messanger += String(PumpsStatus);
+  messanger += "/";
+
   if(Temp[0] != (int)DHT_Err)
   {
     valueChange_flag = true;
-    messanger += Local_Path[0];
-    messanger += " ";
-    messanger += String(DHT_Err);
-    messanger += "/";
     json.set(Child_Path[0].c_str(),DHT_Err);
     Temp[0] = (int)DHT_Err;
   }
   if(Temp[1] != (int)LDR_Err )
   {
     valueChange_flag = true;
-    messanger += Local_Path[1];
-    messanger += " ";
-    messanger += String(LDR_Err);
-    messanger += "/";
     json.set(Child_Path[1].c_str(),LDR_Err);
     Temp[1] = (int)LDR_Err;
   }
   if(Temp[2] != (int)Soil_Err)
   {
     valueChange_flag = true;
-    messanger += Local_Path[2];
-    messanger += " ";
-    messanger += String(Soil_Err);
-    messanger += "/";
     json.set(Child_Path[2].c_str(),Soil_Err);
     Temp[2] = (int)Soil_Err;
   }
   if(Temp[3] != (int)Tree.Days )
   {
     valueChange_flag = true;
-    messanger += Local_Path[3];
-    messanger += " ";
-    messanger += String(Tree.Days);
-    messanger += "/";
     json.set(Child_Path[3].c_str(),Tree.Days);
     Temp[3] = (int)Tree.Days;
   }
   if(Temp[4] != (int)Humidity)
   {
     valueChange_flag = true;
-    messanger += Local_Path[4];
-    messanger += " ";
-    messanger += String(Humidity);
-    messanger += "/";
-    Temp[4] = (int)Humidity;
     json.set(Child_Path[4].c_str(),String(Humidity));
+    Temp[4] = (int)Humidity;
   }
   if(Temp[5] != (int)Temperature)
   {
     valueChange_flag = true;
-    messanger += Local_Path[5];
-    messanger += " ";
-    messanger += String(Temperature);
-    messanger += "/";
     json.set(Child_Path[5].c_str(),String(Temperature));
     Temp[5] = (int)Temperature;
   }
   if(Temp[6] != (int)lumen)
   {
     valueChange_flag = true;
-    messanger += Local_Path[6];
-    messanger += " ";
-    messanger += String(lumen);
-    messanger += "/";
     json.set(Child_Path[6].c_str(),lumen);
     Temp[6] = (int)lumen;
   }
   if(Temp[7] != (int)soilMoist)
   {
     valueChange_flag = true;
-    messanger += Local_Path[7];
-    messanger += " ";
-    messanger += String(soilMoist);
-    messanger += "/";
     json.set(Child_Path[7].c_str(),soilMoist);
     Temp[7] = (int)soilMoist;
   }
   if(Temp[8] != (int)LightStatus)
   {
     valueChange_flag = true;
-    messanger += Local_Path[8];
-    messanger += " ";
-    messanger += String(LightStatus);
-    messanger += "/";
     json.set(Child_Path[8].c_str(),LightStatus);
     Temp[8] = (int)LightStatus;
   }
   if(Temp[9] != (int)PumpsStatus)
   {
     valueChange_flag = true;
-    messanger += Local_Path[9];
-    messanger += " ";
-    messanger += String(PumpsStatus);
-    messanger += "/";
     json.set(Child_Path[9].c_str(),PumpsStatus);
     Temp[9] = (int)PumpsStatus;
   }
@@ -2593,16 +2598,22 @@ void SendMess() //Send mess prepared to who
 {
   if(valueChange_flag)
   {
+
     if(Person>0) //Send thourgh WebSocket
       notifyClients(messanger);
+    Data.SetData(ID,messanger,Default);
     if(gateway_node == 2) //Send to Gateway only if It's a node
     {
       Data.SetNextIP(IPGateway);
-      Data.SetData(ID,messanger,Default);
       xQueueSend(Queue_Delivery,&Data,pdMS_TO_TICKS(100));
     }
     if(WiFi.status() == WL_CONNECTED && ping_flag && !first_sta && Firebase.ready()) //Send to database
-      xQueueSend(Queue_Database,&json,pdMS_TO_TICKS(100));
+    {
+      Pack  = Data.GetData();
+      Serial.print("Data Send: ");
+      Serial.println(Pack.toString());
+      xQueueSend(Queue_Database,&Pack,pdMS_TO_TICKS(100));
+    }  
   }
 }
 #pragma endregion Send Message
@@ -2773,10 +2784,10 @@ void setup()
   Serial.println();
   WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(ap_ssid.c_str(), ap_password.c_str());
-  Connect_Network();
   initWebSocket();
   Init_Server();
   Init_WiFi_Event();
+  Connect_Network();
   pinMode(Pumps,OUTPUT);
   pinMode(Light,OUTPUT);
   digitalWrite(Pumps,LOW);
@@ -2795,9 +2806,9 @@ void setup()
     &DeliveryTask
   );//TODO: Delete Task when not use
   xTaskCreate(
-    Log,
-    "Log",
-    8000,
+    DataLog,
+    "DataLog",
+    8000,//3028B left
     NULL,
     0,
     &DatabaseTask
