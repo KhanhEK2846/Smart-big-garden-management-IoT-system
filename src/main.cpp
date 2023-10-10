@@ -102,7 +102,6 @@ const int total_key = 17; //Total number of key in DataLogging
 const unsigned long time_delay_send_datalogging = 180000; //3 minutes/Send
 const unsigned long expired_data = 30 * 60 * 60 * 24; //30 days
 unsigned long Last_datalogging_time = 0;
-DataPackage Pack;
 //MQTT Variable
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
@@ -126,14 +125,18 @@ boolean first_sta = true;
 boolean valueChange_flag = false;
 //Type of server
 int gateway_node = 0; // 0:default 1: gateway 2:node
+//Own & Deliver
+Transmit D_Data;
+DataPackage D_Pack;
+Transmit O_Data;
+DataPackage O_Pack;
+String Command;
 //Task Delivery Data
 TaskHandle_t DeliveryTask = NULL;
 TaskHandle_t DatabaseTask = NULL;
 QueueHandle_t Queue_Delivery = NULL;
 QueueHandle_t Queue_Command = NULL;
 QueueHandle_t Queue_Database = NULL;
-Transmit Data;
-String Command;
 const int Queue_Length = 10;
 const unsigned long long Queue_item_delivery_size = sizeof(Transmit);
 const unsigned long long Queue_item_command_size = sizeof(String);
@@ -150,8 +153,9 @@ const String ID = WiFi.macAddress();
 //Loop variable
 int i;
 // Store Recent Value
-int Temp[11] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};//Array {DHT_Err,LDR_Err,Soil_Err,Days,Humidity,Temperature,lumen,soilMoist,LightStatus,PumpsStatus,MQTTStatus}
-#pragma region File HTML Files
+int Temp[11] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
+
+#pragma region HTML
 #pragma region main_default_html
 const char main_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML><html> 
@@ -1814,7 +1818,7 @@ const char Tolerance_html[] PROGMEM = R"rawliteral(
 </html>
 )rawliteral";
 #pragma endregion Parameters_html
-#pragma endregion File HTML Files
+#pragma endregion HTML
 #pragma region Common Function
 unsigned long getTime() // Get Timestamp
 { 
@@ -2204,9 +2208,9 @@ void DataLogging()//Store a record to database
       Firebase.RTDB.setJSON(&firebaseData, Destinate.c_str(), &json);
       break;
     case 2:
-      Data.SetNextIP(IPGateway);
-      Data.SetData(ID,messanger,Default);
-      xQueueSend(Queue_Delivery,&Data,pdMS_TO_TICKS(100));
+      O_Data.SetNextIP(IPGateway);
+      O_Data.SetData(ID,messanger,Default);
+      xQueueSend(Queue_Delivery,&O_Data,pdMS_TO_TICKS(100));
       // Ljson.clear();
       // Ljson.set(messanger);
       // messanger.clear();
@@ -2601,18 +2605,16 @@ void SendMess() //Send mess prepared to who
 
     if(Person>0) //Send thourgh WebSocket
       notifyClients(messanger);
-    Data.SetData(ID,messanger,Default);
+    O_Data.SetData(ID,messanger,Default);
     if(gateway_node == 2) //Send to Gateway only if It's a node
     {
-      Data.SetNextIP(IPGateway);
-      xQueueSend(Queue_Delivery,&Data,pdMS_TO_TICKS(100));
+      O_Data.SetNextIP(IPGateway);
+      xQueueSend(Queue_Delivery,&O_Data,pdMS_TO_TICKS(100));
     }
     if(WiFi.status() == WL_CONNECTED && ping_flag && !first_sta && Firebase.ready()) //Send to database
     {
-      Pack  = Data.GetData();
-      Serial.print("Data Send: ");
-      Serial.println(Pack.toString());
-      xQueueSend(Queue_Database,&Pack,pdMS_TO_TICKS(100));
+      O_Pack = O_Data.GetData();
+      xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(100));
     }  
   }
 }

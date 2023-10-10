@@ -29,6 +29,11 @@ void DataPackage::SetDataPackage(const String t_id, const String t_data, const S
     this->Mode = t_mode;
 }
 
+void DataPackage::SetMode(const String mode)
+{
+    this->Mode = mode;
+}
+
 DataPackage ::~DataPackage()
 {
     data.remove(0);

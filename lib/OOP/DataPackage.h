@@ -13,6 +13,7 @@ public:
     String GetData() const;
     String GetMode() const;
     void SetDataPackage(const String t_id, const String t_data, const String t_mode);
+    void SetMode(const String mode);
     ~DataPackage();
     DataPackage& operator=(const DataPackage temp);
     String toString() const;
