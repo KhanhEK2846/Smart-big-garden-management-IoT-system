@@ -2170,10 +2170,20 @@ void DataLog(void * pvParameters)
   while(true)
   {
     xQueueReceive(Queue_Database,&data,portMAX_DELAY); 
-    Root = ID;
+    Serial.print("Database: ");
+    Serial.println(data.toString());
+    Root = data.GetID();
     Root += "/";
     data.DataToJson(&t_data);
-    Firebase.RTDB.updateNodeSilentAsync(&firebaseData, Root, &t_data);
+    if(data.GetMode() == LogData)
+    {
+      Root += "DataLog/";
+      Root += String(timestamp);
+      Root += "/";
+      Firebase.RTDB.setJSON(&firebaseData, Root, &t_data);
+    }
+    else
+      Firebase.RTDB.updateNodeSilentAsync(&firebaseData, Root, &t_data);
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);  
   }
@@ -2201,22 +2211,16 @@ void DataLogging()//Store a record to database
     switch (gateway_node)
     {
     case 1:
-      Destinate = ID;
-      Destinate += "/DataLog/";
-      Destinate += String(timestamp);
-      Destinate += "/";
-      Firebase.RTDB.setJSON(&firebaseData, Destinate.c_str(), &json);
+      O_Pack = O_Data.GetData();
+      O_Pack.SetMode(LogData);
+      Serial.print("Log before Send: ");
+      Serial.println(O_Pack.toString());
+      xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(100));
       break;
     case 2:
       O_Data.SetNextIP(IPGateway);
-      O_Data.SetData(ID,messanger,Default);
+      O_Data.SetData(ID,messanger,LogData);
       xQueueSend(Queue_Delivery,&O_Data,pdMS_TO_TICKS(100));
-      // Ljson.clear();
-      // Ljson.set(messanger);
-      // messanger.clear();
-      // json.toString(messanger);
-      // Serial.println(messanger);
-
       break;
     default:
       break;
@@ -2446,7 +2450,7 @@ void Init_Server() // FIXME: Fix backend server
         }
       }
     } 
-    if(package.GetData().GetMode() == Default) // Default mode
+    if(package.GetData().GetMode() == Default || package.GetData().GetMode() == LogData) // Default mode
     {
       if(gateway_node == 0)
       {
@@ -2455,7 +2459,8 @@ void Init_Server() // FIXME: Fix backend server
       }
       if(gateway_node == 1) // If it's a gateway -> Send to Database
       {
-
+        D_Pack = package.GetData();
+        xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(100));
 
         return;
       }
@@ -2747,7 +2752,7 @@ void Network()// Netword Part
   ws.cleanupClients();
   PrepareMess();
   SendMess();
-  //DataLogging();
+  DataLogging();
 
   if(sta_flag)
   {
