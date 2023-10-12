@@ -2210,14 +2210,14 @@ void DataLogging()//Store a record to database
     String tmp;
     switch (gateway_node)
     {
-    case 1:
+    case 1: // Gateway -> Database
       O_Pack = O_Data.GetData();
       O_Pack.SetMode(LogData);
       Serial.print("Log before Send: ");
       Serial.println(O_Pack.toString());
       xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(100));
       break;
-    case 2:
+    case 2: //Node -> Gateway
       O_Data.SetNextIP(IPGateway);
       O_Data.SetData(ID,messanger,LogData);
       xQueueSend(Queue_Delivery,&O_Data,pdMS_TO_TICKS(100));
@@ -2409,7 +2409,7 @@ void Init_Server() // FIXME: Fix backend server
     request->send(401);
   });
   server.on("/Delivery",HTTP_POST,[](AsyncWebServerRequest *request){ //Receive data from Node
-  },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
+  },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){ //[ ]: Test it
     request->send(Received_Code);
     Transmit package;
     package.DataFromString(String((char*) data));
@@ -2461,7 +2461,6 @@ void Init_Server() // FIXME: Fix backend server
       {
         D_Pack = package.GetData();
         xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(100));
-
         return;
       }
       if(gateway_node == 2)//If it's a node -> Delivery to Gateway
@@ -2747,6 +2746,28 @@ void Solve_Command()
 
   Command.clear();
 }
+void Init_Task()
+{
+  Queue_Delivery = xQueueCreate(Queue_Length,Queue_item_delivery_size+1);
+  Queue_Command = xQueueCreate(Queue_Length,Queue_item_command_size+1);
+  Queue_Database = xQueueCreate(Queue_Length,Queue_item_database_size+1);
+  xTaskCreate(
+    Delivery,
+    "Delivery",
+    3000, //1684B left
+    NULL,
+    0,
+    &DeliveryTask
+  );
+  xTaskCreate(
+    DataLog,
+    "DataLog",
+    8000,//3028B left
+    NULL,
+    0,
+    &DatabaseTask
+  );
+}
 void Network()// Netword Part
 {
   ws.cleanupClients();
@@ -2801,25 +2822,7 @@ void setup()
   digitalWrite(Light,LOW);
   dht.begin();
   Time_Passed = millis();
-  Queue_Delivery = xQueueCreate(Queue_Length,Queue_item_delivery_size+1);
-  Queue_Command = xQueueCreate(Queue_Length,Queue_item_command_size+1);
-  Queue_Database = xQueueCreate(Queue_Length,Queue_item_database_size+1);
-  xTaskCreate(
-    Delivery,
-    "Delivery",
-    3000, //1684B left
-    NULL,
-    0,
-    &DeliveryTask
-  );//TODO: Delete Task when not use
-  xTaskCreate(
-    DataLog,
-    "DataLog",
-    8000,//3028B left
-    NULL,
-    0,
-    &DatabaseTask
-  );
+  Init_Task();
 
 }
 void loop() 
