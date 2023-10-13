@@ -2180,6 +2180,8 @@ void DataLog(void * pvParameters)
       Root += "DataLog/";
       Root += String(timestamp);
       Root += "/";
+      Serial.print("Root path: ");
+      Serial.println(Root);
       Firebase.RTDB.setJSON(&firebaseData, Root, &t_data);
     }
     else
@@ -2308,7 +2310,8 @@ void Init_Server() // FIXME: Fix backend server
       //request->send_P(200, "text/plain", "Coming soon");
   });//Home Page Server
   server.on("/Test",HTTP_GET,[](AsyncWebServerRequest *request){
-    request->send_P(Received_Code,"text/plain","I am node");
+    O_Data.SetData(ID,messanger,Default);
+    request->send_P(Received_Code,"text/plain",O_Data.GetData().toString().c_str());
   });// BUG: Remove it after done
   server.on("/Sercurity",HTTP_GET,[](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request) ) //Only for client from AP Mode
@@ -2409,7 +2412,7 @@ void Init_Server() // FIXME: Fix backend server
     request->send(401);
   });
   server.on("/Delivery",HTTP_POST,[](AsyncWebServerRequest *request){ //Receive data from Node
-  },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){ //[ ]: Test it
+  },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){ //FIXME: Not work as plan
     request->send(Received_Code);
     Transmit package;
     package.DataFromString(String((char*) data));
@@ -2772,8 +2775,8 @@ void Network()// Netword Part
 {
   ws.cleanupClients();
   PrepareMess();
-  SendMess();
-  DataLogging();
+  //SendMess();
+  //DataLogging();
 
   if(sta_flag)
   {

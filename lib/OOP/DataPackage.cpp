@@ -83,7 +83,7 @@ void DataPackage::DataToJson(FirebaseJson* slave)
 void DataPackage::fromString(const String data)
 {
     String temp = data.substring(data.indexOf("{\n") + 3, data.lastIndexOf("\n}"));
-    this->ID = temp.substring(temp.indexOf("ID: ")+4,temp.indexOf("\nMode:"));
-    this->Mode = temp.substring(temp.indexOf("Mode: ")+6,temp.indexOf("\nData:"));
-    this->data = temp.substring(temp.indexOf("Data: ")+6, temp.length());
+    this->ID = temp.substring(temp.indexOf("ID: ")+4,temp.indexOf("\nMode:")-1);
+    this->Mode = temp.substring(temp.indexOf("Mode: ")+6,temp.indexOf("\nData:")-1);
+    this->data = temp.substring(temp.indexOf("Data: ")+6, temp.length()-1);
 }
