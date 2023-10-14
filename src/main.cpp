@@ -2170,8 +2170,6 @@ void DataLog(void * pvParameters)
   while(true)
   {
     xQueueReceive(Queue_Database,&data,portMAX_DELAY); 
-    Serial.print("Database: ");
-    Serial.println(data.toString());
     Root = data.GetID();
     Root += "/";
     data.DataToJson(&t_data);
@@ -2215,8 +2213,6 @@ void DataLogging()//Store a record to database
     case 1: // Gateway -> Database
       O_Pack = O_Data.GetData();
       O_Pack.SetMode(LogData);
-      Serial.print("Log before Send: ");
-      Serial.println(O_Pack.toString());
       xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(100));
       break;
     case 2: //Node -> Gateway
@@ -2775,8 +2771,8 @@ void Network()// Netword Part
 {
   ws.cleanupClients();
   PrepareMess();
-  //SendMess();
-  //DataLogging();
+  SendMess();
+  DataLogging();
 
   if(sta_flag)
   {
