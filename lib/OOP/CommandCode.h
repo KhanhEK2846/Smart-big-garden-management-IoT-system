@@ -9,7 +9,7 @@
 #define Gone_Code 410
 #define No_Response_Code 444
 #define Network_Authentication_Required 511
-//MD5
+//MD5 Decoder
 #define Init_Node_Code "45ef6ef895e5639e9f8f06c686d46e5c"
 #define Default "7a1920d61156abc05a60135aefe8bc67" //Node -> Gateway
 #define Broadcast "be55b6387170df0ca68f41225268e842" // Send both except from sender

@@ -61,7 +61,7 @@ boolean PumpsStatus = false; //Current Status Pump
 //Light
 boolean LightStatus = false; //Current Status Light
 //WIFI Variable
-String sta_ssid = "Sieu Viet 1" ; 
+String sta_ssid = "Sieu Viet 1"; 
 String sta_password = "02838474844" ;
 String ap_ssid = "ESP32_Server";
 String ap_password = "123456789";
@@ -95,8 +95,6 @@ int MAX_Clients = 3;
 int Num_Clients = 0;
 //Firebase Variable
 FirebaseData firebaseData;
-FirebaseJson json;
-const String Child_Path[12] = {"Error/DHT11","Error/LDR","Error/Soil","Plant/Days","Sensor/DHT11/Humi","Sensor/DHT11/Temp","Sensor/Light","Sensor/Solid","Status/Led","Status/Pump","Status/MQTT","Name"};
 String Destinate;
 const int total_key = 17; //Total number of key in DataLogging
 const unsigned long time_delay_send_datalogging = 180000; //3 minutes/Send
@@ -2165,25 +2163,28 @@ void DataLog(void * pvParameters)
   uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
   Serial.println(uxHighWaterMark);
   DataPackage data;
-  FirebaseJson t_data;
+  FirebaseJson json_data;
   String Root;
+  unsigned long time_log = 0; //Time that data was logged
   while(true)
   {
     xQueueReceive(Queue_Database,&data,portMAX_DELAY); 
     Root = data.GetID();
     Root += "/";
-    data.DataToJson(&t_data);
+    data.DataToJson(&json_data);
+    json_data.set("Status/MQTT",String(MQTTStatus));
     if(data.GetMode() == LogData)
     {
+      time_log = getTime();
       Root += "DataLog/";
-      Root += String(timestamp);
+      Root += String(time_log);
       Root += "/";
       Serial.print("Root path: ");
       Serial.println(Root);
-      Firebase.RTDB.setJSON(&firebaseData, Root, &t_data);
+      Firebase.RTDB.setJSON(&firebaseData, Root, &json_data);
     }
     else
-      Firebase.RTDB.updateNodeSilentAsync(&firebaseData, Root, &t_data);
+      Firebase.RTDB.updateNodeSilentAsync(&firebaseData, Root, &json_data);
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);  
   }
@@ -2408,7 +2409,7 @@ void Init_Server() // FIXME: Fix backend server
     request->send(401);
   });
   server.on("/Delivery",HTTP_POST,[](AsyncWebServerRequest *request){ //Receive data from Node
-  },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){ //FIXME: Not work as plan
+  },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){ //[ ]: Check Delivery node->node
     request->send(Received_Code);
     Transmit package;
     package.DataFromString(String((char*) data));
@@ -2532,71 +2533,56 @@ void PrepareMess() //Decide what to send
   if(Temp[0] != (int)DHT_Err)
   {
     valueChange_flag = true;
-    json.set(Child_Path[0].c_str(),DHT_Err);
     Temp[0] = (int)DHT_Err;
   }
   if(Temp[1] != (int)LDR_Err )
   {
     valueChange_flag = true;
-    json.set(Child_Path[1].c_str(),LDR_Err);
     Temp[1] = (int)LDR_Err;
   }
   if(Temp[2] != (int)Soil_Err)
   {
     valueChange_flag = true;
-    json.set(Child_Path[2].c_str(),Soil_Err);
     Temp[2] = (int)Soil_Err;
   }
   if(Temp[3] != (int)Tree.Days )
   {
     valueChange_flag = true;
-    json.set(Child_Path[3].c_str(),Tree.Days);
     Temp[3] = (int)Tree.Days;
   }
   if(Temp[4] != (int)Humidity)
   {
     valueChange_flag = true;
-    json.set(Child_Path[4].c_str(),String(Humidity));
     Temp[4] = (int)Humidity;
   }
   if(Temp[5] != (int)Temperature)
   {
     valueChange_flag = true;
-    json.set(Child_Path[5].c_str(),String(Temperature));
     Temp[5] = (int)Temperature;
   }
   if(Temp[6] != (int)lumen)
   {
     valueChange_flag = true;
-    json.set(Child_Path[6].c_str(),lumen);
     Temp[6] = (int)lumen;
   }
   if(Temp[7] != (int)soilMoist)
   {
     valueChange_flag = true;
-    json.set(Child_Path[7].c_str(),soilMoist);
     Temp[7] = (int)soilMoist;
   }
   if(Temp[8] != (int)LightStatus)
   {
     valueChange_flag = true;
-    json.set(Child_Path[8].c_str(),LightStatus);
     Temp[8] = (int)LightStatus;
   }
   if(Temp[9] != (int)PumpsStatus)
   {
     valueChange_flag = true;
-    json.set(Child_Path[9].c_str(),PumpsStatus);
     Temp[9] = (int)PumpsStatus;
   }
   if(Temp[10] != (int)MQTTStatus )
   {
     valueChange_flag = true;
-    messanger += Local_Path[10];
-    messanger += " ";
-    messanger += String(MQTTStatus);
-    messanger += "/";
-    json.set(Child_Path[10].c_str(),MQTTStatus);
     Temp[10] = (int)MQTTStatus;
   }
   

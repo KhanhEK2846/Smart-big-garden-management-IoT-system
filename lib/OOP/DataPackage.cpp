@@ -75,7 +75,7 @@ void DataPackage::DataToJson(FirebaseJson* slave)
     slave->set("Sensor/Light",t_data.substring(t_data.indexOf("ligh ")+5,t_data.indexOf("/mois")));//Bright
     slave->set("Sensor/Solid",t_data.substring(t_data.indexOf("mois ")+5,t_data.indexOf("/LED")));//Mois
     slave->set("Status/Led",t_data.substring(t_data.indexOf("LED ")+4,t_data.indexOf("/Pump")));
-    slave->set("Status/Pump",t_data.substring(t_data.indexOf("Pump ")+5,t_data.indexOf("/MQTT")));
+    slave->set("Status/Pump",t_data.substring(t_data.indexOf("Pump ")+5,t_data.lastIndexOf("/")));
     //slave->toString(t_data,true);
     //Serial.println(t_data);
 }
