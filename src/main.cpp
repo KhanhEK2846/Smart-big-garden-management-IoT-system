@@ -61,9 +61,9 @@ boolean PumpsStatus = false; //Current Status Pump
 //Light
 boolean LightStatus = false; //Current Status Light
 //WIFI Variable
-String sta_ssid = "ESP32_Server"; 
-String sta_password = "123456789" ;
-String ap_ssid = "ESP32_Client";
+String sta_ssid = "Sieu Viet 1"; 
+String sta_password = "02838474844" ;
+String ap_ssid = "ESP32_Server";
 String ap_password = "123456789";
 const long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
 //Manage WiFi
@@ -2179,7 +2179,7 @@ void DataLog(void * pvParameters)
       Root += "/";
       Serial.print("Root path: ");
       Serial.println(Root);
-      Firebase.RTDB.setJSON(&firebaseData, Root, &json_data);
+      Firebase.RTDB.setJSONAsync(&firebaseData, Root, &json_data); //[ ]: Test this
     }
     else
       Firebase.RTDB.updateNodeSilentAsync(&firebaseData, Root, &json_data);
@@ -2407,7 +2407,7 @@ void Init_Server() // FIXME: Fix backend server
     request->send(401);
   });
   server.on("/Delivery",HTTP_POST,[](AsyncWebServerRequest *request){ //Receive data from Node
-  },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){ //[ ]: Check Delivery node->node
+  },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
     request->send(Received_Code);
     Transmit package;
     package.DataFromString(String((char*) data));
@@ -2756,7 +2756,7 @@ void Network()// Netword Part
   ws.cleanupClients();
   PrepareMess();
   SendMess();
-  //DataLogging();
+  DataLogging();
 
   if(sta_flag)
   {
