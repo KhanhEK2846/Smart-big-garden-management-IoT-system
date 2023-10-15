@@ -61,9 +61,9 @@ boolean PumpsStatus = false; //Current Status Pump
 //Light
 boolean LightStatus = false; //Current Status Light
 //WIFI Variable
-String sta_ssid = "Sieu Viet 1"; 
-String sta_password = "02838474844" ;
-String ap_ssid = "ESP32_Server";
+String sta_ssid = "ESP32_Server"; 
+String sta_password = "123456789" ;
+String ap_ssid = "ESP32_Client";
 String ap_password = "123456789";
 const long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
 //Manage WiFi
@@ -95,10 +95,8 @@ int MAX_Clients = 3;
 int Num_Clients = 0;
 //Firebase Variable
 FirebaseData firebaseData;
-String Destinate;
-const int total_key = 17; //Total number of key in DataLogging
 const unsigned long time_delay_send_datalogging = 180000; //3 minutes/Send
-const unsigned long expired_data = 30 * 60 * 60 * 24; //30 days
+
 unsigned long Last_datalogging_time = 0;
 //MQTT Variable
 WiFiClient wifiClient;
@@ -2758,7 +2756,7 @@ void Network()// Netword Part
   ws.cleanupClients();
   PrepareMess();
   SendMess();
-  DataLogging();
+  //DataLogging();
 
   if(sta_flag)
   {
