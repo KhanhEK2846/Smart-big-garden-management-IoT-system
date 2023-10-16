@@ -61,18 +61,13 @@ boolean PumpsStatus = false; //Current Status Pump
 //Light
 boolean LightStatus = false; //Current Status Light
 //WIFI Variable
-String sta_ssid; 
-String sta_password ;
+String sta_ssid = ""; 
+String sta_password = "" ;
 String ap_ssid = "ESP32_Server";
 String ap_password = "123456789";
 const long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
-//Manage WiFi
-typedef struct
-{
-  String SSID;
-  String PASSWORD;
-}WiFiManage;
-WiFiManage Local_WiFi[5];
+String Second_sta_ssid = "";
+String Second_sta_password = "";
 //Ping
 WiFiClient PingClient;
 const unsigned long time_delay_to_ping = 300000; // 5 minutes/ping
@@ -2061,9 +2056,9 @@ void First_Mess_To_Node(String IP)// Init client as node
       String payload = http.getString();
       if(payload.indexOf("SSID: ") >= 0 && payload.indexOf("Password: ") >= 0)//TODO: Save a table of wifi
       {
-        String temp = payload.substring(payload.indexOf("{\n") + 3, payload.lastIndexOf("\n}"));
-        Local_WiFi[0].SSID = temp.substring(temp.indexOf("SSID: ")+6,temp.indexOf("\nPassword:"));
-        Local_WiFi[0].PASSWORD = temp.substring(temp.indexOf("Password: ")+10,temp.length());
+        // String temp = payload.substring(payload.indexOf("{\n") + 3, payload.lastIndexOf("\n}"));
+        // Local_WiFi[0].SSID = temp.substring(temp.indexOf("SSID: ")+6,temp.indexOf("\nPassword:"));
+        // Local_WiFi[0].PASSWORD = temp.substring(temp.indexOf("Password: ")+10,temp.length());
         for(int index = 0; index < MAX_Clients; index++)
         {
           if(NodeIP[index] == "")
@@ -2237,7 +2232,7 @@ void Setup_Server()//Initiate connection to the servers
 }
 void Connect_Network()//Connect to Wifi Router
 {
-  if(sta_ssid == NULL)
+  if(sta_ssid == "")
     return;
   InitWaitGateway = &server.on("/YouAreNode",HTTP_POST,[](AsyncWebServerRequest *request){},NULL,
   [](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
@@ -2718,7 +2713,7 @@ void Light_Up()//Light up choice
 #pragma region Main System
 void Solve_Command()
 {
-  if(xQueueReceive(Queue_Command,&Command,0))
+  if(xQueueReceive(Queue_Command,&Command,0) == pdPASS)
   {
     Serial.print("Command: ");
     Serial.println(Command);
