@@ -61,8 +61,8 @@ boolean PumpsStatus = false; //Current Status Pump
 //Light
 boolean LightStatus = false; //Current Status Light
 //WIFI Variable
-String sta_ssid = "Sieu Viet 1"; 
-String sta_password = "02838474844" ;
+String sta_ssid; 
+String sta_password ;
 String ap_ssid = "ESP32_Server";
 String ap_password = "123456789";
 const long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
@@ -90,13 +90,12 @@ String IPGateway;
 //List Device Connected
 wifi_sta_list_t wifi_sta_list; //List of sta connect include MAC
 tcpip_adapter_sta_list_t adapter_sta_list; // List of Mac and IP
-String NodeIP[3] = {"","",""};
-int MAX_Clients = 3;
+String NodeIP[2] = {"",""};
+int MAX_Clients = 2;
 int Num_Clients = 0;
 //Firebase Variable
 FirebaseData firebaseData;
 const unsigned long time_delay_send_datalogging = 180000; //3 minutes/Send
-
 unsigned long Last_datalogging_time = 0;
 //MQTT Variable
 WiFiClient wifiClient;
@@ -2060,7 +2059,7 @@ void First_Mess_To_Node(String IP)// Init client as node
     if(httpResponseCode == Init_Gateway_Code)
     {
       String payload = http.getString();
-      if(payload.indexOf("SSID: ") >= 0 && payload.indexOf("Password: ") >= 0)
+      if(payload.indexOf("SSID: ") >= 0 && payload.indexOf("Password: ") >= 0)//TODO: Save a table of wifi
       {
         String temp = payload.substring(payload.indexOf("{\n") + 3, payload.lastIndexOf("\n}"));
         Local_WiFi[0].SSID = temp.substring(temp.indexOf("SSID: ")+6,temp.indexOf("\nPassword:"));
@@ -2177,8 +2176,6 @@ void DataLog(void * pvParameters)
       Root += "DataLog/";
       Root += String(time_log);
       Root += "/";
-      Serial.print("Root path: ");
-      Serial.println(Root);
       Firebase.RTDB.setJSONAsync(&firebaseData, Root, &json_data); //[ ]: Test this
     }
     else
