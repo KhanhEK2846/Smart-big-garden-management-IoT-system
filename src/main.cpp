@@ -12,21 +12,7 @@
 #include "Transmit.h"
 #include "CommandCode.h"
 #include "Plant.h"
-//Firebase Server
-#define API_KEY "AIzaSyCs-_UEbcWTW9ANFJ-igucZPCbS7XclUIk"
-#define DATABASE_URL "https://gradentiots-default-rtdb.firebaseio.com/"
-#define Database_Secrets "5jR3TXfdANKSI6xXUgBiJc3wvojE26hqcY3bVNCS"
-//PING Server
-#define PINGInternet "www.google.com"
-//NTP Server
-#define NTPserver1 "pool.ntp.org"
-#define NTPserver2 "asia.pool.ntp.org"
-#define NTPserver3 "oceania.pool.ntp.org"
-//MQTT Server
-#define MQTT_SERVER "test.mosquitto.org"
-#define MQTT_PORT 1883
-#define MQTT_Pump_TOPIC "GardenIoT/Pump"
-#define MQTT_LED_TOPIC "GardenIoT/LED"
+#include "URL.h"
 //Port GPIOs
 #define DHTPIN 1 //Read DHT22 Sensor
 #define LDR 3 //Read Light Sensor
@@ -66,8 +52,8 @@ String sta_password = "" ;
 String ap_ssid = "ESP32_Server";
 String ap_password = "123456789";
 const long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
-String Second_sta_ssid = "";
-String Second_sta_password = "";
+String Contingency_sta_ssid = "";
+String Contingency_sta_password = "";
 //Ping
 WiFiClient PingClient;
 const unsigned long time_delay_to_ping = 300000; // 5 minutes/ping
@@ -120,7 +106,8 @@ Transmit D_Data;
 DataPackage D_Pack;
 Transmit O_Data;
 DataPackage O_Pack;
-String Command;
+String O_Command;
+String D_Command;
 //Task Delivery Data
 TaskHandle_t DeliveryTask = NULL;
 TaskHandle_t DatabaseTask = NULL;
@@ -2218,7 +2205,14 @@ void DataLogging()//Store a record to database
 }
 
 #pragma endregion
+#pragma region 
 #pragma region Network
+void Contingency()
+{
+  if(gateway_node == 0 || Contingency_sta_ssid != "")
+    return;
+  
+}
 void Setup_Server()//Initiate connection to the servers
 {
   if(!first_sta)
@@ -2713,13 +2707,13 @@ void Light_Up()//Light up choice
 #pragma region Main System
 void Solve_Command()
 {
-  if(xQueueReceive(Queue_Command,&Command,0) == pdPASS)
+  if(xQueueReceive(Queue_Command,&D_Command,0) == pdPASS)
   {
     Serial.print("Command: ");
-    Serial.println(Command);
+    Serial.println(D_Command);
   }
 
-  Command.clear();
+  D_Command.clear();
 }
 void Init_Task()
 {
@@ -2749,7 +2743,7 @@ void Network()// Netword Part
   PrepareMess();
   SendMess();
   DataLogging();
-
+  Contingency();
   if(sta_flag)
   {
     WiFi.mode(WIFI_AP_STA);
