@@ -51,9 +51,11 @@ String sta_ssid = "";
 String sta_password = "" ;
 String ap_ssid = "ESP32_Server";
 String ap_password = "123456789";
-const long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
-String Contingency_sta_ssid = "";
+const unsigned long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
+String Contingency_sta_ssid = ""; 
 String Contingency_sta_password = "";
+const unsigned long Contingency_TimeOut = 5000;
+unsigned long Contingency_Time = 0;
 //Ping
 WiFiClient PingClient;
 const unsigned long time_delay_to_ping = 300000; // 5 minutes/ping
@@ -66,8 +68,9 @@ const int daylightOffset_sec = 0; //Daylight saving time
 //IPAdress AP
 IPAddress NMask(255, 255, 255, 0);
 IPAddress ApIP(192,168,1,1);
-String DeliveryIP;
-String IPGateway;
+String DeliveryIP = "";
+String IPGateway = "";
+String IPContingency = "";
 //List Device Connected
 wifi_sta_list_t wifi_sta_list; //List of sta connect include MAC
 tcpip_adapter_sta_list_t adapter_sta_list; // List of Mac and IP
@@ -99,6 +102,7 @@ boolean Ig_Led = false;// Ignore Command_Light
 boolean sta_flag = false;
 boolean first_sta = true;
 boolean valueChange_flag = false;
+boolean contingency_flag = false;
 //Type of server
 int gateway_node = 0; // 0:default 1: gateway 2:node
 //Own & Deliver
@@ -111,6 +115,7 @@ String D_Command;
 //Task Delivery Data
 TaskHandle_t DeliveryTask = NULL;
 TaskHandle_t DatabaseTask = NULL;
+SemaphoreHandle_t xMutex_HTTP = NULL;
 QueueHandle_t Queue_Delivery = NULL;
 QueueHandle_t Queue_Command = NULL;
 QueueHandle_t Queue_Database = NULL;
@@ -2012,6 +2017,7 @@ void Delivery(void * pvParameters) //Task Delivery from node to gateway and reve
   while(true)
   {
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
+    xSemaphoreTake(xMutex_HTTP,portMAX_DELAY);
     HTTPClient http;
     DeliveryIP.clear();
     DeliveryIP = "http://";
@@ -2025,12 +2031,14 @@ void Delivery(void * pvParameters) //Task Delivery from node to gateway and reve
     //FIXME: Need delay
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);
+    xSemaphoreGive(xMutex_HTTP);
   }
 }
 void First_Mess_To_Node(String IP)// Init client as node
 {
   if(Num_Clients < MAX_Clients)
   {
+    xSemaphoreTake(xMutex_HTTP,portMAX_DELAY);
     WiFiClient client;
     HTTPClient http;
     String URL = "http://";
@@ -2059,6 +2067,7 @@ void First_Mess_To_Node(String IP)// Init client as node
 
     }
     http.end();
+    xSemaphoreGive(xMutex_HTTP);
   }
 }
 #pragma endregion
@@ -2209,9 +2218,13 @@ void DataLogging()//Store a record to database
 #pragma region Network
 void Contingency()
 {
-  if(gateway_node == 0 || Contingency_sta_ssid != "")
+  if(gateway_node == 0 || Contingency_sta_ssid != "" || contingency_flag && ((unsigned long)(millis() - Contingency_Time) <= Contingency_TimeOut))
     return;
-  
+  O_Data.SetNextIP(IPGateway);
+  O_Data.SetData(IPGateway,ContingencyOK,"");
+  xQueueSend(Queue_Delivery,&O_Data,portMAX_DELAY);
+  contingency_flag = true;
+  Contingency_Time = millis();
 }
 void Setup_Server()//Initiate connection to the servers
 {
@@ -2705,12 +2718,12 @@ void Light_Up()//Light up choice
 }
 #pragma endregion
 #pragma region Main System
-void Solve_Command()
+void Solve_Command() // TODO: Slove Command
 {
   if(xQueueReceive(Queue_Command,&D_Command,0) == pdPASS)
   {
-    Serial.print("Command: ");
-    Serial.println(D_Command);
+    if(D_Command == "")
+      return;
   }
 
   D_Command.clear();
@@ -2720,6 +2733,7 @@ void Init_Task()
   Queue_Delivery = xQueueCreate(Queue_Length,Queue_item_delivery_size+1);
   Queue_Command = xQueueCreate(Queue_Length,Queue_item_command_size+1);
   Queue_Database = xQueueCreate(Queue_Length,Queue_item_database_size+1);
+  xMutex_HTTP = xSemaphoreCreateMutex();
   xTaskCreate(
     Delivery,
     "Delivery",
