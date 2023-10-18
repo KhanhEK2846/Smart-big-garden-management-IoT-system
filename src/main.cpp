@@ -47,9 +47,9 @@ boolean PumpsStatus = false; //Current Status Pump
 //Light
 boolean LightStatus = false; //Current Status Light
 //WIFI Variable
-String sta_ssid = ""; 
-String sta_password = "" ;
-String ap_ssid = "ESP32_Server";
+String sta_ssid = "ESP32_Server"; 
+String sta_password = "123456789" ;
+String ap_ssid = "ESP32_Client";
 String ap_password = "123456789";
 const unsigned long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
 String Contingency_sta_ssid = ""; 
@@ -2157,20 +2157,41 @@ void DataLog(void * pvParameters)
   while(true)
   {
     xQueueReceive(Queue_Database,&data,portMAX_DELAY); 
-    Root = data.GetID();
-    Root += "/";
     data.DataToJson(&json_data);
     json_data.set("Status/MQTT",String(MQTTStatus));
     if(data.GetMode() == LogData)
     {
       time_log = getTime();
-      Root += "DataLog/";
+      Root = "DataLog/";
+      Root += data.GetID();
+      Root += "/";
       Root += String(time_log);
       Root += "/";
+      Serial.println(Root);
       Firebase.RTDB.setJSONAsync(&firebaseData, Root, &json_data); //[ ]: Test this
     }
     else
+    {
+      Root = "Realtime/";
+      Root += data.GetID();
+      Root += "/";
+      Serial.println(Root);
       Firebase.RTDB.updateNodeSilentAsync(&firebaseData, Root, &json_data);
+    }
+    // Root = data.GetID();
+    // Root += "/";
+    // data.DataToJson(&json_data);
+    // json_data.set("Status/MQTT",String(MQTTStatus));
+    // if(data.GetMode() == LogData)
+    // {
+    //   time_log = getTime();
+    //   Root += "DataLog/";
+    //   Root += String(time_log);
+    //   Root += "/";
+    //   Firebase.RTDB.setJSONAsync(&firebaseData, Root, &json_data);
+    // }
+    // else
+    //   Firebase.RTDB.updateNodeSilentAsync(&firebaseData, Root, &json_data);
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);  
   }
@@ -2184,17 +2205,10 @@ void Setup_RTDB()//Initiate Realtime Database Firebase
 
 void DataLogging()//Store a record to database
 {
-  if(WiFi.status() != WL_CONNECTED || !ping_flag || first_sta)
+  if(WiFi.status() != WL_CONNECTED || ((!ping_flag || first_sta) && (gateway_node != 2)))
     return;
-  if(Firebase.ready() && ((unsigned long)(millis()- Last_datalogging_time)>time_delay_send_datalogging)||Last_datalogging_time == 0){
-    timestamp = getTime();
-    if(timestamp == 0)
-    {
-      Last_datalogging_time = 0;
-      return;
-    }
+  if((Firebase.ready() || gateway_node == 2) && ((unsigned long)(millis()- Last_datalogging_time)>time_delay_send_datalogging)||Last_datalogging_time == 0){
     Last_datalogging_time = millis();
-    String tmp;
     switch (gateway_node)
     {
     case 1: // Gateway -> Database
@@ -2757,7 +2771,7 @@ void Network()// Netword Part
   PrepareMess();
   SendMess();
   DataLogging();
-  Contingency();
+  //Contingency();
   if(sta_flag)
   {
     WiFi.mode(WIFI_AP_STA);
