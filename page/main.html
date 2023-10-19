@@ -167,6 +167,10 @@
       justify-content: space-between;
       width: 100vw;
     }
+    #NameTree{
+      font-size: xx-large;
+      font-weight: bolder;
+    }
     .Error_Sensor{
       display: flex;
     }
@@ -244,6 +248,9 @@
     <button id = "Bound">Bound</button>
     <button id = "Security">Security</button>
     <button id ="LogOut">Log Out</button>
+  </div>
+  <div id="NameTree">
+    UNKNOW
   </div>
 <div class="Sensor_Value">
 <!--Độ ẩm không khí-->
@@ -390,6 +397,7 @@
     }
     function onMessage(event){
       console.log(String(event.data))
+      document.getElementById("NameTree").innerHTML = String(event.data).split("/")[0];
       for(var data of String(event.data).split("/"))
       {
         if(String(data).indexOf("humi") >= 0)
