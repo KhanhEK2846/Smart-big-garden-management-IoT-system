@@ -47,9 +47,9 @@ boolean PumpsStatus = false; //Current Status Pump
 //Light
 boolean LightStatus = false; //Current Status Light
 //WIFI Variable
-String sta_ssid = "ESP32_Server"; 
-String sta_password = "123456789" ;
-String ap_ssid = "ESP32_Client";
+String sta_ssid = "Sieu Viet 1"; 
+String sta_password = "02838474844" ;
+String ap_ssid = "ESP32_Server";
 String ap_password = "123456789";
 const unsigned long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
 String Contingency_sta_ssid = ""; 
@@ -2167,7 +2167,6 @@ void DataLog(void * pvParameters)
       Root += "/";
       Root += String(time_log);
       Root += "/";
-      Serial.println(Root);
       Firebase.RTDB.setJSONAsync(&firebaseData, Root, &json_data); //[ ]: Test this
     }
     else
@@ -2175,23 +2174,8 @@ void DataLog(void * pvParameters)
       Root = "Realtime/";
       Root += data.GetID();
       Root += "/";
-      Serial.println(Root);
       Firebase.RTDB.updateNodeSilentAsync(&firebaseData, Root, &json_data);
     }
-    // Root = data.GetID();
-    // Root += "/";
-    // data.DataToJson(&json_data);
-    // json_data.set("Status/MQTT",String(MQTTStatus));
-    // if(data.GetMode() == LogData)
-    // {
-    //   time_log = getTime();
-    //   Root += "DataLog/";
-    //   Root += String(time_log);
-    //   Root += "/";
-    //   Firebase.RTDB.setJSONAsync(&firebaseData, Root, &json_data);
-    // }
-    // else
-    //   Firebase.RTDB.updateNodeSilentAsync(&firebaseData, Root, &json_data);
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);  
   }
@@ -2424,7 +2408,7 @@ void Init_Server() // FIXME: Fix backend server
     request->send(Received_Code);
     Transmit package;
     package.DataFromString(String((char*) data));
-    Serial.println(package.GetData().toString());
+    //Serial.println(package.GetData().toString());
     if(gateway_node == 0)
       return;  
     if(package.GetData().GetID() == ID || package.GetData().GetMode() == Infection ) //ReceiveIP & Infection mode 
