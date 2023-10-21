@@ -1856,12 +1856,11 @@ void connect_to_broker() // Connect to the broker
     }
   }
 }
-void callback(char* topic, byte *payload, unsigned int length)// Receive Messange From Broker
+void callback(char* topic, byte *payload, unsigned int length)// Receive Messange From Broker //TODO: Upgrade MQTT
 {
-    char status[20];
-    for(i = 0; i<length; i++){
-        status[i] = payload[i];
-    }
+    char status[sizeof(payload)+1];
+    memcpy(status,payload,sizeof(payload));
+    status[sizeof(payload)] = '\0';
     if(String(topic) == MQTT_Pump_TOPIC){ 
         if(Ig_Pump)
           Ig_Pump = false;
@@ -2023,8 +2022,10 @@ void Delivery(void * pvParameters) //Task Delivery from node to gateway and reve
     DeliveryIP = "http://";
     DeliveryIP += data.GetNextIP();
     DeliveryIP += "/Delivery";
-    http.begin(node,DeliveryIP);
-    int httpResponseCode = http.POST(data.GetData().toString());
+    if(http.begin(node,DeliveryIP))
+      int httpResponseCode = http.POST(data.GetData().toString());
+    else
+    {}
     http.end();
     // Serial.println(DeliveryIP);
     // Serial.println(data.GetData().toString());
@@ -2044,27 +2045,29 @@ void First_Mess_To_Node(String IP)// Init client as node
     String URL = "http://";
     URL += IP;
     URL += "/YouAreNode";
-    http.begin(client,URL);
-    int httpResponseCode = http.POST(Init_Node_Code);
-    if(httpResponseCode == Init_Gateway_Code)
+    if(http.begin(client,URL))
     {
-      String payload = http.getString();
-      if(payload.indexOf("SSID: ") >= 0 && payload.indexOf("Password: ") >= 0)//TODO: Save a table of wifi
+      int httpResponseCode = http.POST(Init_Node_Code);
+      if(httpResponseCode == Init_Gateway_Code)
       {
-        // String temp = payload.substring(payload.indexOf("{\n") + 3, payload.lastIndexOf("\n}"));
-        // Local_WiFi[0].SSID = temp.substring(temp.indexOf("SSID: ")+6,temp.indexOf("\nPassword:"));
-        // Local_WiFi[0].PASSWORD = temp.substring(temp.indexOf("Password: ")+10,temp.length());
-        for(int index = 0; index < MAX_Clients; index++)
+        String payload = http.getString();
+        if(payload.indexOf("SSID: ") >= 0 && payload.indexOf("Password: ") >= 0)//TODO: Save a table of wifi
         {
-          if(NodeIP[index] == "")
+          // String temp = payload.substring(payload.indexOf("{\n") + 3, payload.lastIndexOf("\n}"));
+          // Local_WiFi[0].SSID = temp.substring(temp.indexOf("SSID: ")+6,temp.indexOf("\nPassword:"));
+          // Local_WiFi[0].PASSWORD = temp.substring(temp.indexOf("Password: ")+10,temp.length());
+          for(int index = 0; index < MAX_Clients; index++)
           {
-            NodeIP[index] = IP;
-            ++Num_Clients;
-            break;
+            if(NodeIP[index] == "")
+            {
+              NodeIP[index] = IP;
+              ++Num_Clients;
+              break;
+            }
           }
         }
-      }
 
+      }
     }
     http.end();
     xSemaphoreGive(xMutex_HTTP);
@@ -2167,7 +2170,7 @@ void DataLog(void * pvParameters)
       Root += "/";
       Root += String(time_log);
       Root += "/";
-      Firebase.RTDB.setJSONAsync(&firebaseData, Root, &json_data); //[ ]: Test this
+      Firebase.RTDB.setJSONAsync(&firebaseData, Root, &json_data);
     }
     else
     {
@@ -2212,7 +2215,7 @@ void DataLogging()//Store a record to database
 }
 
 #pragma endregion
-#pragma region 
+
 #pragma region Network
 void Contingency()
 {
