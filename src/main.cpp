@@ -47,9 +47,9 @@ boolean PumpsStatus = false; //Current Status Pump
 //Light
 boolean LightStatus = false; //Current Status Light
 //WIFI Variable
-String sta_ssid = "Sieu Viet 1"; 
-String sta_password = "02838474844" ;
-String ap_ssid = "ESP32_Server";
+String sta_ssid = "ESP32_Server"; 
+String sta_password = "123456789" ;
+String ap_ssid = "ESP32_Client";
 String ap_password = "123456789";
 const unsigned long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
 String Contingency_sta_ssid = ""; 
@@ -2109,11 +2109,17 @@ void Client_Disconnected(WiFiEvent_t event, WiFiEventInfo_t info)
   List_Connected_Update();
   Serial.println("Client disconnect");
 }
+void Server_Disconnected(WiFiEvent_t event, WiFiEventInfo_t info)
+{
+  Serial.print("Lost WiFi: ");
+  Serial.println(info.wifi_sta_disconnected.reason);
+}
 void Init_WiFi_Event()
 {
   WiFi.onEvent(Client_Connected,WiFiEvent_t::ARDUINO_EVENT_WIFI_AP_STACONNECTED);
   WiFi.onEvent(Client_IP, WiFiEvent_t::ARDUINO_EVENT_WIFI_AP_STAIPASSIGNED);
   WiFi.onEvent(Client_Disconnected,WiFiEvent_t::ARDUINO_EVENT_WIFI_AP_STADISCONNECTED);
+  WiFi.onEvent(Server_Disconnected,WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
 }
 #pragma endregion Device Connected Manager
 #pragma region Hypertext Transfer Protocol
@@ -2133,12 +2139,14 @@ void Delivery(void * pvParameters) //Task Delivery from node to gateway and reve
     HTTPClient http;
     DeliveryIP.clear();
     IP = IsKnown(data.GetNextIP());
-    if(IP = -1)
+    Serial.print("IP: ");
+    Serial.println(IP);
+    if(IP == -1)
       continue;
     DeliveryIP = "http://";
-    DeliveryIP += IP;
+    DeliveryIP += KnownIP[IP];
     DeliveryIP += "/Delivery";
-    
+    Serial.println(DeliveryIP);
     if(http.begin(node,DeliveryIP))
       int httpResponseCode = http.POST(data.GetData().toString());
     else
