@@ -2113,6 +2113,10 @@ void Server_Disconnected(WiFiEvent_t event, WiFiEventInfo_t info)
 {
   Serial.print("Lost WiFi: ");
   Serial.println(info.wifi_sta_disconnected.reason);
+  if(info.wifi_sta_disconnected.reason == wifi_err_reason_t::WIFI_REASON_BEACON_TIMEOUT) //Handle AP Server loss
+  {
+    WiFi.disconnect(true,true);
+  }
 }
 void Init_WiFi_Event()
 {
@@ -2139,14 +2143,11 @@ void Delivery(void * pvParameters) //Task Delivery from node to gateway and reve
     HTTPClient http;
     DeliveryIP.clear();
     IP = IsKnown(data.GetNextIP());
-    Serial.print("IP: ");
-    Serial.println(IP);
     if(IP == -1)
       continue;
     DeliveryIP = "http://";
     DeliveryIP += KnownIP[IP];
     DeliveryIP += "/Delivery";
-    Serial.println(DeliveryIP);
     if(http.begin(node,DeliveryIP))
       int httpResponseCode = http.POST(data.GetData().toString());
     else
@@ -2170,9 +2171,7 @@ void Delivery(void * pvParameters) //Task Delivery from node to gateway and reve
       }
     }
     http.end();
-    // Serial.println(DeliveryIP);
-    // Serial.println(data.GetData().toString());
-    //FIXME: Need delay
+    delay(10);
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);
     xSemaphoreGive(xMutex_HTTP);
