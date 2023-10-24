@@ -69,12 +69,11 @@ const int daylightOffset_sec = 0; //Daylight saving time
 IPAddress NMask(255, 255, 255, 0);
 IPAddress ApIP(192,168,1,1);
 String DeliveryIP = "";
-String IPGateway = "";
-String IPContingency = "";
 //List Device Connected
 wifi_sta_list_t wifi_sta_list; //List of sta connect include MAC
 tcpip_adapter_sta_list_t adapter_sta_list; // List of Mac and IP
-String NodeIP[2] = {"",""};
+String KnownIP[4] = {"","","",""};//[0] is gateway
+int FailIP[4] = {0,0,0,0}; //Amount of delivery fail
 int MAX_Clients = 2;
 int Num_Clients = 0;
 //Firebase Variable
@@ -2004,35 +2003,57 @@ void initWebSocket() //Initialize the WebSocket protocol
   server.addHandler(&ws);
 }
 #pragma endregion
-#pragma region Hypertext Transfer Protocol
-void Delivery(void * pvParameters) //Task Delivery from node to gateway and reverse
+#pragma region Device Connected Manager
+void List_Connected_Update() //Update the list of device connected to ap wifi
 {
-  Serial.println("Delivery Task");
-  Transmit data;
-  UBaseType_t uxHighWaterMark;
-  uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-  Serial.println(uxHighWaterMark);
-  WiFiClient node;
-  while(true)
+  memset(&wifi_sta_list, 0, sizeof(wifi_sta_list));
+  memset(&adapter_sta_list, 0, sizeof(adapter_sta_list));
+  esp_wifi_ap_get_sta_list(&wifi_sta_list); 
+  tcpip_adapter_get_sta_list(&wifi_sta_list, &adapter_sta_list);//Get IP information for stations connected to the Wi-Fi AP interface.
+}
+String MACAddressCovert(uint8_t* mac)// Convert unit8_t to String MAC
+{
+    char macStr[18] = { 0 };
+    sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0],mac[1], mac[2],mac[3],mac[4],mac[5]);
+    return String(macStr);
+}
+void StringtoMACAddress(const char* macString, uint8_t* mac)
+{
+  sscanf(macString, "%02x:%02x:%02x:%02x:%02x:%02x", &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]);
+}
+int IsKnown(String IP)
+{
+  for(int i = 0; i<4;i++)
   {
-    xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
-    xSemaphoreTake(xMutex_HTTP,portMAX_DELAY);
-    HTTPClient http;
-    DeliveryIP.clear();
-    DeliveryIP = "http://";
-    DeliveryIP += data.GetNextIP();
-    DeliveryIP += "/Delivery";
-    if(http.begin(node,DeliveryIP))
-      int httpResponseCode = http.POST(data.GetData().toString());
-    else
-    {}
-    http.end();
-    // Serial.println(DeliveryIP);
-    // Serial.println(data.GetData().toString());
-    //FIXME: Need delay
-    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-    Serial.println(uxHighWaterMark);
-    xSemaphoreGive(xMutex_HTTP);
+    if(KnownIP[i] == IP)
+      return i;
+  }
+  return -1;
+}
+void RefreshNodeIP(String locate = "0")
+{
+  if(locate == "0")
+  {
+    KnownIP[1] = "";
+    KnownIP[2] = "";
+    KnownIP[3] = "";
+    return;
+  }
+  for(int index = 0;index<adapter_sta_list.num; index++)//Find where is mac 
+  {
+    if(locate == MACAddressCovert(adapter_sta_list.sta[index].mac)) 
+    {
+      for (int index1 = 1; index1 <MAX_Clients+1;index1++) //Find where is IP relative that MAC
+      {
+        if(KnownIP[index1] == IPAddress(adapter_sta_list.sta[index].ip.addr).toString())
+        {
+          KnownIP[index1] = "";
+          --Num_Clients;
+          break;
+        }
+      }
+      break;
+    }
   }
 }
 void First_Mess_To_Node(String IP)// Init client as node
@@ -2056,11 +2077,11 @@ void First_Mess_To_Node(String IP)// Init client as node
           // String temp = payload.substring(payload.indexOf("{\n") + 3, payload.lastIndexOf("\n}"));
           // Local_WiFi[0].SSID = temp.substring(temp.indexOf("SSID: ")+6,temp.indexOf("\nPassword:"));
           // Local_WiFi[0].PASSWORD = temp.substring(temp.indexOf("Password: ")+10,temp.length());
-          for(int index = 0; index < MAX_Clients; index++)
+          for(int index = 1; index < MAX_Clients+1; index++)
           {
-            if(NodeIP[index] == "")
+            if(KnownIP[index] == "")
             {
-              NodeIP[index] = IP;
+              KnownIP[index] = IP;
               ++Num_Clients;
               break;
             }
@@ -2073,57 +2094,6 @@ void First_Mess_To_Node(String IP)// Init client as node
     xSemaphoreGive(xMutex_HTTP);
   }
 }
-#pragma endregion
-#pragma region Device Connected Manager
-void List_Connected_Update() //Update the list of device connected to ap wifi
-{
-  memset(&wifi_sta_list, 0, sizeof(wifi_sta_list));
-  memset(&adapter_sta_list, 0, sizeof(adapter_sta_list));
-  esp_wifi_ap_get_sta_list(&wifi_sta_list); 
-  tcpip_adapter_get_sta_list(&wifi_sta_list, &adapter_sta_list);//Get IP information for stations connected to the Wi-Fi AP interface.
-}
-String MACAddressCovert(uint8_t* mac)// Convert unit8_t to String MAC
-{
-    char macStr[18] = { 0 };
-    sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0],mac[1], mac[2],mac[3],mac[4],mac[5]);
-    return String(macStr);
-}
-int IsNode(String IP)
-{
-  for(int i = 0; i<MAX_Clients;i++)
-  {
-    if(NodeIP[i] == IP)
-      return i;
-  }
-  return -1;
-}
-void RefreshNodeIP(String locate = "0")
-{
-  if(locate == "0")
-  {
-    NodeIP[0] = "";
-    NodeIP[1] = "";
-    NodeIP[2] = "";
-    return;
-  }
-  for(int index = 0;index<adapter_sta_list.num; index++)//Find where is mac 
-  {
-    if(locate == MACAddressCovert(adapter_sta_list.sta[index].mac)) 
-    {
-      for (int index1 =0; index1 <MAX_Clients;index1++) //Find where is IP relative that MAC
-      {
-        if(NodeIP[index1] == IPAddress(adapter_sta_list.sta[index].ip.addr).toString())
-        {
-          NodeIP[index1] = "";
-          --Num_Clients;
-          break;
-        }
-      }
-      break;
-    }
-  }
-}
-
 void Client_Connected(WiFiEvent_t event, WiFiEventInfo_t info)
 {
   Serial.println("Client connect");
@@ -2146,6 +2116,61 @@ void Init_WiFi_Event()
   WiFi.onEvent(Client_Disconnected,WiFiEvent_t::ARDUINO_EVENT_WIFI_AP_STADISCONNECTED);
 }
 #pragma endregion Device Connected Manager
+#pragma region Hypertext Transfer Protocol
+void Delivery(void * pvParameters) //Task Delivery from node to gateway and reverse
+{
+  Serial.println("Delivery Task");
+  Transmit data;
+  UBaseType_t uxHighWaterMark;
+  uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+  Serial.println(uxHighWaterMark);
+  WiFiClient node;
+  int IP = 0;
+  while(true)
+  {
+    xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
+    xSemaphoreTake(xMutex_HTTP,portMAX_DELAY);
+    HTTPClient http;
+    DeliveryIP.clear();
+    IP = IsKnown(data.GetNextIP());
+    if(IP = -1)
+      continue;
+    DeliveryIP = "http://";
+    DeliveryIP += IP;
+    DeliveryIP += "/Delivery";
+    
+    if(http.begin(node,DeliveryIP))
+      int httpResponseCode = http.POST(data.GetData().toString());
+    else
+    {
+      if(FailIP[IP] < 3)
+        FailIP[IP] += 1; 
+      else
+      {
+        if(IP == 0)
+        {
+          WiFi.disconnect(true,true);
+          gateway_node = 0;
+          KnownIP[0] = "";
+          continue;
+        }
+        uint8_t t_mac[6];
+        uint16_t t_aid;
+        StringtoMACAddress(KnownIP[IP].c_str(),t_mac);
+        esp_wifi_ap_get_sta_aid(t_mac,&t_aid);
+        esp_wifi_deauth_sta(t_aid);
+      }
+    }
+    http.end();
+    // Serial.println(DeliveryIP);
+    // Serial.println(data.GetData().toString());
+    //FIXME: Need delay
+    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+    Serial.println(uxHighWaterMark);
+    xSemaphoreGive(xMutex_HTTP);
+  }
+}
+#pragma endregion
 #pragma region Cloud Database
 void DataLog(void * pvParameters)
 {
@@ -2204,7 +2229,7 @@ void DataLogging()//Store a record to database
       xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(100));
       break;
     case 2: //Node -> Gateway
-      O_Data.SetNextIP(IPGateway);
+      O_Data.SetNextIP(KnownIP[0]);
       O_Data.SetData(ID,messanger,LogData);
       xQueueSend(Queue_Delivery,&O_Data,pdMS_TO_TICKS(100));
       break;
@@ -2217,16 +2242,6 @@ void DataLogging()//Store a record to database
 #pragma endregion
 
 #pragma region Network
-void Contingency()
-{
-  if(gateway_node == 0 || Contingency_sta_ssid != "" || contingency_flag && ((unsigned long)(millis() - Contingency_Time) <= Contingency_TimeOut))
-    return;
-  O_Data.SetNextIP(IPGateway);
-  O_Data.SetData(IPGateway,ContingencyOK,"");
-  xQueueSend(Queue_Delivery,&O_Data,portMAX_DELAY);
-  contingency_flag = true;
-  Contingency_Time = millis();
-}
 void Setup_Server()//Initiate connection to the servers
 {
   if(!first_sta)
@@ -2253,7 +2268,7 @@ void Connect_Network()//Connect to Wifi Router
       dataWiFi += ap_password;
       dataWiFi += "\n}";
       request->send(Init_Gateway_Code,"text/plain",dataWiFi);
-      IPGateway = request->client()->remoteIP().toString();
+      KnownIP[0] = request->client()->remoteIP().toString();
       esp_wifi_deauth_sta(0);
       if(WiFi.localIP()[3] == 254)
         ApIP[3] = 1;
@@ -2423,27 +2438,14 @@ void Init_Server() // FIXME: Fix backend server
     }
     if (package.GetData().GetMode() == Broadcast || package.GetData().GetMode() == Infection) //Broadcast & Infection mode
     {
-      if(IPGateway == request->client()->remoteIP().toString())
-      {
-        for(int i =0; i< MAX_Clients; i++)
-        {
-          if(NodeIP[i] == "")
-            continue;
-          package.SetNextIP(NodeIP[i]);
-          xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
-        }
-        return;
-      }
-      int t_flag = IsNode(request->client()->remoteIP().toString());
+      int t_flag = IsKnown(request->client()->remoteIP().toString());
       if(t_flag != -1)
       {
-        package.SetNextIP(IPGateway);
-        xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
-        for(int i =0; i< MAX_Clients ;i++)
+        for(int i =0; i< 4 ;i++)
         {
-          if(i == t_flag)
+          if(i == t_flag || KnownIP[i] == "")
             continue;
-          package.SetNextIP(NodeIP[i]);
+          package.SetNextIP(KnownIP[i]);
           xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
         }
       }
@@ -2463,7 +2465,7 @@ void Init_Server() // FIXME: Fix backend server
       }
       if(gateway_node == 2)//If it's a node -> Delivery to Gateway
       {
-        package.SetNextIP(IPGateway);
+        package.SetNextIP(KnownIP[0]);
         xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
         return;
       }
@@ -2595,7 +2597,7 @@ void SendMess() //Send mess prepared to who
     O_Data.SetData(ID,messanger,Default);
     if(gateway_node == 2) //Send to Gateway only if It's a node
     {
-      O_Data.SetNextIP(IPGateway);
+      O_Data.SetNextIP(KnownIP[0]);
       xQueueSend(Queue_Delivery,&O_Data,pdMS_TO_TICKS(100));
     }
     if(WiFi.status() == WL_CONNECTED && ping_flag && !first_sta && Firebase.ready()) //Send to database
@@ -2758,7 +2760,6 @@ void Network()// Netword Part
   PrepareMess();
   SendMess();
   DataLogging();
-  //Contingency();
   if(sta_flag)
   {
     WiFi.mode(WIFI_AP_STA);
