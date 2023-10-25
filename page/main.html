@@ -398,7 +398,7 @@
     }
     function onMessage(event){
       console.log(String(event.data))
-      document.getElementById("NameTree").innerHTML = String(event.data).split("/")[0];
+      document.getElementById("NameTree").innerHTML = String(event.data).split("/")[1];
       for(var data of String(event.data).split("/"))
       {
         if(String(data).indexOf("humi") >= 0)
