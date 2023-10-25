@@ -54,8 +54,7 @@ String ap_password = "123456789";
 const unsigned long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
 String Contingency_sta_ssid = ""; 
 String Contingency_sta_password = "";
-const unsigned long Contingency_TimeOut = 5000;
-unsigned long Contingency_Time = 0;
+int disconnected_wifi_count = -1;
 //Ping
 WiFiClient PingClient;
 const unsigned long time_delay_to_ping = 300000; // 5 minutes/ping
@@ -72,7 +71,7 @@ String DeliveryIP = "";
 //List Device Connected
 wifi_sta_list_t wifi_sta_list; //List of sta connect include MAC
 tcpip_adapter_sta_list_t adapter_sta_list; // List of Mac and IP
-String KnownIP[4] = {"","","",""};//[0] is gateway
+String KnownIP[4] = {"","","",""};//[0] is gateway, [1-2] is original node, [3] is reserved node 
 int FailIP[4] = {0,0,0,0}; //Amount of delivery fail
 int MAX_Clients = 2;
 int Num_Clients = 0;
@@ -2115,7 +2114,15 @@ void Server_Disconnected(WiFiEvent_t event, WiFiEventInfo_t info)
   Serial.println(info.wifi_sta_disconnected.reason);
   if(info.wifi_sta_disconnected.reason == wifi_err_reason_t::WIFI_REASON_BEACON_TIMEOUT) //Handle AP Server loss
   {
-    WiFi.disconnect(true,true);
+    disconnected_wifi_count = 0;
+  }
+  if(info.wifi_sta_disconnected.reason == wifi_err_reason_t::WIFI_REASON_NO_AP_FOUND) //Disconnect after 10 times reconnect
+  {
+    if(disconnected_wifi_count < 0) //ignore Wrong SSID
+      return;
+    disconnected_wifi_count += 1;
+    if(disconnected_wifi_count > 9)
+      WiFi.disconnect(true,true);
   }
 }
 void Init_WiFi_Event()
