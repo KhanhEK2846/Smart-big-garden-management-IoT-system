@@ -307,6 +307,10 @@ const char main_html[] PROGMEM = R"rawliteral(
       justify-content: space-between;
       width: 100vw;
     }
+    #NameTree{
+      font-size: xx-large;
+      font-weight: bolder;
+    }
     .Error_Sensor{
       display: flex;
     }
@@ -384,6 +388,9 @@ const char main_html[] PROGMEM = R"rawliteral(
     <button id = "Bound">Bound</button>
     <button id = "Security">Security</button>
     <button id ="LogOut">Log Out</button>
+  </div>
+  <div id="NameTree">
+    UNKNOW
   </div>
 <div class="Sensor_Value">
 <!--Độ ẩm không khí-->
@@ -525,11 +532,13 @@ const char main_html[] PROGMEM = R"rawliteral(
     }
     function onClose(event) {
       console.log('Connection closed');
-      document,getElementById('status').style.backgroundColor = "gray";
+      document.getElementById('status').style.backgroundColor = "gray";
+      TheEnd()
       setTimeout(initWebSocket, 2000);
     }
     function onMessage(event){
       console.log(String(event.data))
+      document.getElementById("NameTree").innerHTML = String(event.data).split("/")[0];
       for(var data of String(event.data).split("/"))
       {
         if(String(data).indexOf("humi") >= 0)
@@ -654,14 +663,21 @@ const char main_html[] PROGMEM = R"rawliteral(
       var temp = Math.floor(504 * (1 - (value/100)));
       document.getElementById(name2).style.strokeDashoffset = temp;
     }
+    function TheEnd()
+    {
+      document.getElementById("overlay").removeEventListener("click",()=>{
+        document.getElementById("Wifi").style.display = "none";
+        document.getElementById("overlay").classList.add("hide");
+      })
+      document.getElementById("Wifi").style.display = "flex";
+      document.getElementById("overlay").classList.remove("hide");
+      document.getElementById("Wifi").innerHTML = "The end";
+    }
   </script>
 </body>
 </html>
 )rawliteral";
 #pragma endregion main_default_html
-#pragma region main_root
-
-#pragma endregion main_root
 #pragma region 404_Error
 const char Error_html[] PROGMEM = R"rawliteral(
   <!DOCTYPE html>

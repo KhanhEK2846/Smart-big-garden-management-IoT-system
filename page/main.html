@@ -392,7 +392,8 @@
     }
     function onClose(event) {
       console.log('Connection closed');
-      document,getElementById('status').style.backgroundColor = "gray";
+      document.getElementById('status').style.backgroundColor = "gray";
+      TheEnd()
       setTimeout(initWebSocket, 2000);
     }
     function onMessage(event){
@@ -521,6 +522,16 @@
       document.getElementById(name1).innerHTML = value;
       var temp = Math.floor(504 * (1 - (value/100)));
       document.getElementById(name2).style.strokeDashoffset = temp;
+    }
+    function TheEnd()
+    {
+      document.getElementById("overlay").removeEventListener("click",()=>{
+        document.getElementById("Wifi").style.display = "none";
+        document.getElementById("overlay").classList.add("hide");
+      })
+      document.getElementById("Wifi").style.display = "flex";
+      document.getElementById("overlay").classList.remove("hide");
+      document.getElementById("Wifi").innerHTML = "The end";
     }
   </script>
 </body>
