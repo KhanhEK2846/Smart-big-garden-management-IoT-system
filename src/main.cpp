@@ -2802,20 +2802,19 @@ void setup()
 {
   Serial.begin(9600);
   Serial.println();
-  WiFi.mode(WIFI_AP_STA);
-  WiFi.softAP(ap_ssid.c_str(), ap_password.c_str());
+  Init_Task();
   initWebSocket();
-  Init_Server();
-  Init_WiFi_Event();
-  Connect_Network();
   pinMode(Pumps,OUTPUT);
   pinMode(Light,OUTPUT);
   digitalWrite(Pumps,LOW);
   digitalWrite(Light,LOW);
   dht.begin();
   Time_Passed = millis();
-  Init_Task();
-
+  WiFi.mode(WIFI_AP_STA);
+  Init_Server();
+  Init_WiFi_Event();
+  WiFi.softAP(ap_ssid.c_str(), ap_password.c_str());
+  Connect_Network();
 }
 void loop() 
 {
