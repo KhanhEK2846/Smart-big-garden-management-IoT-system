@@ -4,6 +4,7 @@
 #define Init_Gateway_Code 202
 #define No_Content_Code 204
 #define Bad_Request_Code 400
+#define Unauthorized_Code 401
 #define Forbidden_Code 403
 #define Not_Found_Code 404
 #define Gone_Code 410

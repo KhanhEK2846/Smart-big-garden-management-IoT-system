@@ -771,7 +771,7 @@ void Init_Server() // FIXME: Fix backend server
     return request->send_P(Received_Code,"text/plain",MessLimit.c_str());
   });
   server.on("/logout",HTTP_GET,[](AsyncWebServerRequest *request){
-    request->send(401);
+    request->send(Unauthorized_Code);
   });
   server.on("/Delivery",HTTP_POST,[](AsyncWebServerRequest *request){ //Receive data from Node
   },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
