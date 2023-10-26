@@ -1062,7 +1062,7 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
       body{
         height: 100vh;
         width: 100vw;
-        background-image: linear-gradient(to right, #f71717, #ff5a00, #ff8400, #ffa900, #ffcc00, #f1dc0f, #e1eb26, #cefa3f, #abf75a, #88f372, #66ee88, #41e79b);
+        background-image: linear-gradient(to right top, #41ff53, #00eeb6, #00d5ff, #00b3ff, #0088ff, #076fff, #474fff, #7500f5, #9500ee, #ad0ce7, #c11de1, #d22ddb);
         background-size: 300% 100%;
         background-position: center;
         overflow: hidden;
@@ -1354,6 +1354,7 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
   </script>
 </body>
 </html>
+
 )rawliteral";
 #pragma endregion Sercurity_html
 #pragma region Parameters_html //TODO: make script for Apply
