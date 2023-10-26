@@ -125,8 +125,8 @@ const unsigned long long Queue_item_database_size = sizeof(DataPackage);
 //Sercurity
 String http_username = "admin";
 String http_password = "admin";;
-String aut_username = "admin";
-String aut_password = "admin";
+String auth_username = "owner";
+String auth_password = "owner";
 boolean sercurity_backend_key = false;
 boolean tolerance_backend_key = false;
 //ID
@@ -667,12 +667,9 @@ void Init_Server() // FIXME: Fix backend server
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request)) //Only for client from AP Mode
       return request->redirect("/NothingHereForYou");
-    if(!request->authenticate(http_username.c_str(), http_password.c_str()))
+    if(!request->authenticate(http_username.c_str(), http_password.c_str()) && !request->authenticate(auth_username.c_str(),auth_password.c_str()))
       return request->requestAuthentication();
-    //if(gateway_node != 2)
       request->send_P(Received_Code, "text/html", main_html);
-    //else
-      //request->send_P(200, "text/plain", "Coming soon");
   });//Home Page Server
   server.on("/Test",HTTP_GET,[](AsyncWebServerRequest *request){
     O_Data.SetData(ID,messanger,Default);
@@ -681,16 +678,16 @@ void Init_Server() // FIXME: Fix backend server
   server.on("/Sercurity",HTTP_GET,[](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request) ) //Only for client from AP Mode
       return request->redirect("/NothingHereForYou");
-    if(!request->authenticate(http_username.c_str(), http_password.c_str()))
-      return request->requestAuthentication();
+    if(!request->authenticate(auth_username.c_str(), auth_password.c_str()))
+      return request->send_P(Forbidden_Code,"text/html",Forbidden_html);
     sercurity_backend_key = true;
     request->send_P(Received_Code,"text/html",Sercurity_html);
   });
   server.on("/BackEndSercure",HTTP_POST,[](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request)) //Only for client from AP Mode
       return request->redirect("/NothingHereForYou");
-    if(!request->authenticate(http_username.c_str(), http_password.c_str()))
-      return request->requestAuthentication();
+    if(!request->authenticate(auth_username.c_str(), auth_password.c_str()))
+      return request->send_P(Forbidden_Code,"text/html",Forbidden_html);
     if(!sercurity_backend_key)
       return request->redirect("/WrongDoor");
     request->send(Continue_Code);
@@ -710,8 +707,8 @@ void Init_Server() // FIXME: Fix backend server
     }
     if(String((char*) data).indexOf("Authorization: ")>=0)
     {
-      aut_username = TmpID;
-      aut_password = TmpPass;
+      auth_username = TmpID;
+      auth_password = TmpPass;
       request->send(No_Content_Code);
     }
     else if(String((char*) data).indexOf("AP: ")>=0)
@@ -729,16 +726,16 @@ void Init_Server() // FIXME: Fix backend server
   server.on("/Tolerance",HTTP_GET,[](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request)) //Only for client from AP Mode
       return request->redirect("/NothingHereForYou");
-    if(!request->authenticate(http_username.c_str(), http_password.c_str()))
-      return request->requestAuthentication();
+    if(!request->authenticate(auth_username.c_str(), auth_password.c_str()))
+      return request->send_P(Forbidden_Code,"text/html",Forbidden_html);
     tolerance_backend_key = true;
     request->send_P(Received_Code,"text/html",Tolerance_html);
   });
   server.on("/BackEndTolerance",HTTP_POST,[](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request)) //Only for client from AP Mode
       return request->redirect("/NothingHereForYou");
-    if(!request->authenticate(http_username.c_str(), http_password.c_str()))
-      return request->requestAuthentication();
+    if(!request->authenticate(auth_username.c_str(), auth_password.c_str()))
+      return request->send_P(Forbidden_Code,"text/html",Forbidden_html);
     if(!sercurity_backend_key)
       return request->redirect("/WrongDoor");
     request->send(Continue_Code);
@@ -755,8 +752,8 @@ void Init_Server() // FIXME: Fix backend server
     return request->send(Received_Code);
   });
   server.on("/BackEndTolerance",HTTP_GET,[](AsyncWebServerRequest *request){
-    if(!request->authenticate(http_username.c_str(), http_password.c_str()))
-      return request->requestAuthentication();
+    if(!request->authenticate(auth_username.c_str(), auth_password.c_str()))
+      return request->send_P(Forbidden_Code,"text/html",Forbidden_html);
     MessLimit = String(Tree.Danger_Temp);
     MessLimit += "/";
     MessLimit += String(Tree.Save_Temp);
