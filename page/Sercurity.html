@@ -286,13 +286,14 @@
         if (this.readyState == 4 && this.status == 511)
             noti = "Connect again"
         };
+      var DataSend = "{";
       if (state =="Authentication")
-        var DataSend ="Authentication: ";
+        DataSend +="Authentication: ";
       if(state == "Authorization")
-        var DataSend ="Authorization: ";
+        DataSend +="Authorization: ";
       if (state == "Configuring")
-        var DataSend ="AP: ";
-      DataSend += document.getElementById("id").value + "/"+ document.getElementById("password").value + "/";
+        DataSend +="AP: ";
+      DataSend += document.getElementById("id").value + "/"+ document.getElementById("password").value + "}";
       console.log(DataSend)
       Delete();
       xhr.open("POST", "/BackEndSercure", false);

@@ -48,8 +48,8 @@ boolean PumpsStatus = false; //Current Status Pump
 //Light
 boolean LightStatus = false; //Current Status Light
 //WIFI Variable
-String sta_ssid = "ESP32_Server"; 
-String sta_password = "123456789" ;
+String sta_ssid = ""; 
+String sta_password = "" ;
 String ap_ssid = "ESP32_Client";
 String ap_password = "123456789";
 const unsigned long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
@@ -84,6 +84,7 @@ unsigned long Last_datalogging_time = 0;
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
 boolean MQTTStatus = false; //Status Connect Broker
+String MQTT_Messange = "";
 //Local Server Variable
 AsyncWebServer server(80); //Create a web server listening on port 80
 AsyncWebSocket ws("/ws");//Create a path for web socket server
@@ -117,10 +118,12 @@ TaskHandle_t DatabaseTask = NULL;
 SemaphoreHandle_t xMutex_HTTP = NULL;
 QueueHandle_t Queue_Delivery = NULL;
 QueueHandle_t Queue_Command = NULL;
+QueueHandle_t Queue_D_Command = NULL;
 QueueHandle_t Queue_Database = NULL;
 const int Queue_Length = 10;
 const unsigned long long Queue_item_delivery_size = sizeof(Transmit);
 const unsigned long long Queue_item_command_size = sizeof(String);
+const unsigned long long Queue_item_d_command_size = sizeof(String);
 const unsigned long long Queue_item_database_size = sizeof(DataPackage);
 //Sercurity
 String http_username = "admin";
@@ -192,31 +195,41 @@ void connect_to_broker() // Connect to the broker
     }
   }
 }
-void callback(char* topic, byte *payload, unsigned int length)// Receive Messange From Broker //TODO: Upgrade MQTT
+void callback(char* topic, byte *payload, unsigned int length)// Receive Messange From Broker //[ ] Test it
 {
-    char status[sizeof(payload)+1];
-    memcpy(status,payload,sizeof(payload));
-    status[sizeof(payload)] = '\0';
+    MQTT_Messange = String((char*)payload).substring(String((char*)payload).indexOf("{")+1,String((char*)payload).indexOf("}"));
+    String t_IP = MQTT_Messange.substring(0,MQTT_Messange.indexOf("/"));
+    String t_command = MQTT_Messange.substring(MQTT_Messange.indexOf(" ")+1,MQTT_Messange.length());
     if(String(topic) == MQTT_Pump_TOPIC){ 
+      if(t_IP == ID)
+      {
         if(Ig_Pump)
           Ig_Pump = false;
         else
         { 
-        if(String(status).indexOf("ON") != -1)
+        if(t_command == "ON")
             Command_Pump = 1;
-        else if(String(status).indexOf("OFF") != -1)
+        else if(t_command == "OFF")
             Command_Pump = 2;
-        } 
+        }
+      }else{
+        xQueueSend(Queue_D_Command,&MQTT_Messange,pdMS_TO_TICKS(100));
+      }
     }
-    if(String(topic) == MQTT_LED_TOPIC){
+    if(String(topic) == MQTT_LED_TOPIC){ 
+      if(t_IP == ID)
+      {
         if(Ig_Led)
             Ig_Led = false;
         else{
-            if(String(status).indexOf("ON") != -1)
+            if(t_command == "ON")
                 Command_Light = 1;
-            else if(String(status).indexOf("OFF") != -1)
+            else if(t_command == "OFF")
                 Command_Light = 2;
         }
+      }else{ 
+        xQueueSend(Queue_D_Command,&MQTT_Messange,pdMS_TO_TICKS(100));
+      }
     }
 }
 #pragma endregion
@@ -699,8 +712,9 @@ void Init_Server() // FIXME: Fix backend server
   },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
     if(!sercurity_backend_key)
       return request->send(Gone_Code);
-    String TmpID = String((char*) data).substring(String((char*) data).indexOf(' ')+1,String((char*) data).indexOf('/'));
-    String TmpPass = String((char*) data).substring(String((char*) data).indexOf('/')+1,String((char*) data).lastIndexOf('/'));
+    String Filter = String((char*) data).substring(String((char*) data).indexOf('{')+1,String((char*) data).indexOf('}'));
+    String TmpID = Filter.substring(Filter.indexOf(" ")+1,Filter.indexOf('/'));
+    String TmpPass = Filter.substring(Filter.indexOf('/')+1,Filter.length());
     if(TmpID.length() > 63 || TmpID == NULL || TmpPass.indexOf(' ') >= 0 || ( TmpPass.length() < 8 && TmpPass != NULL))
       return request->send(Bad_Request_Code);
      
@@ -751,13 +765,20 @@ void Init_Server() // FIXME: Fix backend server
   },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
     if(!tolerance_backend_key)
       return request->send(Gone_Code);
-    sscanf(strtok((char*)data,"/"),"%d",&Tree.Danger_Temp);
-    sscanf(strtok(NULL,"/"),"%d",&Tree.Save_Temp);
-    sscanf(strtok(NULL,"/"),"%d",&Tree.Danger_Humi);
-    sscanf(strtok(NULL,"/"),"%d",&Tree.Save_Humi);
-    sscanf(strtok(NULL,"/"),"%d",&Tree.WET_SOIL);
-    sscanf(strtok(NULL,"/"),"%d",&Tree.DRY_SOIL);
-    sscanf(strtok(NULL,"/"),"%d",&Tree.DARK_LIGHT);
+    String Filter = String((char*) data).substring(String((char*) data).indexOf('{')+1,String((char*) data).indexOf('}'));
+    Tree.Danger_Temp = atof(Filter.substring(0,Filter.indexOf('/')).c_str());
+    Filter = Filter.substring(Filter.indexOf('/')+1);
+    Tree.Save_Temp = atof(Filter.substring(0,Filter.indexOf('/')).c_str());
+    Filter = Filter.substring(Filter.indexOf('/')+1);
+    Tree.Danger_Humi = atof(Filter.substring(0,Filter.indexOf('/')).c_str());
+    Filter = Filter.substring(Filter.indexOf('/')+1);
+    Tree.Save_Humi = atof(Filter.substring(0,Filter.indexOf('/')).c_str());
+    Filter = Filter.substring(Filter.indexOf('/')+1);
+    Tree.WET_SOIL = atof(Filter.substring(0,Filter.indexOf('/')).c_str());
+    Filter = Filter.substring(Filter.indexOf('/')+1);
+    Tree.DRY_SOIL = atof(Filter.substring(0,Filter.indexOf('/')).c_str());
+    Filter = Filter.substring(Filter.indexOf('/')+1);
+    Tree.DARK_LIGHT = atof(Filter.c_str());
     return request->send(Received_Code);
   });
   server.on("/BackEndTolerance",HTTP_GET,[](AsyncWebServerRequest *request){
@@ -961,6 +982,27 @@ void SendMess() //Send mess prepared to who
       O_Data.SetNextIP(KnownIP[0]);
       xQueueSend(Queue_Delivery,&O_Data,pdMS_TO_TICKS(100));
     }
+    if(xQueueReceive(Queue_D_Command,&D_Command,0) == pdPASS)
+    {
+      String t_IP = D_Command.substring(0,D_Command.indexOf("/"));
+      O_Data.SetData(t_IP,D_Command,Broadcast);
+      int flag = IsKnown(t_IP);
+      if(flag != -1)
+      {
+        O_Data.SetNextIP(t_IP);
+        xQueueSend(Queue_Delivery,&O_Data,pdMS_TO_TICKS(100));
+      }
+      else
+      {
+        for(int i =1; i< 4 ;i++)
+        {
+          if(KnownIP[i] == "")
+            continue;
+          O_Data.SetNextIP(KnownIP[i]);
+          xQueueSend(Queue_Delivery,&O_Data,pdMS_TO_TICKS(100));
+        }
+      }
+    }
     if(WiFi.status() == WL_CONNECTED && ping_flag && !first_sta && Firebase.ready()) //Send to database
     {
       O_Pack = O_Data.GetData();
@@ -1084,18 +1126,21 @@ void Light_Up()//Light up choice
 #pragma region Main System
 void Solve_Command() // TODO: Slove Command
 {
-  if(xQueueReceive(Queue_Command,&D_Command,0) == pdPASS)
+  if(xQueueReceive(Queue_Command,&O_Command,0) == pdPASS)
   {
-    if(D_Command == "")
+    if(O_Command == "")
       return;
+    Serial.print("Receive command: ");
+    Serial.println(O_Command);
   }
 
-  D_Command.clear();
+  O_Command.clear();
 }
 void Init_Task()
 {
   Queue_Delivery = xQueueCreate(Queue_Length,Queue_item_delivery_size+1);
   Queue_Command = xQueueCreate(Queue_Length,Queue_item_command_size+1);
+  Queue_D_Command = xQueueCreate(Queue_Length,Queue_item_d_command_size+1);
   Queue_Database = xQueueCreate(Queue_Length,Queue_item_database_size+1);
   xMutex_HTTP = xSemaphoreCreateMutex();
   xTaskCreate(

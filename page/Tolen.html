@@ -136,7 +136,6 @@
       .box .input_box .range_input:nth-child(even) input::-webkit-slider-thumb{
         border: 5px solid rgb(255, 3, 3);
       }
-
       .range_input label{
         background-color: whitesmoke;
         border-radius:100% 100% 100% 0%;
@@ -307,10 +306,10 @@
     }
     function Send(){
         var xhr = new XMLHttpRequest();
-        var DataSend = "/"+document.getElementById("upT").value +"/"+ document.getElementById("lowT").value +
+        var DataSend = "{"+document.getElementById("upT").value +"/"+ document.getElementById("lowT").value +
                         "/"+document.getElementById("upH").value +"/"+ document.getElementById("lowH").value +
                         "/"+document.getElementById("upSM").value +"/"+ document.getElementById("lowSM").value +
-                        "/"+document.getElementById("L").value+"/";
+                        "/"+document.getElementById("L").value+"}";
         xhr.open("POST", "/BackEndTolerance", false);
         xhr.send(DataSend);
         //window.open(location.href, "_self", "");

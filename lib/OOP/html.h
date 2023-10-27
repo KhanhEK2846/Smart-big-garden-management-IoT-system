@@ -1335,13 +1335,14 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
         if (this.readyState == 4 && this.status == 511)
             noti = "Connect again"
         };
+      var DataSend = "{";
       if (state =="Authentication")
-        var DataSend ="Authentication: ";
+        DataSend +="Authentication: ";
       if(state == "Authorization")
-        var DataSend ="Authorization: ";
+        DataSend +="Authorization: ";
       if (state == "Configuring")
-        var DataSend ="AP: ";
-      DataSend += document.getElementById("id").value + "/"+ document.getElementById("password").value + "/";
+        DataSend +="AP: ";
+      DataSend += document.getElementById("id").value + "/"+ document.getElementById("password").value + "}";
       console.log(DataSend)
       Delete();
       xhr.open("POST", "/BackEndSercure", false);
@@ -1667,10 +1668,10 @@ const char Tolerance_html[] PROGMEM = R"rawliteral(
     }
     function Send(){
         var xhr = new XMLHttpRequest();
-        var DataSend = "/"+document.getElementById("upT").value +"/"+ document.getElementById("lowT").value +
+        var DataSend = "{"+document.getElementById("upT").value +"/"+ document.getElementById("lowT").value +
                         "/"+document.getElementById("upH").value +"/"+ document.getElementById("lowH").value +
                         "/"+document.getElementById("upSM").value +"/"+ document.getElementById("lowSM").value +
-                        "/"+document.getElementById("L").value+"/";
+                        "/"+document.getElementById("L").value+"}";
         xhr.open("POST", "/BackEndTolerance", false);
         xhr.send(DataSend);
         //window.open(location.href, "_self", "");
