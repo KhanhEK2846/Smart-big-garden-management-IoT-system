@@ -48,8 +48,8 @@ boolean PumpsStatus = false; //Current Status Pump
 //Light
 boolean LightStatus = false; //Current Status Light
 //WIFI Variable
-String sta_ssid = ""; 
-String sta_password = "" ;
+String sta_ssid = "Sieu Viet 1"; 
+String sta_password = "02838474844" ;
 String ap_ssid = "ESP32_Client";
 String ap_password = "123456789";
 const unsigned long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
@@ -459,9 +459,9 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
         if(Ig_Pump)
           Ig_Pump = false;
         else{ 
-          if(t_command.indexOf("ON") >=0)
+          if(t_command == "ON")
               Command_Pump = 1;
-          else if(t_command.indexOf("OFF") >=0)
+          else if(t_command == "OFF")
               Command_Pump = 2;
         }
       }else flag = true;
@@ -472,17 +472,18 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
         if(Ig_Led)
             Ig_Led = false;
         else{
-            if(t_command.indexOf("ON") >=0)
+            if(t_command == "ON")
                 Command_Light = 1;
-            else if(t_command.indexOf("OFF") >=0)
+            else if(t_command == "OFF")
                 Command_Light = 2;
         }
       }else flag = true;
     }
     if(flag)
-    {
+    {    
+      MQTT_Data.SetData(t_IP,MQTT_Messange.substring(MQTT_Messange.indexOf("/")+1,MQTT_Messange.length()),Broadcast);
       int isNode = IsKnown(t_IP);
-      MQTT_Data.SetData(t_IP,t_command,Broadcast);
+      Serial.println(MQTT_Data.GetData().toString());
       if(isNode != -1)
       {
         MQTT_Data.SetNextIP(t_IP);
