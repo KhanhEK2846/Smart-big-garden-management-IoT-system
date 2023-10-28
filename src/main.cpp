@@ -111,19 +111,17 @@ DataPackage D_Pack;
 Transmit O_Data;
 DataPackage O_Pack;
 String O_Command;
-String D_Command;
+Transmit MQTT_Data;
 //Task Delivery Data
 TaskHandle_t DeliveryTask = NULL;
 TaskHandle_t DatabaseTask = NULL;
 SemaphoreHandle_t xMutex_HTTP = NULL;
 QueueHandle_t Queue_Delivery = NULL;
 QueueHandle_t Queue_Command = NULL;
-QueueHandle_t Queue_D_Command = NULL;
 QueueHandle_t Queue_Database = NULL;
 const int Queue_Length = 10;
 const unsigned long long Queue_item_delivery_size = sizeof(Transmit);
 const unsigned long long Queue_item_command_size = sizeof(String);
-const unsigned long long Queue_item_d_command_size = sizeof(String);
 const unsigned long long Queue_item_database_size = sizeof(DataPackage);
 //Sercurity
 String http_username = "admin";
@@ -177,60 +175,6 @@ void Cycle_Ping()// Cycle Ping to Host // FIX:
     Last_ping_time = millis();
     Ping();
   }
-}
-#pragma endregion
-#pragma region MQTT Protocol //FIXME Stop mqtt when connected gateway
-void connect_to_broker() // Connect to the broker
-{
-  while (!client.connected()) {
-    String clientId = "ESP32";
-    clientId += String(random(0xffff), HEX);
-    if (client.connect(clientId.c_str())) {
-      client.subscribe(MQTT_Pump_TOPIC);
-      client.subscribe(MQTT_LED_TOPIC);
-      MQTTStatus = true;
-    } else {
-      MQTTStatus = false;
-      break;
-    }
-  }
-}
-void callback(char* topic, byte *payload, unsigned int length)// Receive Messange From Broker //[ ] Test it
-{
-    MQTT_Messange = String((char*)payload).substring(String((char*)payload).indexOf("{")+1,String((char*)payload).indexOf("}"));
-    String t_IP = MQTT_Messange.substring(0,MQTT_Messange.indexOf("/"));
-    String t_command = MQTT_Messange.substring(MQTT_Messange.indexOf(" ")+1,MQTT_Messange.length());
-    if(String(topic) == MQTT_Pump_TOPIC){ 
-      if(t_IP == ID)
-      {
-        if(Ig_Pump)
-          Ig_Pump = false;
-        else
-        { 
-        if(t_command == "ON")
-            Command_Pump = 1;
-        else if(t_command == "OFF")
-            Command_Pump = 2;
-        }
-      }else{
-        xQueueSend(Queue_D_Command,&MQTT_Messange,pdMS_TO_TICKS(100));
-      }
-    }
-    if(String(topic) == MQTT_LED_TOPIC){ 
-      if(t_IP == ID)
-      {
-        if(Ig_Led)
-            Ig_Led = false;
-        else{
-            if(t_command == "ON")
-                Command_Light = 1;
-            else if(t_command == "OFF")
-                Command_Light = 2;
-        }
-      }else{ 
-        xQueueSend(Queue_D_Command,&MQTT_Messange,pdMS_TO_TICKS(100));
-      }
-    }
 }
 #pragma endregion
 #pragma region WebSocket Protocol
@@ -487,6 +431,75 @@ void Init_WiFi_Event()
   WiFi.onEvent(Server_Disconnected,WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
 }
 #pragma endregion Device Connected Manager
+#pragma region MQTT Protocol //FIXME Stop mqtt when connected gateway
+void connect_to_broker() // Connect to the broker
+{
+  while (!client.connected()) {
+    String clientId = "ESP32";
+    clientId += String(random(0xffff), HEX);
+    if (client.connect(clientId.c_str())) {
+      client.subscribe(MQTT_Pump_TOPIC);
+      client.subscribe(MQTT_LED_TOPIC);
+      MQTTStatus = true;
+    } else {
+      MQTTStatus = false;
+      break;
+    }
+  }
+}
+void callback(char* topic, byte *payload, unsigned int length)// Receive Messange From Broker //[ ] Test it
+{
+    MQTT_Messange = String((char*)payload).substring(String((char*)payload).indexOf("{")+1,String((char*)payload).indexOf("}"));
+    String t_IP = MQTT_Messange.substring(0,MQTT_Messange.indexOf("/"));
+    String t_command = MQTT_Messange.substring(MQTT_Messange.indexOf(" ")+1,MQTT_Messange.length());
+    boolean flag = false;
+    if(String(topic) == MQTT_Pump_TOPIC){ 
+      if(t_IP == ID)
+      {
+        if(Ig_Pump)
+          Ig_Pump = false;
+        else{ 
+          if(t_command.indexOf("ON") >=0)
+              Command_Pump = 1;
+          else if(t_command.indexOf("OFF") >=0)
+              Command_Pump = 2;
+        }
+      }else flag = true;
+    }
+    if(String(topic) == MQTT_LED_TOPIC){ 
+      if(t_IP == ID)
+      {
+        if(Ig_Led)
+            Ig_Led = false;
+        else{
+            if(t_command.indexOf("ON") >=0)
+                Command_Light = 1;
+            else if(t_command.indexOf("OFF") >=0)
+                Command_Light = 2;
+        }
+      }else flag = true;
+    }
+    if(flag)
+    {
+      int isNode = IsKnown(t_IP);
+      MQTT_Data.SetData(t_IP,t_command,Broadcast);
+      if(isNode != -1)
+      {
+        MQTT_Data.SetNextIP(t_IP);
+        xQueueSend(Queue_Delivery,&MQTT_Data,pdMS_TO_TICKS(100));
+      }else{
+        for(int i =1; i< 4 ;i++)
+        {
+          if(KnownIP[i] == "")
+            continue;
+          O_Data.SetNextIP(KnownIP[i]);
+          xQueueSend(Queue_Delivery,&MQTT_Data,pdMS_TO_TICKS(100));
+        }
+      }
+    }
+
+}
+#pragma endregion
 #pragma region Hypertext Transfer Protocol
 void Delivery(void * pvParameters) //Task Delivery from node to gateway and reverse
 {
@@ -582,7 +595,6 @@ void Setup_RTDB()//Initiate Realtime Database Firebase
   Firebase.reconnectWiFi(true);
   firebaseData.setResponseSize(4096);
 }
-
 void DataLogging()//Store a record to database
 {
   if(WiFi.status() != WL_CONNECTED || ((!ping_flag || first_sta) && (gateway_node != 2)))
@@ -606,7 +618,6 @@ void DataLogging()//Store a record to database
     }
   }
 }
-
 #pragma endregion
 
 #pragma region Network
@@ -982,27 +993,6 @@ void SendMess() //Send mess prepared to who
       O_Data.SetNextIP(KnownIP[0]);
       xQueueSend(Queue_Delivery,&O_Data,pdMS_TO_TICKS(100));
     }
-    if(xQueueReceive(Queue_D_Command,&D_Command,0) == pdPASS)
-    {
-      String t_IP = D_Command.substring(0,D_Command.indexOf("/"));
-      O_Data.SetData(t_IP,D_Command,Broadcast);
-      int flag = IsKnown(t_IP);
-      if(flag != -1)
-      {
-        O_Data.SetNextIP(t_IP);
-        xQueueSend(Queue_Delivery,&O_Data,pdMS_TO_TICKS(100));
-      }
-      else
-      {
-        for(int i =1; i< 4 ;i++)
-        {
-          if(KnownIP[i] == "")
-            continue;
-          O_Data.SetNextIP(KnownIP[i]);
-          xQueueSend(Queue_Delivery,&O_Data,pdMS_TO_TICKS(100));
-        }
-      }
-    }
     if(WiFi.status() == WL_CONNECTED && ping_flag && !first_sta && Firebase.ready()) //Send to database
     {
       O_Pack = O_Data.GetData();
@@ -1140,7 +1130,6 @@ void Init_Task()
 {
   Queue_Delivery = xQueueCreate(Queue_Length,Queue_item_delivery_size+1);
   Queue_Command = xQueueCreate(Queue_Length,Queue_item_command_size+1);
-  Queue_D_Command = xQueueCreate(Queue_Length,Queue_item_d_command_size+1);
   Queue_Database = xQueueCreate(Queue_Length,Queue_item_database_size+1);
   xMutex_HTTP = xSemaphoreCreateMutex();
   xTaskCreate(
