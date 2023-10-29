@@ -111,6 +111,7 @@ DataPackage D_Pack;
 Transmit O_Data;
 DataPackage O_Pack;
 String O_Command;
+String D_Command;
 Transmit MQTT_Data;
 //Task Delivery Data
 TaskHandle_t DeliveryTask = NULL;
@@ -825,8 +826,8 @@ void Init_Server() // FIXME: Fix backend server
       return;  
     if(package.GetData().GetID() == ID || package.GetData().GetMode() == Infection ) //ReceiveIP & Infection mode 
     {
-      String t_command = package.GetData().GetData();
-      xQueueSend(Queue_Command,&t_command,pdMS_TO_TICKS(100));
+      D_Command = package.GetData().GetData();
+      xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
       if(package.GetData().GetMode() != Infection)
         return;
     }
@@ -1119,12 +1120,27 @@ void Solve_Command() // TODO: Slove Command
 {
   if(xQueueReceive(Queue_Command,&O_Command,0) == pdPASS)
   {
-    if(O_Command == "")
-      return;
     Serial.print("Receive command: ");
     Serial.println(O_Command);
+    String Actuator = O_Command.substring(0,O_Command.indexOf(" "));
+    String Require = O_Command.substring(O_Command.indexOf(" ")+1,O_Command.length());
+    if(Actuator == "Light")
+    {
+      if(Require == "ON")
+          Command_Light = 1;
+      else if(Require == "OFF")
+          Command_Light = 2;
+      return;
+    }
+    if(Actuator == "Pump")
+    {
+      if(Require == "ON")
+          Command_Pump = 1;
+      else if(Require == "OFF")
+          Command_Pump = 2;
+      return;
+    }
   }
-
   O_Command.clear();
 }
 void Init_Task()
