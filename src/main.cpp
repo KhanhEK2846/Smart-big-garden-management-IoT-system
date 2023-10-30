@@ -50,7 +50,7 @@ boolean LightStatus = false; //Current Status Light
 //WIFI Variable
 String sta_ssid = "Sieu Viet 1"; 
 String sta_password = "02838474844" ;
-String ap_ssid = "ESP32_Client";
+String ap_ssid = "ESP32_Server";
 String ap_password = "123456789";
 const unsigned long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
 String Contingency_sta_ssid = ""; 
@@ -328,6 +328,11 @@ int IsKnown(String IP)
   }
   return -1;
 }
+String IsKnowMac(String Mac)
+{
+
+  return "";
+}
 void RefreshNodeIP(String locate = "0")
 {
   if(locate == "0")
@@ -451,11 +456,11 @@ void connect_to_broker() // Connect to the broker
 void callback(char* topic, byte *payload, unsigned int length)// Receive Messange From Broker //[ ] Test it
 {
     MQTT_Messange = String((char*)payload).substring(String((char*)payload).indexOf("{")+1,String((char*)payload).indexOf("}"));
-    String t_IP = MQTT_Messange.substring(0,MQTT_Messange.indexOf("/"));
+    String t_ID = MQTT_Messange.substring(0,MQTT_Messange.indexOf("/"));
     String t_command = MQTT_Messange.substring(MQTT_Messange.indexOf(" ")+1,MQTT_Messange.length());
     boolean flag = false;
     if(String(topic) == MQTT_Pump_TOPIC){ 
-      if(t_IP == ID)
+      if(t_ID == ID)
       {
         if(Ig_Pump)
           Ig_Pump = false;
@@ -468,7 +473,7 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
       }else flag = true;
     }
     if(String(topic) == MQTT_LED_TOPIC){ 
-      if(t_IP == ID)
+      if(t_ID == ID)
       {
         if(Ig_Led)
             Ig_Led = false;
@@ -482,19 +487,19 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
     }
     if(flag)
     {    
-      MQTT_Data.SetData(t_IP,MQTT_Messange.substring(MQTT_Messange.indexOf("/")+1,MQTT_Messange.length()),Broadcast);
-      int isNode = IsKnown(t_IP);
+      MQTT_Data.SetData(t_ID,MQTT_Messange.substring(MQTT_Messange.indexOf("/")+1,MQTT_Messange.length()),Broadcast);
+      int isNode = IsKnown(t_ID);
       Serial.println(MQTT_Data.GetData().toString());
       if(isNode != -1)
       {
-        MQTT_Data.SetNextIP(t_IP);
+        MQTT_Data.SetNextIP(t_ID);
         xQueueSend(Queue_Delivery,&MQTT_Data,pdMS_TO_TICKS(100));
       }else{
         for(int i =1; i< 4 ;i++)
         {
           if(KnownIP[i] == "")
             continue;
-          O_Data.SetNextIP(KnownIP[i]);
+          MQTT_Data.SetNextIP(KnownIP[i]);
           xQueueSend(Queue_Delivery,&MQTT_Data,pdMS_TO_TICKS(100));
         }
       }
