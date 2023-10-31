@@ -309,18 +309,21 @@ void List_Connected_Update() //Update the list of device connected to ap wifi
   esp_wifi_ap_get_sta_list(&wifi_sta_list); 
   tcpip_adapter_get_sta_list(&wifi_sta_list, &adapter_sta_list);//Get IP information for stations connected to the Wi-Fi AP interface.
 }
+
 String MACAddressCovert(uint8_t* mac)// Convert unit8_t to String MAC
 {
     char macStr[18] = { 0 };
     sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0],mac[1], mac[2],mac[3],mac[4],mac[5]);
     return String(macStr);
 }
-void StringtoMACAddress(const char* macString, uint8_t* mac)
+void StringtoMACAddress(const String macString, uint8_t* mac)
 {
-  sscanf(macString, "%02x:%02x:%02x:%02x:%02x:%02x", &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]);
+  sscanf(macString.c_str(), "%02x:%02x:%02x:%02x:%02x:%02x", &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]);
 }
 int IsKnown(String IP)
 {
+  if(IP == "")
+    return -1;
   for(int i = 0; i<4;i++)
   {
     if(KnownIP[i] == IP)
@@ -328,9 +331,26 @@ int IsKnown(String IP)
   }
   return -1;
 }
-String IsKnowMac(String Mac)
+String MactoIP(String Mac)
 {
-
+  for (int i = 0; i< adapter_sta_list.num; i++)
+  {
+    if(Mac == MACAddressCovert(adapter_sta_list.sta[i].mac))
+    {
+      return IPAddress(adapter_sta_list.sta[i].ip.addr).toString();
+    }
+  }
+  return "";
+}
+String IPtoMAC(String IP)
+{
+  for (int i = 0; i< adapter_sta_list.num; i++)
+  {
+    if(IP == IPAddress(adapter_sta_list.sta[i].ip.addr).toString())
+    {
+      return MACAddressCovert(adapter_sta_list.sta[i].mac);
+    }
+  }
   return "";
 }
 void RefreshNodeIP(String locate = "0")
@@ -488,7 +508,7 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
     if(flag)
     {    
       MQTT_Data.SetData(t_ID,MQTT_Messange.substring(MQTT_Messange.indexOf("/")+1,MQTT_Messange.length()),Broadcast);
-      int isNode = IsKnown(t_ID);
+      int isNode = IsKnown(MactoIP(t_ID));
       Serial.println(MQTT_Data.GetData().toString());
       if(isNode != -1)
       {
@@ -546,7 +566,7 @@ void Delivery(void * pvParameters) //Task Delivery from node to gateway and reve
         }
         uint8_t t_mac[6];
         uint16_t t_aid;
-        StringtoMACAddress(KnownIP[IP].c_str(),t_mac);
+        StringtoMACAddress(IPtoMAC(KnownIP[IP]),t_mac);
         esp_wifi_ap_get_sta_aid(t_mac,&t_aid);
         esp_wifi_deauth_sta(t_aid);
       }
