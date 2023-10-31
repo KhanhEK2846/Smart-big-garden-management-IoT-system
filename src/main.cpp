@@ -48,6 +48,10 @@ boolean PumpsStatus = false; //Current Status Pump
 //Light
 boolean LightStatus = false; //Current Status Light
 //WIFI Variable
+// String sta_ssid = "ESP32_Server"; 
+// String sta_password = "123456789" ;
+// String ap_ssid = "ESP32_Client";
+// String ap_password = "123456789";
 String sta_ssid = "Sieu Viet 1"; 
 String sta_password = "02838474844" ;
 String ap_ssid = "ESP32_Server";
@@ -509,12 +513,14 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
     {    
       MQTT_Data.SetData(t_ID,MQTT_Messange.substring(MQTT_Messange.indexOf("/")+1,MQTT_Messange.length()),Broadcast);
       int isNode = IsKnown(MactoIP(t_ID));
-      Serial.println(MQTT_Data.GetData().toString());
+      Serial.println(MactoIP(t_ID));
       if(isNode != -1)
       {
-        MQTT_Data.SetNextIP(t_ID);
+        Serial.println("Know");
+        MQTT_Data.SetNextIP(KnownIP[isNode]);
         xQueueSend(Queue_Delivery,&MQTT_Data,pdMS_TO_TICKS(100));
       }else{
+        Serial.println("Un-Know");
         for(int i =1; i< 4 ;i++)
         {
           if(KnownIP[i] == "")
