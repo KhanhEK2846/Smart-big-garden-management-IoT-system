@@ -735,13 +735,13 @@ void Init_Server() // FIXME: Fix backend server
   server.on("/Sercurity",HTTP_GET,[](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request) ) //Only for client from AP Mode
       return request->redirect("/NothingHereForYou");
-    if(request->authenticate(http_username.c_str(),http_password.c_str()))
-      return request->send_P(Forbidden_Code,"text/html",Forbidden_html);
     if(request->authenticate(auth_username.c_str(), auth_password.c_str()))
     {
       sercurity_backend_key = true;
       return request->send_P(Received_Code,"text/html",Sercurity_html);
     }
+    if(request->authenticate(http_username.c_str(),http_password.c_str()))
+      return request->send_P(Forbidden_Code,"text/html",Forbidden_html);
     return request->send_P(Not_Found_Code,"text/html",Error_html);
 
   });
@@ -789,13 +789,13 @@ void Init_Server() // FIXME: Fix backend server
   server.on("/Tolerance",HTTP_GET,[](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request)) //Only for client from AP Mode
       return request->redirect("/NothingHereForYou");
-    if(request->authenticate(http_username.c_str(),http_password.c_str()))
-      return request->send_P(Forbidden_Code,"text/html",Forbidden_html);
     if(request->authenticate(auth_username.c_str(), auth_password.c_str()))
     {
       tolerance_backend_key = true;
       return request->send_P(Received_Code,"text/html",Tolerance_html);
     }
+    if(request->authenticate(http_username.c_str(),http_password.c_str()))
+      return request->send_P(Forbidden_Code,"text/html",Forbidden_html);
     return request->send_P(Not_Found_Code,"text/html",Error_html);
   });
   server.on("/BackEndTolerance",HTTP_POST,[](AsyncWebServerRequest *request){
