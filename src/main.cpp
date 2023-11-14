@@ -38,8 +38,8 @@ boolean LDR_Err = false;
 Plant Tree;
 //Days
 unsigned long Time_Passed = 0;
-const unsigned long A_Day_milis = 24*60*60*1000;//24 hours
-const unsigned long A_Day_timestamp = 60 * 60 * 24;//24 hours
+const unsigned long A_Day_milis = 86400000;//24 hours
+const unsigned long A_Day_timestamp = 86400;//24 hours
 //Pump
 unsigned long Times_Pumps=0;
 const unsigned long Next_Pump = 43200000; //12 hours
@@ -56,7 +56,7 @@ String sta_ssid = "Sieu Viet 1";
 String sta_password = "02838474844" ;
 String ap_ssid = "ESP32_Server";
 String ap_password = "123456789";
-const unsigned long Network_TimeOut = 5000;// Wait 5 minutes to Connect Wifi
+const unsigned long Network_TimeOut = 5000;// Wait 5 seconds to Connect Wifi
 String Contingency_sta_ssid = ""; 
 String Contingency_sta_password = "";
 int disconnected_wifi_count = -1;
@@ -135,14 +135,14 @@ String auth_username = "owner";
 String auth_password = "owner";
 boolean sercurity_backend_key = false;
 boolean tolerance_backend_key = false;
+const unsigned long reset_key_time = 300000; // 5 minutes to reset
+unsigned long before_reset_key = 0;
 //ID
 const String ID = WiFi.macAddress();
 //Loop variable
 int i;
 // Store Recent Value
 int Temp[11] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
-
-
 #pragma region Common Function
 unsigned long getTime() // Get Timestamp
 { 
@@ -652,7 +652,6 @@ void DataLogging()//Store a record to database
   }
 }
 #pragma endregion
-
 #pragma region Network
 void Setup_Server()//Initiate connection to the servers
 {
@@ -717,6 +716,19 @@ void Connect_Network()//Connect to Wifi Router
     Ping();
     if(ping_flag)
       Setup_Server();
+  }
+}
+void Reset_Key()
+{
+  if(!sercurity_backend_key && !tolerance_backend_key)
+    return;
+  if(before_reset_key == 0)
+    before_reset_key = millis();
+  if((unsigned long)(millis() - before_reset_key) > reset_key_time)
+  {
+    sercurity_backend_key = false;
+    tolerance_backend_key = false;
+    before_reset_key = 0;
   }
 }
 void Init_Server() // FIXME: Fix backend server
@@ -1192,7 +1204,8 @@ void Network()// Netword Part
     WiFi.mode(WIFI_AP_STA);
     Connect_Network();
     sta_flag = false;
-  }  
+  } 
+  Reset_Key(); 
   if(WiFi.status() != WL_CONNECTED){
     if(Last_ping_time != 0) Last_ping_time = 0;
     if(ping_flag) ping_flag = false;
