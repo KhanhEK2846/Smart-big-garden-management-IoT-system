@@ -720,10 +720,8 @@ void Connect_Network()//Connect to Wifi Router
 }
 void Reset_Key()
 {
-  if(!sercurity_backend_key && !tolerance_backend_key)
-    return;
   if(before_reset_key == 0)
-    before_reset_key = millis();
+    return;
   if((unsigned long)(millis() - before_reset_key) > reset_key_time)
   {
     sercurity_backend_key = false;
@@ -750,6 +748,7 @@ void Init_Server() // FIXME: Fix backend server
     if(request->authenticate(auth_username.c_str(), auth_password.c_str()))
     {
       sercurity_backend_key = true;
+      before_reset_key = millis();
       return request->send_P(Received_Code,"text/html",Sercurity_html);
     }
     if(request->authenticate(http_username.c_str(),http_password.c_str()))
@@ -772,7 +771,7 @@ void Init_Server() // FIXME: Fix backend server
       http_password = TmpPass;
       request->send(No_Content_Code);
     }
-    if(String((char*) data).indexOf("Authorization: ")>=0)
+    else if(String((char*) data).indexOf("Authorization: ")>=0)
     {
       auth_username = TmpID;
       auth_password = TmpPass;
@@ -789,6 +788,7 @@ void Init_Server() // FIXME: Fix backend server
     else
       request->send(No_Response_Code);
     sercurity_backend_key = false;
+    before_reset_key = 0;
   });
   server.on("/Tolerance",HTTP_GET,[](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request)) //Only for client from AP Mode
@@ -796,6 +796,7 @@ void Init_Server() // FIXME: Fix backend server
     if(request->authenticate(auth_username.c_str(), auth_password.c_str()))
     {
       tolerance_backend_key = true;
+      before_reset_key = millis();
       return request->send_P(Received_Code,"text/html",Tolerance_html);
     }
     if(request->authenticate(http_username.c_str(),http_password.c_str()))
@@ -819,7 +820,9 @@ void Init_Server() // FIXME: Fix backend server
     Tree.DRY_SOIL = atof(Filter.substring(0,Filter.indexOf('/')).c_str());
     Filter = Filter.substring(Filter.indexOf('/')+1);
     Tree.DARK_LIGHT = atof(Filter.c_str());
-    return request->send(Received_Code);
+    request->send(Received_Code);
+    tolerance_backend_key = false;
+    before_reset_key = 0;
   });
   server.on("/BackEndTolerance",HTTP_GET,[](AsyncWebServerRequest *request){
     if(!request->authenticate(auth_username.c_str(), auth_password.c_str()) || !tolerance_backend_key)

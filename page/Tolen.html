@@ -305,15 +305,21 @@
       })
     }
     function Send(){
+        var noti = "Hello";
         var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+          if (this.readyState == 4 && this.status == 200)
+              noti = "Success"
+          if (this.readyState == 4 && this.status == 410)
+              noti = "Time up!"
+          };
         var DataSend = "{"+document.getElementById("upT").value +"/"+ document.getElementById("lowT").value +
                         "/"+document.getElementById("upH").value +"/"+ document.getElementById("lowH").value +
                         "/"+document.getElementById("upSM").value +"/"+ document.getElementById("lowSM").value +
                         "/"+document.getElementById("L").value+"}";
         xhr.open("POST", "/BackEndTolerance", false);
         xhr.send(DataSend);
-        //window.open(location.href, "_self", "");
-        //window.close();
+        document.querySelector('html').innerHTML = '<h1>'+noti+'</h1>'
       }
   </script>
 </body>

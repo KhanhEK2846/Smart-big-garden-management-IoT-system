@@ -1332,6 +1332,8 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
             noti = "Success"
         if (this.readyState == 4 && this.status == 400)
             noti = "Fail"
+        if (this.readyState == 4 && this.status == 410)
+            noti = "Time up!"
         if (this.readyState == 4 && this.status == 511)
             noti = "Connect again"
         };
@@ -1347,15 +1349,11 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
       Delete();
       xhr.open("POST", "/BackEndSercure", false);
       xhr.send(DataSend);
-      var win = window.open("","_blank","width=200,height=100",false);
-      win.document.body.innerHTML = '<h1>'+noti+'</h1>';
-      window.open(location.href, "_self", "");
-      window.close();
+      document.querySelector('body').innerHTML = '<h1>'+noti+'</h1>'
     }
   </script>
 </body>
 </html>
-
 )rawliteral";
 #pragma endregion Sercurity_html
 #pragma region Parameters_html //TODO: make script for Apply
@@ -1667,15 +1665,21 @@ const char Tolerance_html[] PROGMEM = R"rawliteral(
       })
     }
     function Send(){
+        var noti = "Hello";
         var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+          if (this.readyState == 4 && this.status == 200)
+              noti = "Success"
+          if (this.readyState == 4 && this.status == 410)
+              noti = "Time up!"
+          };
         var DataSend = "{"+document.getElementById("upT").value +"/"+ document.getElementById("lowT").value +
                         "/"+document.getElementById("upH").value +"/"+ document.getElementById("lowH").value +
                         "/"+document.getElementById("upSM").value +"/"+ document.getElementById("lowSM").value +
                         "/"+document.getElementById("L").value+"}";
         xhr.open("POST", "/BackEndTolerance", false);
         xhr.send(DataSend);
-        //window.open(location.href, "_self", "");
-        //window.close();
+        document.querySelector('html').innerHTML = '<h1>'+noti+'</h1>'
       }
   </script>
 </body>
