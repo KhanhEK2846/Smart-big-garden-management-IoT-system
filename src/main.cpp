@@ -745,16 +745,8 @@ void Init_Server() // FIXME: Fix backend server
     return request->send_P(Not_Found_Code,"text/html",Error_html);
 
   });
-  server.on("/BackEndSercure",HTTP_POST,[](AsyncWebServerRequest *request){
-    if(ON_STA_FILTER(request)) //Only for client from AP Mode
-      return request->redirect("/NothingHereForYou");
-    if(!request->authenticate(auth_username.c_str(), auth_password.c_str()))
-      return request->send_P(Forbidden_Code,"text/html",Forbidden_html);
-    if(!sercurity_backend_key)
-      return request->redirect("/WrongDoor");
-    request->send(Continue_Code);
-  },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
-    if(!sercurity_backend_key)
+  server.on("/BackEndSercure",HTTP_POST,[](AsyncWebServerRequest *request){},NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
+    if(!sercurity_backend_key || ON_STA_FILTER(request) || !request->authenticate(auth_username.c_str(), auth_password.c_str()))
       return request->send(Gone_Code);
     String Filter = String((char*) data).substring(String((char*) data).indexOf('{')+1,String((char*) data).indexOf('}'));
     String TmpID = Filter.substring(Filter.indexOf(" ")+1,Filter.indexOf('/'));
@@ -798,16 +790,8 @@ void Init_Server() // FIXME: Fix backend server
       return request->send_P(Forbidden_Code,"text/html",Forbidden_html);
     return request->send_P(Not_Found_Code,"text/html",Error_html);
   });
-  server.on("/BackEndTolerance",HTTP_POST,[](AsyncWebServerRequest *request){
-    if(ON_STA_FILTER(request)) //Only for client from AP Mode
-      return request->redirect("/NothingHereForYou");
-    if(!request->authenticate(auth_username.c_str(), auth_password.c_str()))
-      return request->send_P(Forbidden_Code,"text/html",Forbidden_html);
-    if(!sercurity_backend_key)
-      return request->redirect("/WrongDoor");
-    request->send(Continue_Code);
-  },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
-    if(!tolerance_backend_key)
+  server.on("/BackEndTolerance",HTTP_POST,[](AsyncWebServerRequest *request){},NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
+    if(!tolerance_backend_key || ON_STA_FILTER(request) || !request->authenticate(auth_username.c_str(), auth_password.c_str()))
       return request->send(Gone_Code);
     String Filter = String((char*) data).substring(String((char*) data).indexOf('{')+1,String((char*) data).indexOf('}'));
     Tree.Danger_Temp = atof(Filter.substring(0,Filter.indexOf('/')).c_str());
@@ -826,7 +810,7 @@ void Init_Server() // FIXME: Fix backend server
     return request->send(Received_Code);
   });
   server.on("/BackEndTolerance",HTTP_GET,[](AsyncWebServerRequest *request){
-    if(!request->authenticate(auth_username.c_str(), auth_password.c_str()))
+    if(!request->authenticate(auth_username.c_str(), auth_password.c_str()) || !tolerance_backend_key)
       return request->send_P(Forbidden_Code,"text/html",Forbidden_html);
     MessLimit = String(Tree.Danger_Temp);
     MessLimit += "/";
