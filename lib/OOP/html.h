@@ -1349,7 +1349,7 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
       Delete();
       xhr.open("POST", "/BackEndSercure", false);
       xhr.send(DataSend);
-      document.querySelector('body').innerHTML = '<h1>'+noti+'</h1>'
+      document.querySelector('html').innerHTML = '<h1>'+noti+'</h1>'
     }
   </script>
 </body>
