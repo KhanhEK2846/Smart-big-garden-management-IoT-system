@@ -1093,7 +1093,7 @@ void Condition_Pump()//Check watering conditions
     if(Command_Pump == 1)
       return;
   }
-  if((((Temperature >= Tree.Danger_Temp || Temperature <= Tree.Save_Temp || soilMoist > Tree.WET_SOIL) && !Err || ((unsigned long)(millis()- Times_Pumps) >= Still_Pumps)) || Command_Pump == 2) && PumpsStatus) //Đang bật
+  if((((Temperature >= Tree.Danger_Temp || Temperature <= Tree.Save_Temp || Humidity >= Tree.Danger_Humi  || soilMoist > Tree.WET_SOIL) && !Err || ((unsigned long)(millis()- Times_Pumps) >= Still_Pumps)) || Command_Pump == 2) && PumpsStatus) //Đang bật
   {
     Times_Pumps = millis(); 
     PumpsStatus = false;
