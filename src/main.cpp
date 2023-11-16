@@ -929,7 +929,7 @@ void SendLoRa(String data)
   LoRa.print(data);
   LoRa.endPacket();
 }
-String ReceiveLoRa()
+void ReceiveLoRa()
 {
   int packetSize = LoRa.parsePacket();
     if (packetSize) 
