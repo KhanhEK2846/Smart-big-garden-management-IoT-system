@@ -1,6 +1,7 @@
 ﻿#include <Arduino.h>
 #include <DHT.h>
 #include <WiFi.h>
+#include <LoRa.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <PubSubClient.h>
