@@ -9,6 +9,7 @@
 #include <time.h>
 #include <esp_wifi.h>
 #include <HTTPClient.h>
+#include <painlessMesh.h>
 #include "Transmit.h"
 #include "CommandCode.h"
 #include "Plant.h"
