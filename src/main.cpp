@@ -255,6 +255,9 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) //Handle messa
       sta_password = String((char*)data).substring(String((char*)data).indexOf(' ')+1,String((char*)data).length());
       sta_flag = true;
     }
+    if(String((char*)data).indexOf("NameTree:") >= 0){
+      Tree.Name = String((char*)data).substring(String((char*)data).indexOf(' ')+1,String((char*)data).length());
+    }
     if(String((char*)data).indexOf("Disconnect") >= 0){
       WiFi.disconnect(true,true);
       WiFi.mode(WIFI_AP);
