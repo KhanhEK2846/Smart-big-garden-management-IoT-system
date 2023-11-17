@@ -126,7 +126,7 @@ Transmit MQTT_Data;
 //Task Delivery Data
 TaskHandle_t DeliveryTask = NULL;
 TaskHandle_t DatabaseTask = NULL;
-SemaphoreHandle_t xMutex_HTTP = NULL;
+TaskHandle_t CaptureTask = NULL;
 QueueHandle_t Queue_Delivery = NULL;
 QueueHandle_t Queue_Command = NULL;
 QueueHandle_t Queue_Database = NULL;
@@ -312,14 +312,6 @@ void initWebSocket() //Initialize the WebSocket protocol
 }
 #pragma endregion
 #pragma region Device Connected Manager
-void List_Connected_Update() //Update the list of device connected to ap wifi
-{
-  memset(&wifi_sta_list, 0, sizeof(wifi_sta_list));
-  memset(&adapter_sta_list, 0, sizeof(adapter_sta_list));
-  esp_wifi_ap_get_sta_list(&wifi_sta_list); 
-  tcpip_adapter_get_sta_list(&wifi_sta_list, &adapter_sta_list);//Get IP information for stations connected to the Wi-Fi AP interface.
-}
-
 String MACAddressCovert(uint8_t* mac)// Convert unit8_t to String MAC
 {
     char macStr[18] = { 0 };
@@ -330,142 +322,7 @@ void StringtoMACAddress(const String macString, uint8_t* mac)
 {
   sscanf(macString.c_str(), "%02x:%02x:%02x:%02x:%02x:%02x", &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]);
 }
-int IsKnown(String IP)
-{
-  if(IP == "")
-    return -1;
-  for(int i = 0; i<4;i++)
-  {
-    if(KnownIP[i] == IP)
-      return i;
-  }
-  return -1;
-}
-String MactoIP(String Mac)
-{
-  for (int i = 0; i< adapter_sta_list.num; i++)
-  {
-    if(Mac == MACAddressCovert(adapter_sta_list.sta[i].mac))
-    {
-      return IPAddress(adapter_sta_list.sta[i].ip.addr).toString();
-    }
-  }
-  return "";
-}
-String IPtoMAC(String IP)
-{
-  for (int i = 0; i< adapter_sta_list.num; i++)
-  {
-    if(IP == IPAddress(adapter_sta_list.sta[i].ip.addr).toString())
-    {
-      return MACAddressCovert(adapter_sta_list.sta[i].mac);
-    }
-  }
-  return "";
-}
-void RefreshNodeIP(String locate = "0")
-{
-  if(locate == "0")
-  {
-    KnownIP[1] = "";
-    KnownIP[2] = "";
-    KnownIP[3] = "";
-    return;
-  }
-  for(int index = 0;index<adapter_sta_list.num; index++)//Find where is mac 
-  {
-    if(locate == MACAddressCovert(adapter_sta_list.sta[index].mac)) 
-    {
-      for (int index1 = 1; index1 <MAX_Clients+1;index1++) //Find where is IP relative that MAC
-      {
-        if(KnownIP[index1] == IPAddress(adapter_sta_list.sta[index].ip.addr).toString())
-        {
-          KnownIP[index1] = "";
-          --Num_Clients;
-          break;
-        }
-      }
-      break;
-    }
-  }
-}
-void First_Mess_To_Node(String IP)// Init client as node
-{
-  if(Num_Clients < MAX_Clients)
-  {
-    xSemaphoreTake(xMutex_HTTP,portMAX_DELAY);
-    WiFiClient client;
-    HTTPClient http;
-    String URL = "http://";
-    URL += IP;
-    URL += "/YouAreNode";
-    if(http.begin(client,URL))
-    {
-      int httpResponseCode = http.POST(Init_Node_Code);
-      if(httpResponseCode == Init_Gateway_Code)
-      {
-        String payload = http.getString();
-        if(payload.indexOf("SSID: ") >= 0 && payload.indexOf("Password: ") >= 0)//TODO: Save a table of wifi
-        {
-          // String temp = payload.substring(payload.indexOf("{\n") + 3, payload.lastIndexOf("\n}"));
-          // Local_WiFi[0].SSID = temp.substring(temp.indexOf("SSID: ")+6,temp.indexOf("\nPassword:"));
-          // Local_WiFi[0].PASSWORD = temp.substring(temp.indexOf("Password: ")+10,temp.length());
-          for(int index = 1; index < MAX_Clients+1; index++)
-          {
-            if(KnownIP[index] == "")
-            {
-              KnownIP[index] = IP;
-              ++Num_Clients;
-              break;
-            }
-          }
-        }
 
-      }
-    }
-    http.end();
-    xSemaphoreGive(xMutex_HTTP);
-  }
-}
-void Client_Connected(WiFiEvent_t event, WiFiEventInfo_t info)
-{
-  Serial.println("Client connect");
-}
-void Client_IP(WiFiEvent_t event, WiFiEventInfo_t info)
-{
-  First_Mess_To_Node(IPAddress(info.wifi_ap_staipassigned.ip.addr).toString());
-  List_Connected_Update();
-}
-void Client_Disconnected(WiFiEvent_t event, WiFiEventInfo_t info)
-{ //BUG: Can't handle power off client
-  RefreshNodeIP(MACAddressCovert(info.wifi_ap_stadisconnected.mac));
-  List_Connected_Update();
-  Serial.println("Client disconnect");
-}
-void Server_Disconnected(WiFiEvent_t event, WiFiEventInfo_t info)
-{
-  Serial.print("Lost WiFi: ");
-  Serial.println(info.wifi_sta_disconnected.reason);
-  if(info.wifi_sta_disconnected.reason == wifi_err_reason_t::WIFI_REASON_BEACON_TIMEOUT) //Handle AP Server loss
-  {
-    disconnected_wifi_count = 0;
-  }
-  if(info.wifi_sta_disconnected.reason == wifi_err_reason_t::WIFI_REASON_NO_AP_FOUND) //Disconnect after 10 times reconnect
-  {
-    if(disconnected_wifi_count < 0) //ignore Wrong SSID
-      return;
-    disconnected_wifi_count += 1;
-    if(disconnected_wifi_count > 9)
-      WiFi.disconnect(true,true);
-  }
-}
-void Init_WiFi_Event()
-{
-  WiFi.onEvent(Client_Connected,WiFiEvent_t::ARDUINO_EVENT_WIFI_AP_STACONNECTED);
-  WiFi.onEvent(Client_IP, WiFiEvent_t::ARDUINO_EVENT_WIFI_AP_STAIPASSIGNED);
-  WiFi.onEvent(Client_Disconnected,WiFiEvent_t::ARDUINO_EVENT_WIFI_AP_STADISCONNECTED);
-  WiFi.onEvent(Server_Disconnected,WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
-}
 #pragma endregion Device Connected Manager
 #pragma region MQTT Protocol //FIXME Stop mqtt when connected gateway
 void connect_to_broker() // Connect to the broker
@@ -518,8 +375,7 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
     if(flag)
     {    
       MQTT_Data.SetData(t_ID,MQTT_Messange.substring(MQTT_Messange.indexOf("/")+1,MQTT_Messange.length()),Broadcast);
-      int isNode = IsKnown(MactoIP(t_ID));
-      Serial.println(MactoIP(t_ID));
+      int isNode = 0;
       if(isNode != -1)
       {
         Serial.println("Know");
@@ -540,56 +396,56 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
 }
 #pragma endregion
 #pragma region Hypertext Transfer Protocol
-void Delivery(void * pvParameters) //Task Delivery from node to gateway and reverse
-{
-  Serial.println("Delivery Task");
-  Transmit data;
-  UBaseType_t uxHighWaterMark;
-  uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-  Serial.println(uxHighWaterMark);
-  WiFiClient node;
-  int IP = 0;
-  while(true)
-  {
-    xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
-    xSemaphoreTake(xMutex_HTTP,portMAX_DELAY);
-    HTTPClient http;
-    DeliveryIP.clear();
-    IP = IsKnown(data.GetNextIP());
-    if(IP == -1)
-      continue;
-    DeliveryIP = "http://";
-    DeliveryIP += KnownIP[IP];
-    DeliveryIP += "/Delivery";
-    if(http.begin(node,DeliveryIP))
-      int httpResponseCode = http.POST(data.GetData().toString());
-    else
-    {
-      if(FailIP[IP] < 3)
-        FailIP[IP] += 1; 
-      else
-      {
-        if(IP == 0)
-        {
-          WiFi.disconnect(true,true);
-          gateway_node = 0;
-          KnownIP[0] = "";
-          continue;
-        }
-        uint8_t t_mac[6];
-        uint16_t t_aid;
-        StringtoMACAddress(IPtoMAC(KnownIP[IP]),t_mac);
-        esp_wifi_ap_get_sta_aid(t_mac,&t_aid);
-        esp_wifi_deauth_sta(t_aid);
-      }
-    }
-    http.end();
-    delay(10);
-    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-    Serial.println(uxHighWaterMark);
-    xSemaphoreGive(xMutex_HTTP);
-  }
-}
+// void Delivery(void * pvParameters) //Task Delivery from node to gateway and reverse
+// {
+//   Serial.println("Delivery Task");
+//   Transmit data;
+//   UBaseType_t uxHighWaterMark;
+//   uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+//   Serial.println(uxHighWaterMark);
+//   WiFiClient node;
+//   int IP = 0;
+//   while(true)
+//   {
+//     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
+//     xSemaphoreTake(xMutex_HTTP,portMAX_DELAY);
+//     HTTPClient http;
+//     DeliveryIP.clear();
+//     IP = IsKnown(data.GetNextIP());
+//     if(IP == -1)
+//       continue;
+//     DeliveryIP = "http://";
+//     DeliveryIP += KnownIP[IP];
+//     DeliveryIP += "/Delivery";
+//     if(http.begin(node,DeliveryIP))
+//       int httpResponseCode = http.POST(data.GetData().toString());
+//     else
+//     {
+//       if(FailIP[IP] < 3)
+//         FailIP[IP] += 1; 
+//       else
+//       {
+//         if(IP == 0)
+//         {
+//           WiFi.disconnect(true,true);
+//           gateway_node = 0;
+//           KnownIP[0] = "";
+//           continue;
+//         }
+//         uint8_t t_mac[6];
+//         uint16_t t_aid;
+//         StringtoMACAddress(IPtoMAC(KnownIP[IP]),t_mac);
+//         esp_wifi_ap_get_sta_aid(t_mac,&t_aid);
+//         esp_wifi_deauth_sta(t_aid);
+//       }
+//     }
+//     http.end();
+//     delay(10);
+//     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+//     Serial.println(uxHighWaterMark);
+//     xSemaphoreGive(xMutex_HTTP);
+//   }
+// }
 #pragma endregion
 #pragma region Cloud Database
 void DataLog(void * pvParameters)
@@ -852,57 +708,57 @@ void Init_Server() // FIXME: Fix backend server
   server.on("/logout",HTTP_GET,[](AsyncWebServerRequest *request){
     request->send(Unauthorized_Code);
   });
-  server.on("/Delivery",HTTP_POST,[](AsyncWebServerRequest *request){ //Receive data from Node
-  },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
-    request->send(Received_Code);
-    Transmit package;
-    package.DataFromString(String((char*) data));
-    //Serial.println(package.GetData().toString());
-    if(gateway_node == 0)
-      return;  
-    if(package.GetData().GetID() == ID || package.GetData().GetMode() == Infection ) //ReceiveIP & Infection mode 
-    {
-      D_Command = package.GetData().GetData();
-      xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
-      if(package.GetData().GetMode() != Infection)
-        return;
-    }
-    if (package.GetData().GetMode() == Broadcast || package.GetData().GetMode() == Infection) //Broadcast & Infection mode
-    {
-      int t_flag = IsKnown(request->client()->remoteIP().toString());
-      if(t_flag != -1)
-      {
-        for(int i =0; i< 4 ;i++)
-        {
-          if(i == t_flag || KnownIP[i] == "")
-            continue;
-          package.SetNextIP(KnownIP[i]);
-          xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
-        }
-      }
-    } 
-    if(package.GetData().GetMode() == Default || package.GetData().GetMode() == LogData) // Default mode
-    {
-      if(gateway_node == 0)
-      {
-        Serial.println(package.GetData().toString());
-        return;
-      }
-      if(gateway_node == 1) // If it's a gateway -> Send to Database
-      {
-        D_Pack = package.GetData();
-        xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(100));
-        return;
-      }
-      if(gateway_node == 2)//If it's a node -> Delivery to Gateway
-      {
-        package.SetNextIP(KnownIP[0]);
-        xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
-        return;
-      }
+  // server.on("/Delivery",HTTP_POST,[](AsyncWebServerRequest *request){ //Receive data from Node
+  // },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
+  //   request->send(Received_Code);
+  //   Transmit package;
+  //   package.DataFromString(String((char*) data));
+  //   //Serial.println(package.GetData().toString());
+  //   if(gateway_node == 0)
+  //     return;  
+  //   if(package.GetData().GetID() == ID || package.GetData().GetMode() == Infection ) //ReceiveIP & Infection mode 
+  //   {
+  //     D_Command = package.GetData().GetData();
+  //     xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
+  //     if(package.GetData().GetMode() != Infection)
+  //       return;
+  //   }
+  //   if (package.GetData().GetMode() == Broadcast || package.GetData().GetMode() == Infection) //Broadcast & Infection mode
+  //   {
+  //     int t_flag = IsKnown(request->client()->remoteIP().toString());
+  //     if(t_flag != -1)
+  //     {
+  //       for(int i =0; i< 4 ;i++)
+  //       {
+  //         if(i == t_flag || KnownIP[i] == "")
+  //           continue;
+  //         package.SetNextIP(KnownIP[i]);
+  //         xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
+  //       }
+  //     }
+  //   } 
+  //   if(package.GetData().GetMode() == Default || package.GetData().GetMode() == LogData) // Default mode
+  //   {
+  //     if(gateway_node == 0)
+  //     {
+  //       Serial.println(package.GetData().toString());
+  //       return;
+  //     }
+  //     if(gateway_node == 1) // If it's a gateway -> Send to Database
+  //     {
+  //       D_Pack = package.GetData();
+  //       xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(100));
+  //       return;
+  //     }
+  //     if(gateway_node == 2)//If it's a node -> Delivery to Gateway
+  //     {
+  //       package.SetNextIP(KnownIP[0]);
+  //       xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
+  //       return;
+  //     }
       
-    }
-  });
+  //   }
+  // });
   server.onNotFound([](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request)) //Only for client from AP Mode
       return request->redirect("https://youtu.be/dQw4w9WgXcQ");
@@ -913,6 +769,50 @@ void Init_Server() // FIXME: Fix backend server
 }
 #pragma endregion
 #pragma region LoRa
+void Delivery(void * pvParameters)
+{
+  Serial.println("Delivery Task");
+  Transmit data;
+  UBaseType_t uxHighWaterMark;
+  uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+  Serial.println(uxHighWaterMark);
+  while(true)
+  {
+    xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
+    LoRa.beginPacket();
+    LoRa.print(data.GetData().toString());
+    LoRa.endPacket();
+    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+    Serial.println(uxHighWaterMark);
+  }
+}
+void Capture(void * pvParameters)
+{
+  Serial.println("Capture Task");
+  UBaseType_t uxHighWaterMark;
+  uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+  Serial.println(uxHighWaterMark);
+  int CaptureSuccess;
+  while(true)
+  {
+    CaptureSuccess = LoRa.parsePacket();
+    if(CaptureSuccess)
+    {
+      Serial.print("Received packet '");
+            // read packet
+      while (LoRa.available()) {
+        String LoRaData = LoRa.readString();
+        Serial.print(LoRaData); 
+      }
+
+      // print RSSI of packet
+      Serial.print("' with RSSI ");
+      Serial.println(LoRa.packetRssi());
+    }
+    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+    Serial.println(uxHighWaterMark);
+  }
+}
 void Init_LoRa()
 {
   LoRa.setPins();
@@ -1222,7 +1122,6 @@ void Init_Task()
   Queue_Delivery = xQueueCreate(Queue_Length,Queue_item_delivery_size+1);
   Queue_Command = xQueueCreate(Queue_Length,Queue_item_command_size+1);
   Queue_Database = xQueueCreate(Queue_Length,Queue_item_database_size+1);
-  xMutex_HTTP = xSemaphoreCreateMutex();
   xTaskCreate(
     Delivery,
     "Delivery",
@@ -1238,6 +1137,14 @@ void Init_Task()
     NULL,
     0,
     &DatabaseTask
+  );
+  xTaskCreate(
+    Capture,
+    "Capture",
+    8000,
+    NULL,
+    0,
+    &CaptureTask
   );
 }
 void Network()// Netword Part
@@ -1292,9 +1199,9 @@ void setup()
   Time_Passed = millis();
   WiFi.mode(WIFI_AP_STA);
   Init_Server();
-  Init_WiFi_Event();
   WiFi.softAP(ap_ssid.c_str(), ap_password.c_str());
   Connect_Network();
+  Init_LoRa();
 }
 void loop() 
 {
