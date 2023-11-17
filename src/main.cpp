@@ -2,7 +2,6 @@
 #include <DHT.h>
 #include <WiFi.h>
 #include <LoRa.h>
-#include <esp_now.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <PubSubClient.h>
@@ -11,7 +10,7 @@
 #include <time.h>
 #include <esp_wifi.h>
 #include <HTTPClient.h>
-#include "Transmit.h"
+#include "DataPackage.h"
 #include "CommandCode.h"
 #include "Plant.h"
 #include "URL.h"
@@ -76,8 +75,6 @@ const int daylightOffset_sec = 0; //Daylight saving time
 IPAddress NMask(255, 255, 255, 0);
 IPAddress ApIP(192,168,1,1);
 String DeliveryIP = "";
-//ESP-NOW
-esp_now_peer_info_t peerInfo;
 //List Device Connected
 wifi_sta_list_t wifi_sta_list; //List of sta connect include MAC
 tcpip_adapter_sta_list_t adapter_sta_list; // List of Mac and IP
@@ -115,13 +112,11 @@ boolean contingency_flag = false;
 //Type of server
 int gateway_node = 0; // 0:default 1: gateway 2:node
 //Own & Deliver
-Transmit D_Data;
 DataPackage D_Pack;
-Transmit O_Data;
 DataPackage O_Pack;
 String O_Command;
 String D_Command;
-Transmit MQTT_Data;
+DataPackage MQTT_Data;
 //Task Delivery Data
 TaskHandle_t DeliveryTask = NULL;
 TaskHandle_t DatabaseTask = NULL;
@@ -130,7 +125,7 @@ QueueHandle_t Queue_Delivery = NULL;
 QueueHandle_t Queue_Command = NULL;
 QueueHandle_t Queue_Database = NULL;
 const int Queue_Length = 10;
-const unsigned long long Queue_item_delivery_size = sizeof(Transmit);
+const unsigned long long Queue_item_delivery_size = sizeof(DataPackage);
 const unsigned long long Queue_item_command_size = sizeof(String);
 const unsigned long long Queue_item_database_size = sizeof(DataPackage);
 //Sercurity
@@ -376,23 +371,8 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
     }
     if(flag)
     {    
-      MQTT_Data.SetData(t_ID,MQTT_Messange.substring(MQTT_Messange.indexOf("/")+1,MQTT_Messange.length()),Broadcast);
-      int isNode = 0;
-      if(isNode != -1)
-      {
-        Serial.println("Know");
-        MQTT_Data.SetNextIP(KnownIP[isNode]);
-        xQueueSend(Queue_Delivery,&MQTT_Data,pdMS_TO_TICKS(100));
-      }else{
-        Serial.println("Un-Know");
-        for(int i =1; i< 4 ;i++)
-        {
-          if(KnownIP[i] == "")
-            continue;
-          MQTT_Data.SetNextIP(KnownIP[i]);
-          xQueueSend(Queue_Delivery,&MQTT_Data,pdMS_TO_TICKS(100));
-        }
-      }
+      MQTT_Data.SetDataPackage(t_ID,MQTT_Messange.substring(MQTT_Messange.indexOf("/")+1,MQTT_Messange.length()),Broadcast);
+      xQueueSend(Queue_Delivery,&MQTT_Data,pdMS_TO_TICKS(100));
     }
 
 }
@@ -498,17 +478,14 @@ void DataLogging()//Store a record to database
     return;
   if((Firebase.ready() || gateway_node == 2) && ((unsigned long)(millis()- Last_datalogging_time)>time_delay_send_datalogging)||Last_datalogging_time == 0){
     Last_datalogging_time = millis();
+    O_Pack.SetMode(LogData);
     switch (gateway_node)
     {
     case 1: // Gateway -> Database
-      O_Pack = O_Data.GetData();
-      O_Pack.SetMode(LogData);
       xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(100));
       break;
     case 2: //Node -> Gateway
-      O_Data.SetNextIP(KnownIP[0]);
-      O_Data.SetData(ID,messanger,LogData);
-      xQueueSend(Queue_Delivery,&O_Data,pdMS_TO_TICKS(100));
+      xQueueSend(Queue_Delivery,&O_Pack,pdMS_TO_TICKS(100));
       break;
     default:
       break;
@@ -603,8 +580,7 @@ void Init_Server() // FIXME: Fix backend server
       request->send_P(Received_Code, "text/html", main_html);
   });//Home Page Server
   server.on("/Test",HTTP_GET,[](AsyncWebServerRequest *request){
-    O_Data.SetData(ID,messanger,Default);
-    request->send_P(Received_Code,"text/plain",O_Data.GetData().toString().c_str());
+    request->send(Received_Code);
   });// BUG: Remove it after done
   server.on("/Sercurity",HTTP_GET,[](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request) ) //Only for client from AP Mode
@@ -774,7 +750,7 @@ void Init_Server() // FIXME: Fix backend server
 void Delivery(void * pvParameters)
 {
   Serial.println("Delivery Task");
-  Transmit data;
+  DataPackage data;
   UBaseType_t uxHighWaterMark;
   uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
   Serial.println(uxHighWaterMark);
@@ -782,7 +758,7 @@ void Delivery(void * pvParameters)
   {
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
     LoRa.beginPacket();
-    LoRa.print(data.GetData().toString());
+    LoRa.print(data.toString());
     LoRa.endPacket();
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);
@@ -852,47 +828,6 @@ void ReceiveLoRa()
 }
 
 #pragma endregion LoRa
-#pragma ESP-NOW
-void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
-{
-  String success;
-  Serial.print("\r\nLast Packet Send Status:\t");
-  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
-  if (status ==0){
-    success = "Delivery Success :)";
-  }
-  else{
-    success = "Delivery Fail :(";
-  }
-}
-void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
-{
-  Serial.print("Data recceived from esp-now");
-  Serial.println((char*)incomingData);
-}
-void Init_ESPNOW()
-{
-  if (esp_now_init() != ESP_OK) {
-    Serial.println("Error initializing ESP-NOW");
-    return;
-  }
-  esp_now_register_send_cb(OnDataSent);
-  esp_now_register_recv_cb(OnDataRecv);
-}
-void Register_ESPNOW(uint8_t*broadcastAddress)
-{
-    // Register peer
-  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-  peerInfo.channel = 0;  
-  peerInfo.encrypt = false;
-  // Add peer        
-  if (esp_now_add_peer(&peerInfo) != ESP_OK){
-    Serial.println("Failed to add peer");
-    return;
-  }
-}
-
-#pragma endregion ESP-NOW
 #pragma region Send Message
 void PrepareMess() //Decide what to send
 {
@@ -1006,15 +941,13 @@ void SendMess() //Send mess prepared to who
 
     if(Person>0) //Send thourgh WebSocket
       notifyClients(messanger);
-    O_Data.SetData(ID,messanger,Default);
+    O_Pack.SetDataPackage(ID,messanger,Default);
     if(gateway_node == 2) //Send to Gateway only if It's a node
     {
-      O_Data.SetNextIP(KnownIP[0]);
-      xQueueSend(Queue_Delivery,&O_Data,pdMS_TO_TICKS(100));
+      xQueueSend(Queue_Delivery,&O_Pack,pdMS_TO_TICKS(100));
     }
     if(WiFi.status() == WL_CONNECTED && ping_flag && !first_sta && Firebase.ready()) //Send to database
     {
-      O_Pack = O_Data.GetData();
       xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(100));
     }  
   }
@@ -1245,7 +1178,6 @@ void setup()
   WiFi.softAP(ap_ssid.c_str(), ap_password.c_str());
   Connect_Network();
   Init_LoRa();
-  Init_ESPNOW();
 }
 void loop() 
 {
