@@ -180,6 +180,14 @@ const char main_html[] PROGMEM = R"rawliteral(
     .Error_Sensor{
       display: flex;
     }
+    input, .input_box input{
+      border: none;
+      outline: none;
+      background: transparent;
+    }
+    input{
+      text-align: center; 
+    }
     .input_box{
       position: relative;
       width: 800px;
@@ -201,12 +209,9 @@ const char main_html[] PROGMEM = R"rawliteral(
       top: -15px; 
     }
     .input_box input{
-      border: none;
-      outline: none;
       font-size: 1em;
       width: 100%;
       height: 50px;
-      background: transparent;
       color: aliceblue;
       padding: 0 35px 0 5px;
     }
@@ -255,8 +260,8 @@ const char main_html[] PROGMEM = R"rawliteral(
     <button id = "Security">Security</button>
     <button id ="LogOut">Log Out</button>
   </div>
-  <div id="NameTree">
-    UNKNOW
+  <div>
+    <input type="text" id="NameTree" value="No Name" maxlength="26" name="NameTree">
   </div>
 <div class="Sensor_Value">
 <!--Độ ẩm không khí-->
@@ -365,6 +370,7 @@ const char main_html[] PROGMEM = R"rawliteral(
   <script>
     var gateway = `ws://${window.location.hostname}/ws`;
     var websocket;
+    
     document.getElementById("LogOut").addEventListener("click",()=>{
       var xhr = new XMLHttpRequest();
       xhr.open("GET", "/logout", true);
@@ -385,6 +391,9 @@ const char main_html[] PROGMEM = R"rawliteral(
     document.getElementById("Security").addEventListener("click",()=>{
       window.open(location.href+"Sercurity","_self","")
     })
+    document.getElementById("NameTree").addEventListener("change",(e)=>{
+      websocket.send("NameTree: " + document.getElementById("NameTree").value);
+    })
     window.addEventListener('load', onLoad);
     function initWebSocket() {
       console.log('Trying to open a WebSocket connection...');
@@ -404,7 +413,7 @@ const char main_html[] PROGMEM = R"rawliteral(
     }
     function onMessage(event){
       console.log(String(event.data))
-      document.getElementById("NameTree").innerHTML = String(event.data).split("/")[1];
+      document.getElementById("NameTree").defaultValue = String(event.data).split("/")[1];
       for(var data of String(event.data).split("/"))
       {
         if(String(data).indexOf("humi") >= 0)
@@ -531,7 +540,7 @@ const char main_html[] PROGMEM = R"rawliteral(
     }
     function TheEnd()
     {
-      document.getElementById("overlay").removeEventListener("click",()=>{
+        document.getElementById("overlay").removeEventListener("click",()=>{
         document.getElementById("Wifi").style.display = "none";
         document.getElementById("overlay").classList.add("hide");
       })
