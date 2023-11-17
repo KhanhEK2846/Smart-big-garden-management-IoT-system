@@ -8,6 +8,7 @@ private:
     String ID;
     String data;
 public:
+    int expired;
     DataPackage();
     String GetID() const;
     String GetData() const;

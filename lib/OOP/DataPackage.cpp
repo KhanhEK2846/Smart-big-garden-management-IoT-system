@@ -5,6 +5,7 @@ DataPackage ::DataPackage()
     data = "";
     ID = "";
     Mode = "";
+    expired = 10;
 }
 
 String DataPackage:: GetID() const
@@ -46,6 +47,7 @@ DataPackage& DataPackage::operator=(const DataPackage temp)
     data = temp.data;
     ID = temp.ID;
     Mode = temp.Mode;
+    expired = temp.expired;
     return *this;
 }
 
@@ -58,6 +60,8 @@ String DataPackage::toString() const
     temp += this->Mode;
     temp += "\nData: " ;
     temp += this->data ;
+    temp += "\nExp: " ;
+    temp += this->expired;
     temp +=String("\n}");
     return temp;
 };
@@ -85,5 +89,6 @@ void DataPackage::fromString(const String data)
     String temp = data.substring(data.indexOf("{\n") + 3, data.lastIndexOf("\n}"));
     this->ID = temp.substring(temp.indexOf("ID: ")+4,temp.indexOf("\nMode:"));
     this->Mode = temp.substring(temp.indexOf("Mode: ")+6,temp.indexOf("\nData:"));
-    this->data = temp.substring(temp.indexOf("Data: ")+6, temp.length());
+    this->data = temp.substring(temp.indexOf("Data: ")+6, temp.indexOf("\nExp: "));
+    this->expired = atof(temp.substring(temp.indexOf("\nExp: ")+6, temp.length()).c_str());
 }
