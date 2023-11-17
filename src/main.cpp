@@ -2,6 +2,7 @@
 #include <DHT.h>
 #include <WiFi.h>
 #include <LoRa.h>
+#include <esp_now.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <PubSubClient.h>
@@ -54,12 +55,8 @@ boolean PumpsStatus = false; //Current Status Pump
 //Light
 boolean LightStatus = false; //Current Status Light
 //WIFI Variable
-// String sta_ssid = "ESP32_Server"; 
-// String sta_password = "123456789" ;
-// String ap_ssid = "ESP32_Client";
-// String ap_password = "123456789";
-String sta_ssid = "Sieu Viet 1"; 
-String sta_password = "02838474844" ;
+String sta_ssid = ""; 
+String sta_password = "" ;
 String ap_ssid = "ESP32_Server";
 String ap_password = "123456789";
 const unsigned long Network_TimeOut = 5000;// Wait 5 seconds to Connect Wifi
@@ -79,6 +76,8 @@ const int daylightOffset_sec = 0; //Daylight saving time
 IPAddress NMask(255, 255, 255, 0);
 IPAddress ApIP(192,168,1,1);
 String DeliveryIP = "";
+//ESP-NOW
+esp_now_peer_info_t peerInfo;
 //List Device Connected
 wifi_sta_list_t wifi_sta_list; //List of sta connect include MAC
 tcpip_adapter_sta_list_t adapter_sta_list; // List of Mac and IP
@@ -853,6 +852,47 @@ void ReceiveLoRa()
 }
 
 #pragma endregion LoRa
+#pragma ESP-NOW
+void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
+{
+  String success;
+  Serial.print("\r\nLast Packet Send Status:\t");
+  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+  if (status ==0){
+    success = "Delivery Success :)";
+  }
+  else{
+    success = "Delivery Fail :(";
+  }
+}
+void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
+{
+  Serial.print("Data recceived from esp-now");
+  Serial.println((char*)incomingData);
+}
+void Init_ESPNOW()
+{
+  if (esp_now_init() != ESP_OK) {
+    Serial.println("Error initializing ESP-NOW");
+    return;
+  }
+  esp_now_register_send_cb(OnDataSent);
+  esp_now_register_recv_cb(OnDataRecv);
+}
+void Register_ESPNOW(uint8_t*broadcastAddress)
+{
+    // Register peer
+  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+  peerInfo.channel = 0;  
+  peerInfo.encrypt = false;
+  // Add peer        
+  if (esp_now_add_peer(&peerInfo) != ESP_OK){
+    Serial.println("Failed to add peer");
+    return;
+  }
+}
+
+#pragma endregion ESP-NOW
 #pragma region Send Message
 void PrepareMess() //Decide what to send
 {
@@ -1205,6 +1245,7 @@ void setup()
   WiFi.softAP(ap_ssid.c_str(), ap_password.c_str());
   Connect_Network();
   Init_LoRa();
+  Init_ESPNOW();
 }
 void loop() 
 {
