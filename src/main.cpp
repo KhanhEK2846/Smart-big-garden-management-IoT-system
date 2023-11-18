@@ -8,7 +8,6 @@
 #include  <FirebaseESP32.h>
 #include "addons/RTDBHelper.h"
 #include <time.h>
-#include <esp_wifi.h>
 #include <HTTPClient.h>
 #include "DataPackage.h"
 #include "CommandCode.h"
@@ -71,17 +70,6 @@ boolean ping_flag = false; //Result Ping
 unsigned long timestamp;
 const long  gmtOffset_sec = 7 * 60 * 60; // UTC +7
 const int daylightOffset_sec = 0; //Daylight saving time
-//IPAdress AP
-IPAddress NMask(255, 255, 255, 0);
-IPAddress ApIP(192,168,1,1);
-String DeliveryIP = "";
-//List Device Connected
-wifi_sta_list_t wifi_sta_list; //List of sta connect include MAC
-tcpip_adapter_sta_list_t adapter_sta_list; // List of Mac and IP
-String KnownIP[4] = {"","","",""};//[0] is gateway, [1-2] is original node, [3] is reserved node 
-int FailIP[4] = {0,0,0,0}; //Amount of delivery fail
-int MAX_Clients = 2;
-int Num_Clients = 0;
 //Firebase Variable
 FirebaseData firebaseData;
 const unsigned long time_delay_send_datalogging = 180000; //3 minutes/Send
@@ -509,36 +497,12 @@ void Connect_Network()//Connect to Wifi Router
 {
   if(sta_ssid == "")
     return;
-  InitWaitGateway = &server.on("/YouAreNode",HTTP_POST,[](AsyncWebServerRequest *request){},NULL,
-  [](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
-    if(String((char*)data) == Init_Node_Code)
-    {
-      String dataWiFi = "{\n";
-      dataWiFi += "SSID: ";
-      dataWiFi += ap_ssid;
-      dataWiFi += "\nPassword: ";
-      dataWiFi += ap_password;
-      dataWiFi += "\n}";
-      request->send(Init_Gateway_Code,"text/plain",dataWiFi);
-      KnownIP[0] = request->client()->remoteIP().toString();
-      esp_wifi_deauth_sta(0);
-      if(WiFi.localIP()[3] == 254)
-        ApIP[3] = 1;
-      else
-        ApIP[3] = WiFi.localIP()[3] + 1;
-      WiFi.softAPConfig(ApIP,ApIP,NMask);
-      gateway_node = 2; //It become node
-      Person = 0;
-      Serial.println(WiFi.softAPIP().toString());
-    }else 
-      request->send(Forbidden_Code);
-    });
-    WiFi.begin(sta_ssid.c_str(), sta_password.c_str());
-    long current = millis();
-    while (WiFi.status() != WL_CONNECTED && (unsigned long) (millis()- current) < Network_TimeOut)
-    {
-      delay(500);
-    }
+  WiFi.begin(sta_ssid.c_str(), sta_password.c_str());
+  long current = millis();
+  while (WiFi.status() != WL_CONNECTED && (unsigned long) (millis()- current) < Network_TimeOut)
+  {
+    delay(500);
+  }
 
   if(WiFi.status() != WL_CONNECTED)
   {
@@ -779,13 +743,23 @@ void Capture(void * pvParameters)
       Serial.print("Received packet '");
             // read packet
       while (LoRa.available()) {
-        String LoRaData = LoRa.readString();
-        Serial.print(LoRaData); 
+        D_Pack.fromString(LoRa.readString());
+        Serial.print(D_Pack.toString()); 
       }
-
+      if(D_Pack.GetID() == ID || D_Pack.GetMode() == Infection ) //ReceiveIP & Infection mode 
+      {
+        D_Command = D_Pack.GetData();
+        xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
+        if(D_Pack.GetMode() != Infection)
+          return;
+      }
+      if (D_Pack.GetMode() == Broadcast || D_Pack.GetMode() == Infection) //Broadcast & Infection mode
+      {
+        xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
+      }
       // print RSSI of packet
-      Serial.print("' with RSSI ");
-      Serial.println(LoRa.packetRssi());
+      // Serial.print("' with RSSI ");
+      // Serial.println(LoRa.packetRssi());
     }
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);
@@ -1181,7 +1155,7 @@ void setup()
 }
 void loop() 
 {
-  //Auto();
-  //Network();
+  Auto();
+  Network();
 }
 #pragma endregion
