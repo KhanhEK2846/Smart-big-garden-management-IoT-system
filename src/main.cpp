@@ -746,6 +746,9 @@ void Capture(void * pvParameters)
         D_Pack.fromString(LoRa.readString());
         Serial.print(D_Pack.toString()); 
       }
+      if(D_Pack.expired == 0)
+        return;
+      --D_Pack.expired; 
       if(D_Pack.GetID() == ID || D_Pack.GetMode() == Infection ) //ReceiveIP & Infection mode 
       {
         D_Command = D_Pack.GetData();
