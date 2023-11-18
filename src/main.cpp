@@ -757,6 +757,22 @@ void Capture(void * pvParameters)
       {
         xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
       }
+      if(D_Pack.GetMode() == Default || D_Pack.GetMode() == LogData)
+      {
+        if(gateway_node == 0)
+        {
+          return;
+        }
+        if(gateway_node == 1)// If it's a gateway -> Send to Database
+        {
+          xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(100));
+          return;
+        }
+        if(gateway_node ==2)//If it's a node -> Delivery to Gateway
+        {
+          xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
+        }
+      }
       // print RSSI of packet
       // Serial.print("' with RSSI ");
       // Serial.println(LoRa.packetRssi());
