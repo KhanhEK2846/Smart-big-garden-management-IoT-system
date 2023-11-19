@@ -381,10 +381,7 @@ const char main_html[] PROGMEM = R"rawliteral(
       document.getElementById("Wifi").style.display = "flex";
       document.getElementById("overlay").classList.remove("hide");
     })
-    document.getElementById("overlay").addEventListener("click",()=>{
-      document.getElementById("Wifi").style.display = "none";
-      document.getElementById("overlay").classList.add("hide");
-    })
+    document.getElementById("overlay").addEventListener("click",OverLay)
     document.getElementById("Bound").addEventListener("click",()=>{
       window.open(location.href+"Tolerance","_self","")
     })
@@ -538,15 +535,20 @@ const char main_html[] PROGMEM = R"rawliteral(
       var temp = Math.floor(504 * (1 - (value/100)));
       document.getElementById(name2).style.strokeDashoffset = temp;
     }
-    function TheEnd()
+    function OverLay()
     {
-        document.getElementById("overlay").removeEventListener("click",()=>{
         document.getElementById("Wifi").style.display = "none";
         document.getElementById("overlay").classList.add("hide");
-      })
-      document.getElementById("Wifi").style.display = "flex";
+    }
+    function TheEnd()
+    {
       document.getElementById("overlay").classList.remove("hide");
-      document.getElementById("Wifi").innerHTML = "The end";
+      document.getElementById("overlay").style.zIndex = 3;
+      document.getElementById("overlay").removeEventListener("click",OverLay);
+      document.getElementById("Wifi").style.display = "flex";
+      document.getElementById("Wifi").style.zIndex = 4;
+      document.getElementById("Wifi").innerHTML = "<b>Lost Connection to Server<b>";
+      
     }
   </script>
 </body>
