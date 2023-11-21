@@ -364,58 +364,6 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
 
 }
 #pragma endregion
-#pragma region Hypertext Transfer Protocol
-// void Delivery(void * pvParameters) //Task Delivery from node to gateway and reverse
-// {
-//   Serial.println("Delivery Task");
-//   Transmit data;
-//   UBaseType_t uxHighWaterMark;
-//   uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-//   Serial.println(uxHighWaterMark);
-//   WiFiClient node;
-//   int IP = 0;
-//   while(true)
-//   {
-//     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
-//     xSemaphoreTake(xMutex_HTTP,portMAX_DELAY);
-//     HTTPClient http;
-//     DeliveryIP.clear();
-//     IP = IsKnown(data.GetNextIP());
-//     if(IP == -1)
-//       continue;
-//     DeliveryIP = "http://";
-//     DeliveryIP += KnownIP[IP];
-//     DeliveryIP += "/Delivery";
-//     if(http.begin(node,DeliveryIP))
-//       int httpResponseCode = http.POST(data.GetData().toString());
-//     else
-//     {
-//       if(FailIP[IP] < 3)
-//         FailIP[IP] += 1; 
-//       else
-//       {
-//         if(IP == 0)
-//         {
-//           WiFi.disconnect(true,true);
-//           gateway_node = 0;
-//           KnownIP[0] = "";
-//           continue;
-//         }
-//         uint8_t t_mac[6];
-//         uint16_t t_aid;
-//         StringtoMACAddress(IPtoMAC(KnownIP[IP]),t_mac);
-//         esp_wifi_ap_get_sta_aid(t_mac,&t_aid);
-//         esp_wifi_deauth_sta(t_aid);
-//       }
-//     }
-//     http.end();
-//     delay(10);
-//     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-//     Serial.println(uxHighWaterMark);
-//     xSemaphoreGive(xMutex_HTTP);
-//   }
-// }
-#pragma endregion
 #pragma region Cloud Database
 void DataLog(void * pvParameters)
 {
@@ -676,18 +624,6 @@ void Delivery(void * pvParameters)
     Serial.println(uxHighWaterMark);
   }
 }
-void Init_LoRa()
-{
-  LoRa.setPins();
-  while (!LoRa.begin(866E6)) {
-    Serial.println(".");
-    delay(500);
-  }
-  // ranges from 0-0xFF
-  LoRa.setSyncWord(0xF3);
-  LoRa.onReceive(onReceive);
-  LoRa.receive();
-}
 void onReceive(int packetSize)
 {
     if (packetSize == 0) return;
@@ -726,6 +662,18 @@ void onReceive(int packetSize)
       }
     }
 
+}
+void Init_LoRa()
+{
+  LoRa.setPins();
+  while (!LoRa.begin(866E6)) {
+    Serial.println(".");
+    delay(500);
+  }
+  // ranges from 0-0xFF
+  LoRa.setSyncWord(0xF3);
+  LoRa.onReceive(onReceive);
+  LoRa.receive();
 }
 void SendLoRa(String data)
 {
