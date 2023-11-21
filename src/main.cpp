@@ -108,7 +108,6 @@ DataPackage MQTT_Data;
 //Task Delivery Data
 TaskHandle_t DeliveryTask = NULL;
 TaskHandle_t DatabaseTask = NULL;
-TaskHandle_t CaptureTask = NULL;
 QueueHandle_t Queue_Delivery = NULL;
 QueueHandle_t Queue_Command = NULL;
 QueueHandle_t Queue_Database = NULL;
@@ -650,57 +649,6 @@ void Init_Server() // FIXME: Fix backend server
   server.on("/logout",HTTP_GET,[](AsyncWebServerRequest *request){
     request->send(Unauthorized_Code);
   });
-  // server.on("/Delivery",HTTP_POST,[](AsyncWebServerRequest *request){ //Receive data from Node
-  // },NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
-  //   request->send(Received_Code);
-  //   Transmit package;
-  //   package.DataFromString(String((char*) data));
-  //   //Serial.println(package.GetData().toString());
-  //   if(gateway_node == 0)
-  //     return;  
-  //   if(package.GetData().GetID() == ID || package.GetData().GetMode() == Infection ) //ReceiveIP & Infection mode 
-  //   {
-  //     D_Command = package.GetData().GetData();
-  //     xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
-  //     if(package.GetData().GetMode() != Infection)
-  //       return;
-  //   }
-  //   if (package.GetData().GetMode() == Broadcast || package.GetData().GetMode() == Infection) //Broadcast & Infection mode
-  //   {
-  //     int t_flag = IsKnown(request->client()->remoteIP().toString());
-  //     if(t_flag != -1)
-  //     {
-  //       for(int i =0; i< 4 ;i++)
-  //       {
-  //         if(i == t_flag || KnownIP[i] == "")
-  //           continue;
-  //         package.SetNextIP(KnownIP[i]);
-  //         xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
-  //       }
-  //     }
-  //   } 
-  //   if(package.GetData().GetMode() == Default || package.GetData().GetMode() == LogData) // Default mode
-  //   {
-  //     if(gateway_node == 0)
-  //     {
-  //       Serial.println(package.GetData().toString());
-  //       return;
-  //     }
-  //     if(gateway_node == 1) // If it's a gateway -> Send to Database
-  //     {
-  //       D_Pack = package.GetData();
-  //       xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(100));
-  //       return;
-  //     }
-  //     if(gateway_node == 2)//If it's a node -> Delivery to Gateway
-  //     {
-  //       package.SetNextIP(KnownIP[0]);
-  //       xQueueSend(Queue_Delivery,&package,pdMS_TO_TICKS(100));
-  //       return;
-  //     }
-      
-  //   }
-  // });
   server.onNotFound([](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request)) //Only for client from AP Mode
       return request->redirect("https://youtu.be/dQw4w9WgXcQ");
@@ -728,62 +676,6 @@ void Delivery(void * pvParameters)
     Serial.println(uxHighWaterMark);
   }
 }
-void Capture(void * pvParameters)
-{
-  Serial.println("Capture Task");
-  UBaseType_t uxHighWaterMark;
-  uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-  Serial.println(uxHighWaterMark);
-  int CaptureSuccess;
-  while(true)
-  {
-    CaptureSuccess = LoRa.parsePacket();
-    if(CaptureSuccess)
-    {
-      Serial.print("Received packet '");
-            // read packet
-      while (LoRa.available()) {
-        D_Pack.fromString(LoRa.readString());
-        Serial.print(D_Pack.toString()); 
-      }
-      if(D_Pack.expired == 0)
-        return;
-      --D_Pack.expired; 
-      if(D_Pack.GetID() == ID || D_Pack.GetMode() == Infection ) //ReceiveIP & Infection mode 
-      {
-        D_Command = D_Pack.GetData();
-        xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
-        if(D_Pack.GetMode() != Infection)
-          return;
-      }
-      if (D_Pack.GetMode() == Broadcast || D_Pack.GetMode() == Infection) //Broadcast & Infection mode
-      {
-        xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
-      }
-      if(D_Pack.GetMode() == Default || D_Pack.GetMode() == LogData)
-      {
-        if(gateway_node == 0)
-        {
-          return;
-        }
-        if(gateway_node == 1)// If it's a gateway -> Send to Database
-        {
-          xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(100));
-          return;
-        }
-        if(gateway_node ==2)//If it's a node -> Delivery to Gateway
-        {
-          xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
-        }
-      }
-      // print RSSI of packet
-      // Serial.print("' with RSSI ");
-      // Serial.println(LoRa.packetRssi());
-    }
-    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-    Serial.println(uxHighWaterMark);
-  }
-}
 void Init_LoRa()
 {
   LoRa.setPins();
@@ -793,6 +685,47 @@ void Init_LoRa()
   }
   // ranges from 0-0xFF
   LoRa.setSyncWord(0xF3);
+  LoRa.onReceive(onReceive);
+  LoRa.receive();
+}
+void onReceive(int packetSize)
+{
+    if (packetSize == 0) return;
+    
+    D_Pack.fromString(LoRa.readString());
+    Serial.print(D_Pack.toString());  
+
+    if(D_Pack.expired == 0)
+      return;
+    --D_Pack.expired; 
+    if(D_Pack.GetID() == ID || D_Pack.GetMode() == Infection ) //ReceiveIP & Infection mode 
+    {
+      D_Command = D_Pack.GetData();
+      xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
+      if(D_Pack.GetMode() != Infection)
+        return;
+    }
+    if (D_Pack.GetMode() == Broadcast || D_Pack.GetMode() == Infection) //Broadcast & Infection mode
+    {
+      xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
+    }
+    if(D_Pack.GetMode() == Default || D_Pack.GetMode() == LogData)
+    {
+      if(gateway_node == 0)
+      {
+        return;
+      }
+      if(gateway_node == 1)// If it's a gateway -> Send to Database
+      {
+        xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(100));
+        return;
+      }
+      if(gateway_node ==2)//If it's a node -> Delivery to Gateway
+      {
+        xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
+      }
+    }
+
 }
 void SendLoRa(String data)
 {
@@ -1106,14 +1039,6 @@ void Init_Task()
     NULL,
     0,
     &DatabaseTask
-  );
-  xTaskCreate(
-    Capture,
-    "Capture",
-    8000,
-    NULL,
-    0,
-    &CaptureTask
   );
 }
 void Network()// Netword Part
