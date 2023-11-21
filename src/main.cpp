@@ -619,7 +619,7 @@ void Delivery(void * pvParameters)
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
     LoRa.beginPacket();
     LoRa.print(data.toString());
-    LoRa.endPacket();
+    LoRa.endPacket(true);
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);
   }
@@ -675,32 +675,6 @@ void Init_LoRa()
   LoRa.onReceive(onReceive);
   LoRa.receive();
 }
-void SendLoRa(String data)
-{
-  LoRa.beginPacket();
-  LoRa.print(data);
-  LoRa.endPacket();
-}
-void ReceiveLoRa()
-{
-  int packetSize = LoRa.parsePacket();
-    if (packetSize) 
-    {
-      // received a packet
-      Serial.print("Received packet '");
-
-      // read packet
-      while (LoRa.available()) {
-        String LoRaData = LoRa.readString();
-        Serial.print(LoRaData); 
-      }
-
-      // print RSSI of packet
-      Serial.print("' with RSSI ");
-      Serial.println(LoRa.packetRssi());
-    }
-}
-
 #pragma endregion LoRa
 #pragma region Send Message
 void PrepareMess() //Decide what to send
