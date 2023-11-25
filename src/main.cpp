@@ -105,6 +105,8 @@ DataPackage O_Pack;
 String O_Command;
 String D_Command;
 DataPackage MQTT_Data;
+const unsigned long own_delay_send = 500;
+unsigned long own_wait_time = 0;
 //Task Delivery Data
 TaskHandle_t DeliveryTask = NULL;
 TaskHandle_t DatabaseTask = NULL;
@@ -622,6 +624,7 @@ void Delivery(void * pvParameters)
     LoRa.endPacket(true);
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);
+    delay(500);
   }
 }
 void onReceive(int packetSize)
@@ -790,8 +793,9 @@ void SendMess() //Send mess prepared to who
     if(Person>0) //Send thourgh WebSocket
       notifyClients(messanger);
     O_Pack.SetDataPackage(ID,messanger,Default);
-    if(gateway_node == 2) //Send to Gateway only if It's a node
+    if(gateway_node == 2 && ((unsigned long)(millis() - own_wait_time)>own_delay_send || own_wait_time ==0)) //Send to Gateway only if It's a node
     {
+      own_wait_time = millis();
       xQueueSend(Queue_Delivery,&O_Pack,pdMS_TO_TICKS(100));
     }
     if(WiFi.status() == WL_CONNECTED && ping_flag && !first_sta && Firebase.ready()) //Send to database
