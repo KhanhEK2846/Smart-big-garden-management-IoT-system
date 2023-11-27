@@ -611,7 +611,8 @@ void onReceive(int packetSize)
     
     D_Pack.fromString(LoRa.readString());
     Serial.print(D_Pack.toString());  
-
+    Serial.println(String(LoRa.packetRssi()));
+    Serial.println(String(LoRa.packetSnr()));
     if(D_Pack.expired == 0)
       return;
     --D_Pack.expired; 
