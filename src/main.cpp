@@ -382,8 +382,13 @@ void DataLog(void * pvParameters)
     xQueueReceive(Queue_Database,&data,portMAX_DELAY); 
     data.DataToJson(&json_data);
     json_data.set("Status/MQTT",String(MQTTStatus));
+    Root = "Realtime/";
+    Root += data.GetID();
+    Root += "/";
+    Firebase.RTDB.updateNodeSilentAsync(&firebaseData, Root, &json_data);
     if(data.GetMode() == LogData)
     {
+      while(!Firebase.ready()){}
       time_log = getTime();
       Root = "DataLog/";
       Root += data.GetID();
@@ -391,13 +396,6 @@ void DataLog(void * pvParameters)
       Root += String(time_log);
       Root += "/";
       Firebase.RTDB.setJSONAsync(&firebaseData, Root, &json_data);
-    }
-    else
-    {
-      Root = "Realtime/";
-      Root += data.GetID();
-      Root += "/";
-      Firebase.RTDB.updateNodeSilentAsync(&firebaseData, Root, &json_data);
     }
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);  
@@ -408,26 +406,6 @@ void Setup_RTDB()//Initiate Realtime Database Firebase
   Firebase.begin(DATABASE_URL,Database_Secrets);
   Firebase.reconnectWiFi(true);
   firebaseData.setResponseSize(4096);
-}
-void DataLogging()//Store a record to database
-{
-  if(WiFi.status() != WL_CONNECTED || ((!ping_flag || first_sta) && (gateway_node != 2)))
-    return;
-  if((Firebase.ready() || gateway_node == 2) && ((unsigned long)(millis()- Last_datalogging_time)>time_delay_send_datalogging)||Last_datalogging_time == 0){
-    Last_datalogging_time = millis();
-    O_Pack.SetMode(LogData);
-    switch (gateway_node)
-    {
-    case 1: // Gateway -> Database
-      xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(100));
-      break;
-    case 2: //Node -> Gateway
-      xQueueSend(Queue_Delivery,&O_Pack,pdMS_TO_TICKS(100));
-      break;
-    default:
-      break;
-    }
-  }
 }
 #pragma endregion
 #pragma region Network
@@ -639,6 +617,8 @@ void onReceive(int packetSize)
     --D_Pack.expired; 
     if(D_Pack.GetID() == ID || D_Pack.GetMode() == Infection ) //ReceiveIP & Infection mode 
     {
+      if(D_Pack.GetMode() == Default)
+        return;
       D_Command = D_Pack.GetData();
       xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
       if(D_Pack.GetMode() != Infection)
@@ -647,6 +627,7 @@ void onReceive(int packetSize)
     if (D_Pack.GetMode() == Broadcast || D_Pack.GetMode() == Infection) //Broadcast & Infection mode
     {
       xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
+      return;
     }
     if(D_Pack.GetMode() == Default || D_Pack.GetMode() == LogData)
     {
@@ -662,6 +643,7 @@ void onReceive(int packetSize)
       if(gateway_node ==2)//If it's a node -> Delivery to Gateway
       {
         xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
+        return;
       }
     }
 
@@ -792,16 +774,40 @@ void SendMess() //Send mess prepared to who
 
     if(Person>0) //Send thourgh WebSocket
       notifyClients(messanger);
-    O_Pack.SetDataPackage(ID,messanger,Default);
-    if(gateway_node == 2 && ((unsigned long)(millis() - own_wait_time)>own_delay_send || own_wait_time ==0)) //Send to Gateway only if It's a node
+    if(((unsigned long)(millis()- Last_datalogging_time)>time_delay_send_datalogging)||Last_datalogging_time == 0)
     {
-      own_wait_time = millis();
-      xQueueSend(Queue_Delivery,&O_Pack,pdMS_TO_TICKS(100));
+      if(((!ping_flag || first_sta) && (gateway_node != 2)))
+        return;
+      if(Firebase.ready() || gateway_node == 2)
+      {
+        Last_datalogging_time = millis();
+        O_Pack.SetDataPackage(ID,messanger,LogData);
+        switch (gateway_node)
+        {
+        case 1: // Gateway -> Database
+          xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(100));
+          break;
+        case 2: //Node -> Gateway
+          xQueueSend(Queue_Delivery,&O_Pack,pdMS_TO_TICKS(100));
+          break;
+        default:
+          break;
+        }
+      }
     }
-    if(WiFi.status() == WL_CONNECTED && ping_flag && !first_sta && Firebase.ready()) //Send to database
+    else
     {
-      xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(100));
-    }  
+      O_Pack.SetDataPackage(ID,messanger,Default);
+      if(gateway_node == 2 && ((unsigned long)(millis() - own_wait_time)>own_delay_send || own_wait_time ==0)) //Send to Gateway only if It's a node
+      {
+        own_wait_time = millis();
+        xQueueSend(Queue_Delivery,&O_Pack,pdMS_TO_TICKS(100));
+      }
+      if(WiFi.status() == WL_CONNECTED && ping_flag && !first_sta && Firebase.ready()) //Send to database
+      {
+        xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(100));
+      }  
+    }
   }
 }
 #pragma endregion Send Message
@@ -972,7 +978,6 @@ void Network()// Netword Part
   ws.cleanupClients();
   PrepareMess();
   SendMess();
-  DataLogging();
   if(sta_flag)
   {
     WiFi.mode(WIFI_AP_STA);
