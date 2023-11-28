@@ -57,7 +57,11 @@ String Contingency_sta_ssid = "";
 String Contingency_sta_password = "";
 int disconnected_wifi_count = -1;
 //LoRa Variable
-
+//NodeMCU 
+//LoRa_E32 lora(&Serial2); //16-RX 17-TX
+//ESP32-C3
+SoftwareSerial mySerial(19, 18); // e32 TX e32 RX
+LoRa_E32 lora(&mySerial);
 //Ping
 WiFiClient PingClient;
 const unsigned long time_delay_to_ping = 300000; // 5 minutes/ping
