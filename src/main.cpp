@@ -20,11 +20,6 @@
 #define Soil_Moisture 2 //Read Soild Sensor
 #define Pumps 4 // Control Pump
 #define Light 5 //Control Light
-//SPI Port
-#define CS_Port 14
-#define CLK_Port 15
-#define MISO_Port 17
-#define MOSI_Port 16
 //DHT11 Variable
 #define DHTTYPE DHT22 
 DHT dht(DHTPIN, DHTTYPE);
@@ -61,6 +56,8 @@ const unsigned long Network_TimeOut = 5000;// Wait 5 seconds to Connect Wifi
 String Contingency_sta_ssid = ""; 
 String Contingency_sta_password = "";
 int disconnected_wifi_count = -1;
+//LoRa Variable
+
 //Ping
 WiFiClient PingClient;
 const unsigned long time_delay_to_ping = 300000; // 5 minutes/ping
