@@ -1,7 +1,7 @@
 ﻿#include <Arduino.h>
 #include <DHT.h>
 #include <WiFi.h>
-#include <LoRa.h>
+#include <LoRa_E32.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <PubSubClient.h>
@@ -589,77 +589,77 @@ void Init_Server() // FIXME: Fix backend server
 #pragma region LoRa
 void Delivery(void * pvParameters)
 {
-  Serial.println("Delivery Task");
-  DataPackage data;
-  UBaseType_t uxHighWaterMark;
-  uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-  Serial.println(uxHighWaterMark);
-  while(true)
-  {
-    xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
-    LoRa.beginPacket();
-    LoRa.print(data.toString());
-    LoRa.endPacket(true);
-    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-    Serial.println(uxHighWaterMark);
-    delay(500);
-  }
+  // Serial.println("Delivery Task");
+  // DataPackage data;
+  // UBaseType_t uxHighWaterMark;
+  // uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+  // Serial.println(uxHighWaterMark);
+  // while(true)
+  // {
+  //   xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
+  //   LoRa.beginPacket();
+  //   LoRa.print(data.toString());
+  //   LoRa.endPacket(true);
+  //   uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+  //   Serial.println(uxHighWaterMark);
+  //   delay(500);
+  // }
 }
 void onReceive(int packetSize)
 {
-    if (packetSize == 0) return;
+    // if (packetSize == 0) return;
     
-    D_Pack.fromString(LoRa.readString());
-    Serial.print(D_Pack.toString());  
-    Serial.println(String(LoRa.packetRssi()));
-    Serial.println(String(LoRa.packetSnr()));
-    if(D_Pack.expired == 0)
-      return;
-    --D_Pack.expired; 
-    if(D_Pack.GetID() == ID || D_Pack.GetMode() == Infection ) //ReceiveIP & Infection mode 
-    {
-      if(D_Pack.GetMode() == Default)
-        return;
-      D_Command = D_Pack.GetData();
-      xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
-      if(D_Pack.GetMode() != Infection)
-        return;
-    }
-    if (D_Pack.GetMode() == Broadcast || D_Pack.GetMode() == Infection) //Broadcast & Infection mode
-    {
-      xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
-      return;
-    }
-    if(D_Pack.GetMode() == Default || D_Pack.GetMode() == LogData)
-    {
-      if(gateway_node == 0)
-      {
-        return;
-      }
-      if(gateway_node == 1)// If it's a gateway -> Send to Database
-      {
-        xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(100));
-        return;
-      }
-      if(gateway_node ==2)//If it's a node -> Delivery to Gateway
-      {
-        xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
-        return;
-      }
-    }
+    // D_Pack.fromString(LoRa.readString());
+    // Serial.print(D_Pack.toString());  
+    // Serial.println(String(LoRa.packetRssi()));
+    // Serial.println(String(LoRa.packetSnr()));
+    // if(D_Pack.expired == 0)
+    //   return;
+    // --D_Pack.expired; 
+    // if(D_Pack.GetID() == ID || D_Pack.GetMode() == Infection ) //ReceiveIP & Infection mode 
+    // {
+    //   if(D_Pack.GetMode() == Default)
+    //     return;
+    //   D_Command = D_Pack.GetData();
+    //   xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
+    //   if(D_Pack.GetMode() != Infection)
+    //     return;
+    // }
+    // if (D_Pack.GetMode() == Broadcast || D_Pack.GetMode() == Infection) //Broadcast & Infection mode
+    // {
+    //   xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
+    //   return;
+    // }
+    // if(D_Pack.GetMode() == Default || D_Pack.GetMode() == LogData)
+    // {
+    //   if(gateway_node == 0)
+    //   {
+    //     return;
+    //   }
+    //   if(gateway_node == 1)// If it's a gateway -> Send to Database
+    //   {
+    //     xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(100));
+    //     return;
+    //   }
+    //   if(gateway_node ==2)//If it's a node -> Delivery to Gateway
+    //   {
+    //     xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
+    //     return;
+    //   }
+    // }
 
 }
 void Init_LoRa()
 {
-  LoRa.setPins();
-  while (!LoRa.begin(866E6)) {
-    Serial.println(".");
-    delay(500);
-  }
-  // ranges from 0-0xFF
-  LoRa.setSyncWord(0xF3);
-  LoRa.onReceive(onReceive);
-  LoRa.receive();
+  // LoRa.setPins();
+  // while (!LoRa.begin(866E6)) {
+  //   Serial.println(".");
+  //   delay(500);
+  // }
+  // // ranges from 0-0xFF
+  // LoRa.setSyncWord(0xF3);
+  // LoRa.onReceive(onReceive);
+  // LoRa.receive();
 }
 #pragma endregion LoRa
 #pragma region Send Message
