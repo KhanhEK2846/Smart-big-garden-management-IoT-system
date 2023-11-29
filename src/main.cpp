@@ -56,7 +56,7 @@ const unsigned long Network_TimeOut = 5000;// Wait 5 seconds to Connect Wifi
 String Contingency_sta_ssid = ""; 
 String Contingency_sta_password = "";
 int disconnected_wifi_count = -1;
-//LoRa Variable
+//LoRa Variable //TODO: Add FUll GPIO
 //NodeMCU 
 //LoRa_E32 lora(&Serial2); //16-RX 17-TX
 //ESP32-C3
@@ -328,7 +328,7 @@ void connect_to_broker() // Connect to the broker
     }
   }
 }
-void callback(char* topic, byte *payload, unsigned int length)// Receive Messange From Broker //[ ] Test it
+void callback(char* topic, byte *payload, unsigned int length)// Receive Messange From Broker
 {
     MQTT_Messange = String((char*)payload).substring(String((char*)payload).indexOf("{")+1,String((char*)payload).indexOf("}"));
     String t_ID = MQTT_Messange.substring(0,MQTT_Messange.indexOf("/"));
@@ -472,9 +472,6 @@ void Init_Server() // FIXME: Fix backend server
       return request->requestAuthentication();
       request->send_P(Received_Code, "text/html", main_html);
   });//Home Page Server
-  server.on("/Test",HTTP_GET,[](AsyncWebServerRequest *request){
-    request->send(Received_Code);
-  });// BUG: Remove it after done
   server.on("/Sercurity",HTTP_GET,[](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request) ) //Only for client from AP Mode
       return request->redirect("/NothingHereForYou");
