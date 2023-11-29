@@ -615,7 +615,7 @@ void Capture(void * pvParameters)
     Serial.println(uxHighWaterMark);
     if(lora.available())
     {
-      mess = lora.receiveMessage();
+      mess = lora.receiveMessageUntil();
       if(mess.status.code == 1)
       {
         D_Pack.fromString(mess.data);
