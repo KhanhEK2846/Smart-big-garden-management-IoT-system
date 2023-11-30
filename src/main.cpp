@@ -994,35 +994,34 @@ void PrepareMess() //Decide what to send
 }
 void SendMess() //Send mess prepared to who
 {
-  if(valueChange_flag)
+  if(Person>0 && valueChange_flag) //Send thourgh WebSocket
+    notifyClients(messanger);
+  if(((unsigned long)(millis()- Last_datalogging_time)>time_delay_send_datalogging)||Last_datalogging_time == 0)
   {
-
-    if(Person>0) //Send thourgh WebSocket
-      notifyClients(messanger);
-    if(((unsigned long)(millis()- Last_datalogging_time)>time_delay_send_datalogging)||Last_datalogging_time == 0)
+    if(WiFi.status() != WL_CONNECTED || ((!ping_flag || first_sta) && (gateway_node != 2)))
+      return;
+    if((Firebase.ready() || gateway_node == 2) && ((unsigned long)(millis()- Last_datalogging_time)>time_delay_send_datalogging)||Last_datalogging_time == 0)
     {
-      if(WiFi.status() != WL_CONNECTED || ((!ping_flag || first_sta) && (gateway_node != 2)))
-        return;
-      if((Firebase.ready() || gateway_node == 2) && ((unsigned long)(millis()- Last_datalogging_time)>time_delay_send_datalogging)||Last_datalogging_time == 0)
+      Last_datalogging_time = millis();
+      O_Data.SetData(ID,messanger,LogData);
+      switch (gateway_node)
       {
-        Last_datalogging_time = millis();
-        O_Data.SetData(ID,messanger,LogData);
-        switch (gateway_node)
-        {
-          case 1: // Gateway -> Database
-            O_Pack = O_Data.GetData();
-            xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(100));
-            break;
-          case 2: //Node -> Gateway
-            O_Data.SetNextIP(KnownIP[0]);
-            xQueueSend(Queue_Delivery,&O_Data,pdMS_TO_TICKS(100));
-            break;
-          default:
-            break;
-        }
+        case 1: // Gateway -> Database
+          O_Pack = O_Data.GetData();
+          xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(100));
+          break;
+        case 2: //Node -> Gateway
+          O_Data.SetNextIP(KnownIP[0]);
+          xQueueSend(Queue_Delivery,&O_Data,pdMS_TO_TICKS(100));
+          break;
+        default:
+          break;
       }
     }
-    else
+  }
+  else
+  {
+    if(valueChange_flag)
     {
       O_Data.SetData(ID,messanger,Default);
       if(gateway_node == 2 && ((unsigned long)(millis() - own_wait_time)>own_delay_send || own_wait_time ==0)) //Send to Gateway only if It's a node
@@ -1035,9 +1034,8 @@ void SendMess() //Send mess prepared to who
       {
         O_Pack = O_Data.GetData();
         xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(100));
-      }  
+      } 
     }
-
   }
 }
 #pragma endregion Send Message
