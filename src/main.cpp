@@ -62,6 +62,7 @@ int disconnected_wifi_count = -1;
 //ESP32-C3
 SoftwareSerial mySerial(19, 18); // e32 TX e32 RX
 LoRa_E32 lora(&mySerial);
+boolean lora_flag = false;
 //Ping
 WiFiClient PingClient;
 const unsigned long time_delay_to_ping = 300000; // 5 minutes/ping
@@ -665,6 +666,26 @@ void Capture(void * pvParameters)
 void Init_LoRa()
 {
   lora.begin();
+  ResponseStructContainer c;
+  ResponseStructContainer cMi;
+  c = lora.getConfiguration();
+  cMi = lora.getModuleInformation();
+  if(c.status.code == 1 && cMi.status.code == 1)
+  {
+    Serial.println("LoRa OK");
+    lora_flag = true;
+  }
+  else
+  {
+    Serial.println("LoRa not OK");
+    Serial.print("Configuration: ");
+    Serial.println(c.status.getResponseDescription());
+    Serial.print("Module Information: ");
+    Serial.println(cMi.status.getResponseDescription());
+    lora_flag = false;
+  }
+  c.close();
+  cMi.close();
 }
 #pragma endregion LoRa
 #pragma region Send Message
