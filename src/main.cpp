@@ -58,10 +58,10 @@ String Contingency_sta_password = "";
 int disconnected_wifi_count = -1;
 //LoRa Variable //TODO: Add FUll GPIO
 //NodeMCU 
-//LoRa_E32 lora(&Serial2); //16-RX 17-TX
+LoRa_E32 lora(&Serial2,15,2,0); //16-RX 17-TX
 //ESP32-C3
-SoftwareSerial mySerial(19, 18); // e32 TX e32 RX
-LoRa_E32 lora(&mySerial);
+// SoftwareSerial mySerial(19, 18); // e32 TX e32 RX
+// LoRa_E32 lora(&mySerial);
 boolean lora_flag = false;
 //Ping
 WiFiClient PingClient;
@@ -592,15 +592,17 @@ void Delivery(void * pvParameters)
   Serial.println("Delivery Task");
   DataPackage data;
   UBaseType_t uxHighWaterMark;
+  ResponseStatus rs;
   uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
   Serial.println(uxHighWaterMark);
   while(true)
   {
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
-    lora.sendMessage(data.toString());
+    rs = lora.sendMessage(data.toString());
+    Serial.println(rs.getResponseDescription());
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);
-    delay(500);
+    delay(2000);
   }
 }
 void Capture(void * pvParameters)
@@ -674,6 +676,8 @@ void Init_LoRa()
   {
     Serial.println("LoRa OK");
     lora_flag = true;
+    if(gateway_node == 0)
+      gateway_node = 2;
   }
   else
   {
