@@ -1048,6 +1048,7 @@ void setup()
 {
   Serial.begin(9600);
   Serial.println();
+  Init_LoRa();
   Init_Task();
   initWebSocket();
   pinMode(Pumps,OUTPUT);
@@ -1060,7 +1061,6 @@ void setup()
   Init_Server();
   WiFi.softAP(ap_ssid.c_str(), ap_password.c_str());
   Connect_Network();
-  Init_LoRa();
 }
 void loop() 
 {
