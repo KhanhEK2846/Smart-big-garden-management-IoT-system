@@ -61,7 +61,7 @@ int disconnected_wifi_count = -1;
 LoRa_E32 lora(&Serial2,15,2,0); //16-RX 17-TX
 //ESP32-C3
 // SoftwareSerial mySerial(19, 18); // e32 TX e32 RX
-// LoRa_E32 lora(&mySerial);
+// LoRa_E32 lora(&Serial,6,7,8);
 boolean lora_flag = false;
 //Ping
 WiFiClient PingClient;
