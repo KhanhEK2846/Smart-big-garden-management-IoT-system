@@ -53,42 +53,54 @@ DataPackage& DataPackage::operator=(const DataPackage temp)
 
 String DataPackage::toString() const
 {
-    String temp = String("{\n") ;
-    temp += "ID: ";
+    String temp = String("{") ;
     temp += this->ID;
-    temp += "\nMode: ";
+    temp += ",";
     temp += this->Mode;
-    temp += "\nData: " ;
+    temp += "," ;
     temp += this->data ;
-    temp += "\nExp: " ;
+    temp += "," ;
     temp += this->expired;
-    temp +=String("\n}");
+    temp +=String("}");
     return temp;
 };
 
 void DataPackage::DataToJson(FirebaseJson* slave)
 {
     String t_data = this->data;
-    slave->set("Name",t_data.substring(t_data.indexOf("/")+1,t_data.indexOf("/StatusD")));//Name
-    slave->set("Error/DHT11",t_data.substring(t_data.indexOf("StatusD ")+8,t_data.indexOf("/StatusL"))); //Status DHT
-    slave->set("Error/LDR",t_data.substring(t_data.indexOf("StatusL ")+8,t_data.indexOf("/StatusM")));//Status Light Sensor
-    slave->set("Error/Soil",t_data.substring(t_data.indexOf("StatusM ")+8,t_data.indexOf("/Day"))); //Soid moisure sensor
-    slave->set("Plant/Days",t_data.substring(t_data.indexOf("Day ")+4,t_data.indexOf("/humi"))); // Day pass
-    slave->set("Sensor/DHT11/Humi",t_data.substring(t_data.indexOf("humi ")+5,t_data.indexOf("/temp")));//Humi
-    slave->set("Sensor/DHT11/Temp",t_data.substring(t_data.indexOf("temp ")+5,t_data.indexOf("/ligh")));//Temperture
-    slave->set("Sensor/Light",t_data.substring(t_data.indexOf("ligh ")+5,t_data.indexOf("/mois")));//Bright
-    slave->set("Sensor/Solid",t_data.substring(t_data.indexOf("mois ")+5,t_data.indexOf("/LED")));//Mois
-    slave->set("Status/Led",t_data.substring(t_data.indexOf("LED ")+4,t_data.indexOf("/Pump")));
-    slave->set("Status/Pump",t_data.substring(t_data.indexOf("Pump ")+5,t_data.lastIndexOf("/")));
+    slave->set("Name",t_data.substring(0,t_data.indexOf("/")));//Name
+    t_data = t_data.substring(t_data.indexOf("/")+1);
+    slave->set("Error/DHT11",t_data.substring(0,t_data.indexOf("/"))); //Status DHT
+    t_data = t_data.substring(t_data.indexOf("/")+1);
+    slave->set("Error/LDR",t_data.substring(0,t_data.indexOf("/")));//Status Light Sensor
+    t_data = t_data.substring(t_data.indexOf("/")+1);
+    slave->set("Error/Soil",t_data.substring(0,t_data.indexOf("/"))); //Soid moisure sensor
+    t_data = t_data.substring(t_data.indexOf("/")+1);
+    slave->set("Sensor/DHT11/Humi",t_data.substring(0,t_data.indexOf("/")));//Humi
+    t_data = t_data.substring(t_data.indexOf("/")+1);
+    slave->set("Sensor/DHT11/Temp",t_data.substring(0,t_data.indexOf("/")));//Temperture
+    t_data = t_data.substring(t_data.indexOf("/")+1);
+    slave->set("Sensor/Light",t_data.substring(0,t_data.indexOf("/")));//Bright
+    t_data = t_data.substring(t_data.indexOf("/")+1);
+    slave->set("Sensor/Solid",t_data.substring(0,t_data.indexOf("/")));//Mois
+    t_data = t_data.substring(t_data.indexOf("/")+1);
+    slave->set("Status/Led",t_data.substring(0,t_data.indexOf("/")));//Light
+    t_data = t_data.substring(t_data.indexOf("/")+1);
+    slave->set("Status/Pump",t_data.substring(0,t_data.indexOf("/")));//Pump
+    t_data = t_data.substring(t_data.indexOf("/")+1);
+    slave->set("Plant/Days",t_data); // Day pass
     //slave->toString(t_data,true);
     //Serial.println(t_data);
 }
 
 void DataPackage::fromString(const String data)
 {
-    String temp = data.substring(data.indexOf("{\n") + 3, data.lastIndexOf("\n}"));
-    this->ID = temp.substring(temp.indexOf("ID: ")+4,temp.indexOf("\nMode:"));
-    this->Mode = temp.substring(temp.indexOf("Mode: ")+6,temp.indexOf("\nData:"));
-    this->data = temp.substring(temp.indexOf("Data: ")+6, temp.indexOf("\nExp: "));
-    this->expired = atof(temp.substring(temp.indexOf("\nExp: ")+6, temp.length()).c_str());
+    String temp = data.substring(data.indexOf("{") + 1, data.lastIndexOf("}"));
+    this->ID = temp.substring(0,temp.indexOf(","));
+    temp = temp.substring(temp.indexOf(",")+1);
+    this->Mode = temp.substring(0,temp.indexOf(","));
+    temp = temp.substring(temp.indexOf(",")+1);
+    this->data = temp.substring(0,temp.indexOf(","));
+    temp = temp.substring(temp.indexOf(",")+1);
+    this->expired = atof(temp.c_str());
 }

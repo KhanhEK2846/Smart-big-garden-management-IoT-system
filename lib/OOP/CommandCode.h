@@ -11,10 +11,10 @@
 #define No_Response_Code 444
 #define Network_Authentication_Required 511
 //Mode
-#define Default "7a1920d61156abc05a60135aefe8bc67" //Node -> Gateway
-#define Broadcast "be55b6387170df0ca68f41225268e842" // Send both except from sender
-#define Infection "f0ddc0838281faf6d55e2cf840a2a8ef" // Handle command & Broadcast
-#define LogData "8252db9108bed0cc77b9108ef2e5b215" //Log to Database
+#define Default "1" //Node -> Gateway
+#define Broadcast "2" // Send both except from sender
+#define Infection "3" // Handle command & Broadcast
+#define LogData "4" //Log to Database
 //Message
-#define Init_Node_Code "45ef6ef895e5639e9f8f06c686d46e5c"
-#define ContingencyOK "3d1cd0a3d47681047e175b4f79ae3835"
+#define Init_Node_Code "5"
+#define ContingencyOK "6"

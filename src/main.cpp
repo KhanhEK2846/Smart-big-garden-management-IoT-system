@@ -23,8 +23,8 @@
 //DHT11 Variable
 #define DHTTYPE DHT22 
 DHT dht(DHTPIN, DHTTYPE);
-float Humidity = 0; 
-float Temperature = 0;
+int Humidity = 0; 
+int Temperature = 0;
 //Light Sensor Variable
 int lumen = 0; //Store value from LDR
 //Soild Sensor Variable
@@ -85,7 +85,6 @@ AsyncWebHandler* InitWaitGateway = NULL;
 int Person = 0; // Number clients access local host
 String messanger;
 String MessLimit;
-const String Local_Path[11] = {"StatusD","StatusL","StatusM","Day","humi","temp","ligh","mois","LED","Pump","MQTT"};
 //Command from client
 int Command_Pump = 0; // 0: Nothing, 1:ON, 2:OFF
 int Command_Light = 0; // 0: Nothing, 1:ON, 2:OFF
@@ -174,47 +173,38 @@ void Cycle_Ping()// Cycle Ping to Host // FIX:
 #pragma region WebSocket Protocol
 void notifyClients(const String data) //Notify all local clients with a message
 {
-  ws.textAll(data);
+  String predata = "{";
+  predata += data;
+  predata += "}"; 
+  ws.textAll(predata);
 }
 void notifyClient(AsyncWebSocketClient *client)//Notify only one local client
 {
-  String data ="/";
+  String data ="{";
   data += Tree.Name;
   data += "/";
-  data += Local_Path[0];
-  data += " ";
   data += String(DHT_Err);
   data += "/";
-  data += Local_Path[1];
-  data += " ";
   data += String(LDR_Err);
   data += "/";
-  data += Local_Path[2];
-  data += " ";
   data += String(Soil_Err);
   data += "/";
-  data += Local_Path[4];
-  data += " ";
-  data += String(Humidity);
+  if(DHT_Err)
+    data += String(0);
+  else
+    data += String(Humidity);
   data += "/";
-  data += Local_Path[5];
-  data += " ";
-  data += String(Temperature);
+  if(DHT_Err)
+    data += String(0);
+  else
+    data += String(Temperature);
   data += "/";
-  data += Local_Path[6];
-  data += " ";
   data += String(lumen);
   data += "/";  
-  data += Local_Path[7];
-  data += " ";
   data += String(soilMoist);
   data += "/"; 
-  data += Local_Path[8];
-  data += " ";
   data += String(LightStatus);
   data += "/";  
-  data += Local_Path[9];
-  data += " ";
   data += String(PumpsStatus);
   data += "/";
   if(WiFi.status() != WL_CONNECTED)   
@@ -223,6 +213,7 @@ void notifyClient(AsyncWebSocketClient *client)//Notify only one local client
     data += "Wifi CONNECT";
   else   
     data += "Wifi ON";
+  data += "}";
   ws.text(client->id(),data);
   data.clear();
 }
@@ -591,7 +582,9 @@ void Delivery(void * pvParameters)
   while(true)
   {
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
-    rs = lora.sendMessage(&data,sizeof(DataPackage));
+    Serial.println(data.toString());
+    Serial.println(data.toString().length());
+    rs = lora.sendMessage(data.toString());
     Serial.println(rs.getResponseDescription());
     Serial.print("Delivery Task: ");
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
@@ -602,66 +595,50 @@ void Delivery(void * pvParameters)
 }
 void Capture(void * pvParameters)
 {
-  ResponseStructContainer mess;
+  ResponseContainer mess;
   UBaseType_t uxHighWaterMark;
   while (true)
   {
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     if(lora.available())
     {
-      mess = lora.receiveMessage(sizeof(DataPackage));
-      D_Pack = *(DataPackage*)mess.data;
+      mess = lora.receiveMessageUntil();
+
+      D_Pack.fromString(mess.data);
       Serial.print(D_Pack.toString());  
       if(D_Pack.expired == 0)
-      {
-        mess.close();
         continue;
-      }
       --D_Pack.expired; 
       if(D_Pack.GetID() == ID || D_Pack.GetMode() == Infection ) //ReceiveIP & Infection mode 
       {
         if(D_Pack.GetMode() == Default)
-        {
-          mess.close();
           continue;
-        }
         D_Command = D_Pack.GetData();
         xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
         if(D_Pack.GetMode() != Infection)
-        {
-          mess.close();
           continue;
-        }
       }
       if (D_Pack.GetMode() == Broadcast || D_Pack.GetMode() == Infection) //Broadcast & Infection mode
       {
         xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));    
-        mess.close();
         continue;
-        
       }
       if(D_Pack.GetMode() == Default || D_Pack.GetMode() == LogData)
       {
         if(gateway_node == 0)
-        {
-          mess.close();
           continue;
-        }
         if(gateway_node == 1)// If it's a gateway -> Send to Database
         {
           xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(100));
-          mess.close();
           continue;
         }
         if(gateway_node ==2)//If it's a node -> Delivery to Gateway
         {
           xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
-          mess.close();
           continue;
         }
       }
     }
-    mess.close();
     Serial.print("Capture Task: ");
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);
@@ -700,50 +677,33 @@ void PrepareMess() //Decide what to send
 {
   valueChange_flag = false;
   messanger.clear();
-  messanger = "/";
-  messanger += Tree.Name;
+  messanger = Tree.Name;
   messanger += "/";
-  messanger += Local_Path[0];
-  messanger += " ";
   messanger += String(DHT_Err);
   messanger += "/";
-  messanger += Local_Path[1];
-  messanger += " ";
   messanger += String(LDR_Err);
   messanger += "/";
-  messanger += Local_Path[2];
-  messanger += " ";
   messanger += String(Soil_Err);
   messanger += "/";
-  messanger += Local_Path[3];
-  messanger += " ";
-  messanger += String(Tree.Days);
+  if(DHT_Err)
+    messanger += String(0);
+  else
+    messanger += String(Humidity);
   messanger += "/";
-  messanger += Local_Path[4];
-  messanger += " ";
-  messanger += String(Humidity);
+  if(DHT_Err)
+    messanger += String(0);
+  else
+    messanger += String(Temperature);
   messanger += "/";
-  messanger += Local_Path[5];
-  messanger += " ";
-  messanger += String(Temperature);
-  messanger += "/";
-  messanger += Local_Path[6];
-  messanger += " ";
   messanger += String(lumen);
   messanger += "/";
-  messanger += Local_Path[7];
-  messanger += " ";
   messanger += String(soilMoist);
   messanger += "/";
-  messanger += Local_Path[8];
-  messanger += " ";
   messanger += String(LightStatus);
   messanger += "/";
-  messanger += Local_Path[9];
-  messanger += " ";
   messanger += String(PumpsStatus);
   messanger += "/";
-
+  messanger += String(Tree.Days);
   if(Temp[0] != (int)DHT_Err)
   {
     valueChange_flag = true;
@@ -1006,14 +966,14 @@ void Init_Task()
     0,
     &DatabaseTask
   );
-  xTaskCreate(
-    Capture,
-    "Capture",
-    8000,
-    NULL,
-    0,
-    &CaptureTask
-  );
+  // xTaskCreate(
+  //   Capture,
+  //   "Capture",
+  //   8000,
+  //   NULL,
+  //   0,
+  //   &CaptureTask
+  // );
 }
 void Network()// Netword Part
 {

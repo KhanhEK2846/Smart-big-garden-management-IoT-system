@@ -255,7 +255,7 @@
     <button id ="LogOut">Log Out</button>
   </div>
   <div>
-    <input type="text" id="NameTree" value="No Name" maxlength="26" name="NameTree">
+    <input type="text" id="NameTree" value="No Name" maxlength="7" name="NameTree">
   </div>
 <div class="Sensor_Value">
 <!--Độ ẩm không khí-->
@@ -399,95 +399,70 @@
     function onClose(event) {
       console.log('Connection closed');
       document.getElementById('status').style.backgroundColor = "gray";
-      TheEnd()
+      //TheEnd()
       setTimeout(initWebSocket, 2000);
     }
     function onMessage(event){
       console.log(String(event.data))
-      document.getElementById("NameTree").defaultValue = String(event.data).split("/")[1];
-      for(var data of String(event.data).split("/"))
-      {
-        if(String(data).indexOf("humi") >= 0)
-        {
-          var value = Number(String(data).split(" ")[1]);
-          Gauge2("humi","c_humi",value);
-        }
-        if(String(data).indexOf("temp") >= 0)
-        {
-          var value = Number(String(data).split(" ")[1]);
-          Gauge2("temp","c_temp",value);
-        }
-        if(String(data).indexOf("mois") >= 0)
-        {
-          var value = Number(String(data).split(" ")[1]);
-          Gauge1("mois","c_mois",value);
-        }
-        if(String(data).indexOf("ligh") >= 0)
-        {
-          var value = Number(String(data).split(" ")[1]);
-          Gauge1("ligh","c_ligh",value);
-        }
-        if(String(data).indexOf("Wifi") >= 0)
-        {
-          if(String(data).indexOf("OFF") >= 0)
-          {
-            document.getElementById("Submit").classList.remove("hide");
-            document.getElementById('LogIn').classList.remove("hide");
-            document.getElementById("wait").classList.add("hide");
-            document.getElementById('Disconnect').classList.add("hide");
-            document.getElementById('Info').innerHTML = "Status: Not connected";
-            document.getElementById('status').style.backgroundColor = "red";
-          }
-          if(String(data).indexOf("ON") >= 0 || String(data).indexOf("CONNECT") >= 0)
-          {
-            document.getElementById("Submit").classList.add("hide");
-            document.getElementById('LogIn').classList.add("hide");
-            document.getElementById('Info').innerHTML = "Status: Connected";
-            document.getElementById('Disconnect').classList.remove("hide");
-            document.getElementById("wait").classList.add("hide");
-            if(String(data).indexOf("ON") >= 0)
-              document.getElementById('status').style.backgroundColor = "orange";
-            else
-              document.getElementById('status').style.backgroundColor = "green";
-          }
+      var pre_data = String(event.data).substring(String(event.data).indexOf("{")+1,String(event.data).indexOf("}"))
+      if(String(pre_data).split("/")[0].indexOf("Wifi") < 0 )
+        document.getElementById("NameTree").defaultValue = String(pre_data).split("/")[0];
+      if(String(pre_data).split("/")[1].indexOf("1") >= 0)
+        document.getElementById("DHT11_Status").innerHTML = "Error";
+      if(String(pre_data).split("/")[1].indexOf("0") >= 0)
+        document.getElementById("DHT11_Status").innerHTML = "Ok";
+      if(String(pre_data).split("/")[2].indexOf("1") >= 0)
+        document.getElementById("Ligh_Status").innerHTML = "Error";
+      if(String(pre_data).split("/")[2].indexOf("0") >= 0)
+        document.getElementById("Ligh_Status").innerHTML = "Ok";
+      if(String(pre_data).split("/")[3].indexOf("1") >= 0)
+        document.getElementById("Mois_Status").innerHTML = "Error";
+      if(String(pre_data).split("/")[3].indexOf("0") >= 0)
+        document.getElementById("Mois_Status").innerHTML = "Ok";
+      Gauge2("humi","c_humi",Number(String(pre_data).split("/")[4]));
+      Gauge2("temp","c_temp",Number(String(pre_data).split("/")[5]));
+      Gauge1("ligh","c_ligh",Number(String(pre_data).split("/")[6]));
+      Gauge1("mois","c_mois",Number(String(pre_data).split("/")[7]));
+      if(String(pre_data).split("/")[8].indexOf("1") >= 0)
+        document.getElementById("Led").innerHTML = "Led: ON";
+      if(String(pre_data).split("/")[8].indexOf("0") >= 0)
+        document.getElementById("Led").innerHTML = "Led: OFF";
+      if(String(pre_data).split("/")[9].indexOf("1") >= 0)
+        document.getElementById("Pump").innerHTML = "Pump: ON";
+      if(String(pre_data).split("/")[9].indexOf("0") >= 0)
+        document.getElementById("Pump").innerHTML = "Pump: OFF";
 
-        }
-        if(String(data).indexOf("StatusL") >= 0)
+      if(String(pre_data).split("/")[10].indexOf("Wifi") >= 0 || String(pre_data).split("/")[0].indexOf("Wifi") >= 0)
+      {
+        var wifi;
+        if(String(pre_data).split("/")[10].indexOf("Wifi") >= 0)
+          wifi = String(pre_data).split("/")[10]
+        else
+          wifi = String(pre_data).split("/")[0]
+        if(wifi.indexOf("OFF") >= 0)
         {
-          if(String(data).indexOf("1") >= 0)
-            document.getElementById("Ligh_Status").innerHTML = "Error";
-          if(String(data).indexOf("0") >= 0)
-            document.getElementById("Ligh_Status").innerHTML = "Ok";
+          document.getElementById("Submit").classList.remove("hide");
+          document.getElementById('LogIn').classList.remove("hide");
+          document.getElementById("wait").classList.add("hide");
+          document.getElementById('Disconnect').classList.add("hide");
+          document.getElementById('Info').innerHTML = "Status: Not connected";
+          document.getElementById('status').style.backgroundColor = "red";
         }
-        if(String(data).indexOf("StatusD") >= 0)
+        if(wifi.indexOf("ON") >= 0 || wifi.indexOf("CONNECT") >= 0)
         {
-          if(String(data).indexOf("1") >= 0)
-            document.getElementById("DHT11_Status").innerHTML = "Error";
-          if(String(data).indexOf("0") >= 0)
-            document.getElementById("DHT11_Status").innerHTML = "Ok";
+          document.getElementById("Submit").classList.add("hide");
+          document.getElementById('LogIn').classList.add("hide");
+          document.getElementById('Info').innerHTML = "Status: Connected";
+          document.getElementById('Disconnect').classList.remove("hide");
+          document.getElementById("wait").classList.add("hide");
+          if(wifi.indexOf("ON") >= 0)
+            document.getElementById('status').style.backgroundColor = "orange";
+          else
+            document.getElementById('status').style.backgroundColor = "green";
         }
-        if(String(data).indexOf("StatusM") >= 0)
-        {
-          if(String(data).indexOf("1") >= 0)
-            document.getElementById("Mois_Status").innerHTML = "Error";
-          if(String(data).indexOf("0") >= 0)
-            document.getElementById("Mois_Status").innerHTML = "Ok";
-        }
-        if(String(data).indexOf("Pump") >= 0)
-        {
-          if(String(data).indexOf("1") >= 0)
-            document.getElementById("Pump").innerHTML = "Pump: ON";
-          if(String(data).indexOf("0") >= 0)
-            document.getElementById("Pump").innerHTML = "Pump: OFF";
-        }
-        if(String(data).indexOf("LED") >= 0)
-        {
-          if(String(data).indexOf("1") >= 0)
-            document.getElementById("Led").innerHTML = "Led: ON";
-          if(String(data).indexOf("0") >= 0)
-            document.getElementById("Led").innerHTML = "Led: OFF";
-        }
+
       }
+
     }
     function onLoad(event) {
       initWebSocket();
