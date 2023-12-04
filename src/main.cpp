@@ -58,10 +58,7 @@ String Contingency_sta_password = "";
 int disconnected_wifi_count = -1;
 //LoRa Variable //TODO: Add FUll GPIO
 //NodeMCU 
-LoRa_E32 lora(&Serial2,15,2,0); //16-RX 17-TX
-//ESP32-C3
-// SoftwareSerial mySerial(19, 18); // e32 TX e32 RX
-// LoRa_E32 lora(&Serial,6,7,8);
+LoRa_E32 lora(&Serial2,15,2,0); //16-->TX 17-->RX 15-->AUX 2-->M1 0-->M0 
 boolean lora_flag = false;
 //Ping
 WiFiClient PingClient;
@@ -809,6 +806,7 @@ void SendMess() //Send mess prepared to who
     if(Firebase.ready() || gateway_node == 2)
     {
       Last_datalogging_time = millis();
+      own_wait_time = millis();
       O_Pack.SetDataPackage(ID,messanger,LogData);
       switch (gateway_node)
       {
