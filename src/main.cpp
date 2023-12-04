@@ -15,11 +15,11 @@
 #include "URL.h"
 #include "html.h"
 //Port GPIOs
-#define DHTPIN 1 //Read DHT22 Sensor
-#define LDR 3 //Read Light Sensor
-#define Soil_Moisture 2 //Read Soild Sensor
-#define Pumps 4 // Control Pump
-#define Light 5 //Control Light
+#define DHTPIN 21 //Read DHT22 Sensor
+#define LDR 39 //Read Light Sensor
+#define Soil_Moisture 34 //Read Soild Sensor
+#define Pumps 22 // Control Pump
+#define Light 23 //Control Light
 //DHT11 Variable
 #define DHTTYPE DHT22 
 DHT dht(DHTPIN, DHTTYPE);
@@ -58,7 +58,7 @@ String Contingency_sta_password = "";
 int disconnected_wifi_count = -1;
 //LoRa Variable //TODO: Add FUll GPIO
 //NodeMCU 
-LoRa_E32 lora(&Serial2,15,2,0); //16-->TX 17-->RX 15-->AUX 2-->M1 0-->M0 
+LoRa_E32 lora(&Serial2,2,0,4); //16-->TX 17-->RX 2-->AUX 0-->M1 4-->M0 
 boolean lora_flag = false;
 //Ping
 WiFiClient PingClient;
@@ -369,10 +369,7 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
 #pragma region Cloud Database
 void DataLog(void * pvParameters)
 {
-  Serial.println("Database Task");
   UBaseType_t uxHighWaterMark;
-  uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-  Serial.println(uxHighWaterMark);
   DataPackage data;
   FirebaseJson json_data;
   String Root;
@@ -397,8 +394,10 @@ void DataLog(void * pvParameters)
       Root += "/";
       Firebase.RTDB.setJSONAsync(&firebaseData, Root, &json_data);
     }
+    Serial.print("DataLog Task: ");
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-    Serial.println(uxHighWaterMark);  
+    Serial.println(uxHighWaterMark);
+    Serial.println(); 
   }
 }
 void Setup_RTDB()//Initiate Realtime Database Firebase
@@ -586,80 +585,87 @@ void Init_Server() // FIXME: Fix backend server
 #pragma region LoRa
 void Delivery(void * pvParameters)
 {
-  Serial.println("Delivery Task");
   DataPackage data;
   UBaseType_t uxHighWaterMark;
   ResponseStatus rs;
-  uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-  Serial.println(uxHighWaterMark);
   while(true)
   {
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
-    rs = lora.sendMessage(data.toString());
+    rs = lora.sendMessage(&data,sizeof(DataPackage));
     Serial.println(rs.getResponseDescription());
+    Serial.print("Delivery Task: ");
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);
+    Serial.println();
     delay(2000);
   }
 }
 void Capture(void * pvParameters)
 {
-  Serial.println("Capturre Task");
-  ResponseContainer mess;
+  ResponseStructContainer mess;
   UBaseType_t uxHighWaterMark;
-  uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-  Serial.println(uxHighWaterMark);
   while (true)
   {
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-    Serial.println(uxHighWaterMark);
     if(lora.available())
     {
-      mess = lora.receiveMessageUntil();
-      if(mess.status.code == 1)
+      mess = lora.receiveMessage(sizeof(DataPackage));
+      D_Pack = *(DataPackage*)mess.data;
+      Serial.print(D_Pack.toString());  
+      if(D_Pack.expired == 0)
       {
-        D_Pack.fromString(mess.data);
-        Serial.print(D_Pack.toString());  
-        if(D_Pack.expired == 0)
-          continue;
-        --D_Pack.expired; 
-        if(D_Pack.GetID() == ID || D_Pack.GetMode() == Infection ) //ReceiveIP & Infection mode 
+        mess.close();
+        continue;
+      }
+      --D_Pack.expired; 
+      if(D_Pack.GetID() == ID || D_Pack.GetMode() == Infection ) //ReceiveIP & Infection mode 
+      {
+        if(D_Pack.GetMode() == Default)
         {
-          if(D_Pack.GetMode() == Default)
-            continue;
-          D_Command = D_Pack.GetData();
-          xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
-          if(D_Pack.GetMode() != Infection)
-            continue;
+          mess.close();
+          continue;
         }
-        if (D_Pack.GetMode() == Broadcast || D_Pack.GetMode() == Infection) //Broadcast & Infection mode
+        D_Command = D_Pack.GetData();
+        xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
+        if(D_Pack.GetMode() != Infection)
+        {
+          mess.close();
+          continue;
+        }
+      }
+      if (D_Pack.GetMode() == Broadcast || D_Pack.GetMode() == Infection) //Broadcast & Infection mode
+      {
+        xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));    
+        mess.close();
+        continue;
+        
+      }
+      if(D_Pack.GetMode() == Default || D_Pack.GetMode() == LogData)
+      {
+        if(gateway_node == 0)
+        {
+          mess.close();
+          continue;
+        }
+        if(gateway_node == 1)// If it's a gateway -> Send to Database
+        {
+          xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(100));
+          mess.close();
+          continue;
+        }
+        if(gateway_node ==2)//If it's a node -> Delivery to Gateway
         {
           xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
+          mess.close();
           continue;
         }
-        if(D_Pack.GetMode() == Default || D_Pack.GetMode() == LogData)
-        {
-          if(gateway_node == 0)
-          {
-            continue;
-          }
-          if(gateway_node == 1)// If it's a gateway -> Send to Database
-          {
-            xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(100));
-            continue;
-          }
-          if(gateway_node ==2)//If it's a node -> Delivery to Gateway
-          {
-            xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
-            continue;
-          }
-        }
-      }
-      else
-      {
-        Serial.println(mess.status.getResponseDescription());
       }
     }
+    mess.close();
+    Serial.print("Capture Task: ");
+    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+    Serial.println(uxHighWaterMark);
+    Serial.println();
   }
 }
 void Init_LoRa()
