@@ -570,6 +570,8 @@ void Delivery(void * pvParameters)
   while(true)
   {
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
+    Serial.print(ID);
+    Serial.println(" send:");
     Serial.println(data.toString());
     Serial.println(data.toString().length());
     rs = lora.sendMessage(data.toString());
@@ -593,7 +595,9 @@ void Capture(void * pvParameters)
       mess = lora.receiveMessageUntil();
 
       D_Pack.fromString(mess.data);
-      Serial.print(D_Pack.toString());  
+      Serial.print(ID);
+      Serial.println(" receive:");
+      Serial.println(D_Pack.toString());  
       if(D_Pack.expired == 0)
         continue;
       --D_Pack.expired; 
