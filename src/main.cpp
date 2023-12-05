@@ -231,8 +231,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) //Handle messa
     if(String((char*)data).indexOf("Disconnect") >= 0){
       WiFi.disconnect(true,true);
       WiFi.mode(WIFI_AP);
-      if(gateway_node != 0) //If it's not in dafault state
-        gateway_node = 0;
+      gateway_node = 0;
       ping_flag = false;
       notifyClients("Wifi OFF");
     }
@@ -421,8 +420,7 @@ void Connect_Network()//Connect to Wifi Router
   }
   else
   {
-    if(gateway_node != 2)//If it isn't node, so it gateway
-      gateway_node = 1;
+    gateway_node = 1;
     if(Person > 0)
       notifyClients("Wifi ON");
     Ping();
@@ -628,7 +626,7 @@ void Capture(void * pvParameters)
           continue;
         }
       }
-    }
+    } else delay(100);
     Serial.print("Capture Task: ");
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);
@@ -762,7 +760,7 @@ void SendMess() //Send mess prepared to who
     if(Firebase.ready() || gateway_node == 2)
     {
       Last_datalogging_time = millis();
-      own_wait_time = millis();
+      own_wait_time = millis(); //Renew realtime send
       O_Pack.SetDataPackage(ID,messanger,LogData);
       switch (gateway_node)
       {
@@ -782,7 +780,7 @@ void SendMess() //Send mess prepared to who
     if(valueChange_flag)
     {
       O_Pack.SetDataPackage(ID,messanger,Default);
-      if(gateway_node == 2 && ((unsigned long)(millis() - own_wait_time)>own_delay_send || own_wait_time ==0)) //Send to Gateway only if It's a node
+      if(gateway_node == 2 && ((unsigned long)(millis() - own_wait_time)>own_delay_send )) //Send to Gateway only if It's a node
       {
         own_wait_time = millis();
         xQueueSend(Queue_Delivery,&O_Pack,pdMS_TO_TICKS(100));
@@ -800,10 +798,10 @@ int Get_Sensor(int anaPin)// Get Data From Light Sensor & Soild Sensor
 {
   int value = 0;
   value = analogRead(anaPin);
-  if(value > 4095)
-    value = 4095;
-  if(value < 1500)
-    value = 1500;
+  // if(value > 4095)
+  //   value = 4095;
+  // if(value < 1500)
+  //   value = 1500;
   value = map(value,4095,1500,0,100);
   return value;
 } 
@@ -956,14 +954,14 @@ void Init_Task()
     0,
     &DatabaseTask
   );
-  // xTaskCreate(
-  //   Capture,
-  //   "Capture",
-  //   8000,
-  //   NULL,
-  //   0,
-  //   &CaptureTask
-  // );
+  xTaskCreate(
+    Capture,
+    "Capture",
+    8000,
+    NULL,
+    0,
+    &CaptureTask
+  );
 }
 void Network()// Netword Part
 {
