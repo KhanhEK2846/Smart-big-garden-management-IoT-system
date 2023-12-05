@@ -405,7 +405,7 @@ const char main_html[] PROGMEM = R"rawliteral(
     function onClose(event) {
       console.log('Connection closed');
       document.getElementById('status').style.backgroundColor = "gray";
-      //TheEnd()
+      TheEnd()
       setTimeout(initWebSocket, 2000);
     }
     function onMessage(event){

@@ -21,7 +21,7 @@
 #define Pumps 22 // Control Pump
 #define Light 23 //Control Light
 //DHT11 Variable
-#define DHTTYPE DHT22 
+#define DHTTYPE DHT11 
 DHT dht(DHTPIN, DHTTYPE);
 int Humidity = 0; 
 int Temperature = 0;
@@ -53,9 +53,6 @@ String sta_password = "" ;
 String ap_ssid = "ESP32_Server";
 String ap_password = "123456789";
 const unsigned long Network_TimeOut = 5000;// Wait 5 seconds to Connect Wifi
-String Contingency_sta_ssid = ""; 
-String Contingency_sta_password = "";
-int disconnected_wifi_count = -1;
 //LoRa Variable //TODO: Add FUll GPIO
 //NodeMCU 
 LoRa_E32 lora(&Serial2,2,0,4); //16-->TX 17-->RX 2-->AUX 0-->M1 4-->M0 
@@ -81,7 +78,6 @@ String MQTT_Messange = "";
 //Local Server Variable
 AsyncWebServer server(80); //Create a web server listening on port 80
 AsyncWebSocket ws("/ws");//Create a path for web socket server
-AsyncWebHandler* InitWaitGateway = NULL;
 int Person = 0; // Number clients access local host
 String messanger;
 String MessLimit;
@@ -236,11 +232,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) //Handle messa
       WiFi.disconnect(true,true);
       WiFi.mode(WIFI_AP);
       if(gateway_node != 0) //If it's not in dafault state
-      {
         gateway_node = 0;
-        server.removeHandler(InitWaitGateway);
-        InitWaitGateway = NULL;
-      }
       ping_flag = false;
       notifyClients("Wifi OFF");
     }
@@ -423,8 +415,6 @@ void Connect_Network()//Connect to Wifi Router
 
   if(WiFi.status() != WL_CONNECTED)
   {
-    server.removeHandler(InitWaitGateway);
-    InitWaitGateway = NULL;
     WiFi.mode(WIFI_AP);
     if(Person > 0)
       notifyClients("Wifi OFF");
