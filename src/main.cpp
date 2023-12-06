@@ -56,7 +56,7 @@ const unsigned long Network_TimeOut = 5000;// Wait 5 seconds to Connect Wifi
 //LoRa Variable //TODO: Add FUll GPIO
 //NodeMCU 
 LoRa_E32 lora(&Serial2,2,0,4); //16-->TX 17-->RX 2-->AUX 0-->M1 4-->M0 
-boolean lora_flag = false;
+volatile boolean lora_flag = false;
 //Ping
 WiFiClient PingClient;
 const unsigned long time_delay_to_ping = 300000; // 5 minutes/ping
@@ -99,7 +99,7 @@ DataPackage O_Pack;
 String O_Command;
 String D_Command;
 DataPackage MQTT_Data;
-const unsigned long own_delay_send = 500;
+const unsigned long own_delay_send = 5000; // 5 seconds/send
 unsigned long own_wait_time = 0;
 //Task Delivery Data
 TaskHandle_t DeliveryTask = NULL;
@@ -354,8 +354,12 @@ void DataLog(void * pvParameters)
   UBaseType_t uxHighWaterMark;
   DataPackage data;
   FirebaseJson json_data;
+  FirebaseJson json;
   String Root;
   unsigned long time_log = 0; //Time that data was logged
+  QueryFilter query;
+  unsigned long time_check_before_log = 0; //Make sure that !(time < data_logging_time)
+  query.orderBy("$key").limitToLast(1);
   while(true)
   {
     xQueueReceive(Queue_Database,&data,portMAX_DELAY); 
@@ -367,11 +371,29 @@ void DataLog(void * pvParameters)
     Firebase.RTDB.updateNodeSilentAsync(&firebaseData, Root, &json_data);
     if(data.GetMode() == LogData)
     {
-      while(!Firebase.ready()){}
-      time_log = getTime();
       Root = "DataLog/";
       Root += data.GetID();
+      if(ID != data.GetID())
+      {
+        if(Firebase.RTDB.getJSON(&firebaseData,Root,&query))
+        {
+          if(firebaseData.dataType() == "json" && firebaseData.jsonString().length() > 4)
+          {
+            sscanf(firebaseData.jsonString().substring(2,firebaseData.jsonString().indexOf("\"",12)).c_str(),"%lu",&time_check_before_log);
+          }
+        }
+        else
+          time_check_before_log = 0;
+      }
+
       Root += "/";
+      do
+      {
+        time_log = getTime();
+        delay(5);
+      } while (time_log == 0);
+      if((unsigned long)(time_log - time_check_before_log) < (unsigned long)(time_delay_send_datalogging /1000))
+        continue;
       Root += String(time_log);
       Root += "/";
       Firebase.RTDB.setJSONAsync(&firebaseData, Root, &json_data);
@@ -590,7 +612,7 @@ void Capture(void * pvParameters)
   while (true)
   {
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-    if(lora.available())
+    if(lora_flag && lora.available()>1)
     {
       mess = lora.receiveMessageUntil();
 
@@ -961,7 +983,7 @@ void Init_Task()
   xTaskCreate(
     Capture,
     "Capture",
-    8000,
+    8000, //6948B left
     NULL,
     0,
     &CaptureTask
