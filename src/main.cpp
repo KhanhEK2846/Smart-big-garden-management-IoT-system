@@ -16,8 +16,8 @@
 #include "html.h"
 //Port GPIOs
 #define DHTPIN 21 //Read DHT22 Sensor
-#define LDR 39 //Read Light Sensor
-#define Soil_Moisture 34 //Read Soild Sensor
+#define LDR 34 //Read Light Sensor
+#define Soil_Moisture 35 //Read Soild Sensor
 #define Pumps 22 // Control Pump
 #define Light 23 //Control Light
 //DHT11 Variable
