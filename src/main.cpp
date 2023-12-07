@@ -53,9 +53,8 @@ String sta_password = "" ;
 String ap_ssid = "ESP32_Server";
 String ap_password = "123456789";
 const unsigned long Network_TimeOut = 5000;// Wait 5 seconds to Connect Wifi
-//LoRa Variable //TODO: Add FUll GPIO
-//NodeMCU 
-LoRa_E32 lora(&Serial2,2,0,4); //16-->TX 17-->RX 2-->AUX 0-->M1 4-->M0 
+//LoRa Variable
+LoRa_E32 lora(&Serial2,4,5,18); //16-->TX 17-->RX 4-->AUX 5-->M1 18-->M0 
 volatile boolean lora_flag = false;
 //Ping
 WiFiClient PingClient;
