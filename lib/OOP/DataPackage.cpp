@@ -51,7 +51,7 @@ DataPackage& DataPackage::operator=(const DataPackage temp)
     return *this;
 }
 
-String DataPackage::toString(boolean prettier = false) const
+String DataPackage::toString(boolean prettier) const
 {
     String temp;
     if(prettier)

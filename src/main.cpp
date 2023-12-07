@@ -278,19 +278,6 @@ void initWebSocket() //Initialize the WebSocket protocol
   server.addHandler(&ws);
 }
 #pragma endregion
-#pragma region Device Connected Manager
-String MACAddressCovert(uint8_t* mac)// Convert unit8_t to String MAC
-{
-    char macStr[18] = { 0 };
-    sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0],mac[1], mac[2],mac[3],mac[4],mac[5]);
-    return String(macStr);
-}
-void StringtoMACAddress(const String macString, uint8_t* mac)
-{
-  sscanf(macString.c_str(), "%02x:%02x:%02x:%02x:%02x:%02x", &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]);
-}
-
-#pragma endregion Device Connected Manager
 #pragma region MQTT Protocol //FIXME Stop mqtt when connected gateway
 void connect_to_broker() // Connect to the broker
 {
@@ -823,10 +810,6 @@ int Get_Sensor(int anaPin)// Get Data From Light Sensor & Soild Sensor
 {
   int value = 0;
   value = analogRead(anaPin);
-  // if(value > 4095)
-  //   value = 4095;
-  // if(value < 1500)
-  //   value = 1500;
   value = map(value,4095,1500,0,100);
   return value;
 } 
