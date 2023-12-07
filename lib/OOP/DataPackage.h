@@ -17,7 +17,7 @@ public:
     void SetMode(const String mode);
     ~DataPackage();
     DataPackage& operator=(const DataPackage temp);
-    String toString() const;
+    String toString(boolean prettier = false) const;
     void DataToJson(FirebaseJson * slave);
     void fromString(const String data);
 };

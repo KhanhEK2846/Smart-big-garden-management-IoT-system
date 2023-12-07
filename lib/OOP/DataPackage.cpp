@@ -51,17 +51,33 @@ DataPackage& DataPackage::operator=(const DataPackage temp)
     return *this;
 }
 
-String DataPackage::toString() const
+String DataPackage::toString(boolean prettier = false) const
 {
-    String temp = String("{") ;
+    String temp;
+    if(prettier)
+        temp = "{\nID: ";
+    else
+        temp = "{";
     temp += this->ID;
-    temp += ",";
+    if(prettier)
+        temp += "\nMode: ";
+    else
+        temp += ",";
     temp += this->Mode;
-    temp += "," ;
+    if(prettier)
+        temp += "\nData: ";
+    else
+        temp += "," ;
     temp += this->data ;
-    temp += "," ;
+    if(prettier)
+        temp += "\nExpired: ";
+    else
+        temp += "," ;
     temp += this->expired;
-    temp +=String("}");
+    if(prettier)
+        temp += "\n}";
+    else
+        temp += "}";
     return temp;
 };
 
