@@ -169,16 +169,16 @@ void Cycle_Ping()// Cycle Ping to Host // FIX:
 }
 #pragma endregion
 #pragma region LoRa
-void CalculateAddressChannel(const String id, uint8_t* H, uint8_t* L, uint8_t* chan)
+void CalculateAddressChannel(const String id, uint8_t &H, uint8_t &L, uint8_t &chan)
 {
   uint8_t tempid[6];
   sscanf(id.c_str(), "%02x:%02x:%02x:%02x:%02x:%02x", &tempid[0], &tempid[1], &tempid[2], &tempid[3], &tempid[4], &tempid[5]);
-	*H = tempid[0] + tempid[1] + tempid[2];
-	*L = tempid[3] + tempid[4] + tempid[5];
-	*chan = tempid[0] + tempid[1] + tempid[2] + tempid[3] + tempid[4] + tempid[5];
-  while(*H > 0xFF) *H -= 0xFF;
-  while(*L > 0xFF) *L -= 0xFF;
-  while(*chan > 0x1F) *chan -= 0x1F;
+	H = tempid[0] + tempid[1] + tempid[2];
+	L = tempid[3] + tempid[4] + tempid[5];
+	chan = tempid[0] + tempid[1] + tempid[2] + tempid[3] + tempid[4] + tempid[5];
+  while(H > 0xFF) H -= 0xFF;
+  while(L > 0xFF) L -= 0xFF;
+  while(chan > 0x1F) chan -= 0x1F;
 }
 void Reset_ConfigurationLoRa(boolean gateway = true)
 {
@@ -216,7 +216,7 @@ void Delivery(void * pvParameters)
       rs = lora.sendFixedMessage(0,0,23,data.toString());
     else
     {
-      CalculateAddressChannel(data.GetID(),&DeliveryH,&DeliveryL,&DeliveryChan);
+      CalculateAddressChannel(data.GetID(),DeliveryH,DeliveryL,DeliveryChan);
       rs = lora.sendFixedMessage(DeliveryH,DeliveryL,DeliveryChan,data.toString());
     }
     Serial.println(rs.getResponseDescription());
@@ -285,7 +285,7 @@ void Init_LoRa()
   lora.begin();
   ResponseStructContainer c = lora.getConfiguration();
   Configuration configuration = *(Configuration*) c.data;
-  CalculateAddressChannel(ID,&AddH,&AddL,&Channel);
+  CalculateAddressChannel(ID,AddH,AddL,Channel);
   if(c.status.code == 1)
   {
     if(configuration.OPTION.fixedTransmission == FT_FIXED_TRANSMISSION && configuration.ADDH == AddH && configuration.ADDL == AddL && configuration.CHAN == Channel)
