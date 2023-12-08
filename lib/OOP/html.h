@@ -261,7 +261,7 @@ const char main_html[] PROGMEM = R"rawliteral(
     <button id ="LogOut">Log Out</button>
   </div>
   <div>
-    <input type="text" id="NameTree" value="No Name" maxlength="7" name="NameTree">
+    <input type="text" id="NameTree" value="No Name" maxlength="4" name="NameTree">
   </div>
 <div class="Sensor_Value">
 <!--Độ ẩm không khí-->

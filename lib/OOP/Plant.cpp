@@ -2,7 +2,7 @@
 
 Plant::Plant()
 {
-    Name = "No name";
+    Name = "Tree";
     Days = 0;
     Save_Temp=25; //Limit Temperature Low
     Danger_Temp=40; //Limit Temperature High

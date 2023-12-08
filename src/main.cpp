@@ -56,6 +56,9 @@ const unsigned long Network_TimeOut = 5000;// Wait 5 seconds to Connect Wifi
 //LoRa Variable
 LoRa_E32 lora(&Serial2,4,5,18); //16-->TX 17-->RX 4-->AUX 5-->M1 18-->M0 
 volatile boolean lora_flag = false;
+uint8_t AddH;
+uint8_t AddL;
+uint8_t Channel;
 //Ping
 WiFiClient PingClient;
 const unsigned long time_delay_to_ping = 300000; // 5 minutes/ping
@@ -165,6 +168,149 @@ void Cycle_Ping()// Cycle Ping to Host // FIX:
   }
 }
 #pragma endregion
+#pragma region LoRa
+void CalculateAddressChannel(const String id, uint8_t* H, uint8_t* L, uint8_t* chan)
+{
+  uint8_t tempid[6];
+  sscanf(id.c_str(), "%02x:%02x:%02x:%02x:%02x:%02x", &tempid[0], &tempid[1], &tempid[2], &tempid[3], &tempid[4], &tempid[5]);
+	*H = tempid[0] + tempid[1] + tempid[2];
+	*L = tempid[3] + tempid[4] + tempid[5];
+	*chan = tempid[0] + tempid[1] + tempid[2] + tempid[3] + tempid[4] + tempid[5];
+  while(*H > 0xFF) *H -= 0xFF;
+  while(*L > 0xFF) *L -= 0xFF;
+  while(*chan > 0x1F) *chan -= 0x1F;
+}
+void Reset_ConfigurationLoRa(boolean gateway = true)
+{
+  if(!lora_flag)
+    return;
+  ResponseStructContainer c = lora.getConfiguration();
+  Configuration configuration = *(Configuration*) c.data;
+  if(gateway)
+  {
+    configuration.ADDH = 0;
+    configuration.ADDL = 0;
+    configuration.CHAN = 0x17;
+  }
+  else
+  {
+    configuration.ADDH = AddH;
+    configuration.ADDL = AddL;
+    configuration.CHAN = Channel;
+  }
+  lora.setConfiguration(configuration, WRITE_CFG_PWR_DWN_SAVE);
+  c.close(); 
+}
+void Delivery(void * pvParameters)
+{
+  DataPackage data;
+  UBaseType_t uxHighWaterMark;
+  ResponseStatus rs;
+  uint8_t DeliveryH;
+  uint8_t DeliveryL;
+  uint8_t DeliveryChan;
+  while(true)
+  {
+    xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
+    if(data.GetID() == ID)
+      rs = lora.sendFixedMessage(0,0,23,data.toString());
+    else
+    {
+      CalculateAddressChannel(data.GetID(),&DeliveryH,&DeliveryL,&DeliveryChan);
+      rs = lora.sendFixedMessage(DeliveryH,DeliveryL,DeliveryChan,data.toString());
+    }
+    Serial.println(rs.getResponseDescription());
+    Serial.print("Delivery Task: ");
+    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+    Serial.println(uxHighWaterMark);
+    Serial.println();
+    delay(2000);
+  }
+}
+void Capture(void * pvParameters)
+{
+  ResponseContainer mess;
+  UBaseType_t uxHighWaterMark;
+  while (true)
+  {
+    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+    if(lora_flag && lora.available()>1)
+    {
+      mess = lora.receiveMessageUntil();
+      D_Pack.fromString(mess.data);
+      Serial.print(ID);
+      Serial.println(" receive:");
+      Serial.println(D_Pack.toString());  
+      if(D_Pack.expired == 0)
+        continue;
+      --D_Pack.expired; 
+      if(D_Pack.GetID() == ID || D_Pack.GetMode() == Infection ) //ReceiveIP & Infection mode 
+      {
+        if(D_Pack.GetMode() == Default)
+          continue;
+        D_Command = D_Pack.GetData();
+        xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
+        if(D_Pack.GetMode() != Infection)
+          continue;
+      }
+      if (D_Pack.GetMode() == Broadcast || D_Pack.GetMode() == Infection) //Broadcast & Infection mode
+      {
+        xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));    
+        continue;
+      }
+      if(D_Pack.GetMode() == Default || D_Pack.GetMode() == LogData)
+      {
+        if(gateway_node == 0)
+          continue;
+        if(gateway_node == 1)// If it's a gateway -> Send to Database
+        {
+          xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(100));
+          continue;
+        }
+        if(gateway_node ==2)//If it's a node -> Delivery to Gateway
+        {
+          xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
+          continue;
+        }
+      }
+    } else delay(100);
+    Serial.print("Capture Task: ");
+    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+    Serial.println(uxHighWaterMark);
+    Serial.println();
+  }
+}
+void Init_LoRa()
+{
+  lora.begin();
+  ResponseStructContainer c = lora.getConfiguration();
+  Configuration configuration = *(Configuration*) c.data;
+  CalculateAddressChannel(ID,&AddH,&AddL,&Channel);
+  if(c.status.code == 1)
+  {
+    if(configuration.OPTION.fixedTransmission == FT_FIXED_TRANSMISSION && configuration.ADDH == AddH && configuration.ADDL == AddL && configuration.CHAN == Channel)
+    {
+      Serial.println("Already Confingure");
+    }
+    else
+    {
+      configuration.OPTION.fixedTransmission = FT_FIXED_TRANSMISSION;
+      configuration.ADDH = AddH;
+      configuration.ADDL = AddL;
+      configuration.CHAN = Channel;
+      lora.setConfiguration(configuration, WRITE_CFG_PWR_DWN_SAVE);
+    }
+    lora_flag = true;
+    if(gateway_node == 0)
+      gateway_node = 2;
+  }
+  else
+  {
+    lora_flag = false;
+  }
+  c.close();
+}
+#pragma endregion LoRa
 #pragma region WebSocket Protocol
 void notifyClients(const String data) //Notify all local clients with a message
 {
@@ -233,6 +379,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) //Handle messa
       gateway_node = 0;
       ping_flag = false;
       notifyClients("Wifi OFF");
+      Reset_ConfigurationLoRa(false);
     }
     if(String((char*)data).indexOf("Pump") >= 0){
       if(PumpsStatus)
@@ -429,6 +576,7 @@ void Connect_Network()//Connect to Wifi Router
   else
   {
     gateway_node = 1;
+    Reset_ConfigurationLoRa();
     if(Person > 0)
       notifyClients("Wifi ON");
     Ping();
@@ -569,109 +717,6 @@ void Init_Server() // FIXME: Fix backend server
   server.begin();
 }
 #pragma endregion
-#pragma region LoRa
-void Delivery(void * pvParameters)
-{
-  DataPackage data;
-  UBaseType_t uxHighWaterMark;
-  ResponseStatus rs;
-  while(true)
-  {
-    xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
-    Serial.print(ID);
-    Serial.println(" send:");
-    Serial.println(data.toString());
-    Serial.println(data.toString().length());
-    rs = lora.sendMessage(data.toString());
-    Serial.println(rs.getResponseDescription());
-    Serial.print("Delivery Task: ");
-    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-    Serial.println(uxHighWaterMark);
-    Serial.println();
-    delay(2000);
-  }
-}
-void Capture(void * pvParameters)
-{
-  ResponseContainer mess;
-  UBaseType_t uxHighWaterMark;
-  while (true)
-  {
-    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-    if(lora_flag && lora.available()>1)
-    {
-      mess = lora.receiveMessageUntil();
-
-      D_Pack.fromString(mess.data);
-      Serial.print(ID);
-      Serial.println(" receive:");
-      Serial.println(D_Pack.toString());  
-      if(D_Pack.expired == 0)
-        continue;
-      --D_Pack.expired; 
-      if(D_Pack.GetID() == ID || D_Pack.GetMode() == Infection ) //ReceiveIP & Infection mode 
-      {
-        if(D_Pack.GetMode() == Default)
-          continue;
-        D_Command = D_Pack.GetData();
-        xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
-        if(D_Pack.GetMode() != Infection)
-          continue;
-      }
-      if (D_Pack.GetMode() == Broadcast || D_Pack.GetMode() == Infection) //Broadcast & Infection mode
-      {
-        xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));    
-        continue;
-      }
-      if(D_Pack.GetMode() == Default || D_Pack.GetMode() == LogData)
-      {
-        if(gateway_node == 0)
-          continue;
-        if(gateway_node == 1)// If it's a gateway -> Send to Database
-        {
-          xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(100));
-          continue;
-        }
-        if(gateway_node ==2)//If it's a node -> Delivery to Gateway
-        {
-          xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
-          continue;
-        }
-      }
-    } else delay(100);
-    Serial.print("Capture Task: ");
-    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-    Serial.println(uxHighWaterMark);
-    Serial.println();
-  }
-}
-void Init_LoRa()
-{
-  lora.begin();
-  ResponseStructContainer c;
-  ResponseStructContainer cMi;
-  c = lora.getConfiguration();
-  cMi = lora.getModuleInformation();
-  if(c.status.code == 1 && cMi.status.code == 1)
-  {
-    Serial.println("LoRa OK");
-    lora_flag = true;
-    if(gateway_node == 0)
-      gateway_node = 2;
-  }
-  else
-  {
-    Serial.println("LoRa not OK");
-    Serial.print("Configuration: ");
-    Serial.println(c.status.getResponseDescription());
-    Serial.print("Module Information: ");
-    Serial.println(cMi.status.getResponseDescription());
-    lora_flag = false;
-  }
-  c.close();
-  cMi.close();
-}
-#pragma endregion LoRa
 #pragma region Send Message
 void PrepareMess() //Decide what to send
 {
