@@ -340,9 +340,15 @@ void notifyClient(AsyncWebSocketClient *client)//Notify only one local client
   else
     data += String(Temperature);
   data += "/";
-  data += String(lumen);
-  data += "/";  
-  data += String(soilMoist);
+  if(LDR_Err)
+    data += String(0);
+  else
+    data += String(lumen);
+  data += "/";
+  if(Soil_Err)
+    data += String(0);
+  else  
+    data += String(soilMoist);
   data += "/"; 
   data += String(LightStatus);
   data += "/";  
@@ -740,9 +746,15 @@ void PrepareMess() //Decide what to send
   else
     messanger += String(Temperature);
   messanger += "/";
-  messanger += String(lumen);
+  if(LDR_Err)
+    messanger += String(0);
+  else
+    messanger += String(lumen);
   messanger += "/";
-  messanger += String(soilMoist);
+  if(Soil_Err)
+    messanger += String(0);
+  else
+    messanger += String(soilMoist);
   messanger += "/";
   messanger += String(LightStatus);
   messanger += "/";
@@ -855,7 +867,7 @@ int Get_Sensor(int anaPin)// Get Data From Light Sensor & Soild Sensor
 {
   int value = 0;
   value = analogRead(anaPin);
-  value = map(value,4095,1500,0,100);
+  value = map(value,4095,0,0,100);
   return value;
 } 
 void Check()// Check error sensor
@@ -1002,7 +1014,7 @@ void Init_Task()
   xTaskCreate(
     DataLog,
     "DataLog",
-    8000,//3028B left
+    8000,//2000B left
     NULL,
     0,
     &DatabaseTask
