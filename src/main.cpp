@@ -244,9 +244,25 @@ void Capture(void * pvParameters)
       if(D_Pack.expired == 0)
         continue;
       --D_Pack.expired; 
+      if(D_Pack.GetMode() == HelloNeighbor)
+      {
+        if(D_Pack.GetID() != ID)
+        {
+          D_Pack.SetDataPackage("",ID,"");
+          xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
+        }
+        else
+        {
+          if(D_Pack.GetData() != "")
+          {
+            
+          }
+        }
+        continue;
+      }
       if(D_Pack.GetID() == ID || D_Pack.GetMode() == Infection ) //ReceiveIP & Infection mode 
       {
-        if(D_Pack.GetMode() == Default)
+        if(D_Pack.GetMode() == Default) //Receive its data
           continue;
         D_Command = D_Pack.GetData();
         xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));

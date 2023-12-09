@@ -13,7 +13,7 @@ public:
     String GetID() const;
     String GetData() const;
     String GetMode() const;
-    void SetDataPackage(const String t_id, const String t_data, const String t_mode);
+    void SetDataPackage(const String t_id, const String t_data, const String t_mode); // "" for nothing change
     void SetMode(const String mode);
     ~DataPackage();
     DataPackage& operator=(const DataPackage temp);

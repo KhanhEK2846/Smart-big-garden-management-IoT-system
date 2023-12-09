@@ -25,9 +25,12 @@ String DataPackage::GetMode() const
 
 void DataPackage::SetDataPackage(const String t_id, const String t_data, const String t_mode)
 {
-    this->ID = t_id;
-    this->data = t_data;
-    this->Mode = t_mode;
+    if(t_id != "")
+        this->ID = t_id;
+    if(t_data != "")
+        this->data = t_data;
+    if(t_mode != "")
+        this->Mode = t_mode;
 }
 
 void DataPackage::SetMode(const String mode)
