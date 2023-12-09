@@ -147,7 +147,7 @@ void Make_Day()//Counter Day
 }
 #pragma endregion
 #pragma region Check Internet Connected from Wifi
-void Ping()// Ping to host
+void PingNetwork()// Ping to host
 {
   if(gateway_node == 1){ //If it's gateway, check Internet
     if (PingClient.connect(PINGInternet, 80)) {
@@ -164,7 +164,7 @@ void Cycle_Ping()// Cycle Ping to Host // FIX:
     Last_ping_time = millis();
   if((unsigned long)(millis()- Last_ping_time) > time_delay_to_ping){
     Last_ping_time = millis();
-    Ping();
+    PingNetwork();
   }
 }
 #pragma endregion
@@ -603,7 +603,7 @@ void Connect_Network()//Connect to Wifi Router
     Reset_ConfigurationLoRa();
     if(Person > 0)
       notifyClients("Wifi ON");
-    Ping();
+    PingNetwork();
     if(ping_flag)
       Setup_Server();
   }
