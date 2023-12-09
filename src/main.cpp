@@ -50,7 +50,7 @@ boolean LightStatus = false; //Current Status Light
 //WIFI Variable
 String sta_ssid = ""; 
 String sta_password = "" ;
-String ap_ssid = "ESP32_Client";
+String ap_ssid = "ESP32_Server";
 String ap_password = "123456789";
 const unsigned long Network_TimeOut = 5000;// Wait 5 seconds to Connect Wifi
 //LoRa Variable
@@ -169,9 +169,31 @@ void Cycle_Ping()// Cycle Ping to Host // FIX:
 }
 #pragma endregion
 #pragma region LoRa
+// void printParameters(struct Configuration configuration)
+// {
+//   Serial.println("----------------------------------------");
+
+// 	Serial.print(F("HEAD BIN: "));  Serial.print(configuration.HEAD, BIN);Serial.print(" ");Serial.print(configuration.HEAD, DEC);Serial.print(" ");Serial.println(configuration.HEAD, HEX);
+// 	Serial.println(F(" "));
+// 	Serial.print(F("AddH BIN: "));  Serial.println(configuration.ADDH, DEC);
+// 	Serial.print(F("AddL BIN: "));  Serial.println(configuration.ADDL, DEC);
+// 	Serial.print(F("Chan BIN: "));  Serial.print(configuration.CHAN, DEC); Serial.print(" -> "); Serial.println(configuration.getChannelDescription());
+// 	Serial.println(F(" "));
+// 	Serial.print(F("SpeedParityBit BIN    : "));  Serial.print(configuration.SPED.uartParity, BIN);Serial.print(" -> "); Serial.println(configuration.SPED.getUARTParityDescription());
+// 	Serial.print(F("SpeedUARTDataRate BIN : "));  Serial.print(configuration.SPED.uartBaudRate, BIN);Serial.print(" -> "); Serial.println(configuration.SPED.getUARTBaudRate());
+// 	Serial.print(F("SpeedAirDataRate BIN  : "));  Serial.print(configuration.SPED.airDataRate, BIN);Serial.print(" -> "); Serial.println(configuration.SPED.getAirDataRate());
+
+// 	Serial.print(F("OptionTrans BIN       : "));  Serial.print(configuration.OPTION.fixedTransmission, BIN);Serial.print(" -> "); Serial.println(configuration.OPTION.getFixedTransmissionDescription());
+// 	Serial.print(F("OptionPullup BIN      : "));  Serial.print(configuration.OPTION.ioDriveMode, BIN);Serial.print(" -> "); Serial.println(configuration.OPTION.getIODroveModeDescription());
+// 	Serial.print(F("OptionWakeup BIN      : "));  Serial.print(configuration.OPTION.wirelessWakeupTime, BIN);Serial.print(" -> "); Serial.println(configuration.OPTION.getWirelessWakeUPTimeDescription());
+// 	Serial.print(F("OptionFEC BIN         : "));  Serial.print(configuration.OPTION.fec, BIN);Serial.print(" -> "); Serial.println(configuration.OPTION.getFECDescription());
+// 	Serial.print(F("OptionPower BIN       : "));  Serial.print(configuration.OPTION.transmissionPower, BIN);Serial.print(" -> "); Serial.println(configuration.OPTION.getTransmissionPowerDescription());
+
+// 	Serial.println("----------------------------------------");
+// }
 void CalculateAddressChannel(const String id, uint8_t &H, uint8_t &L, uint8_t &chan)
 {
-  uint8_t tempid[6];
+  int tempid[6];
   sscanf(id.c_str(), "%02x:%02x:%02x:%02x:%02x:%02x", &tempid[0], &tempid[1], &tempid[2], &tempid[3], &tempid[4], &tempid[5]);
 	H = tempid[0] + tempid[1] + tempid[2];
 	L = tempid[3] + tempid[4] + tempid[5];
@@ -179,6 +201,7 @@ void CalculateAddressChannel(const String id, uint8_t &H, uint8_t &L, uint8_t &c
   while(H > 0xFF) H -= 0xFF;
   while(L > 0xFF) L -= 0xFF;
   while(chan > 0x1F) chan -= 0x1F;
+
 }
 void Reset_ConfigurationLoRa(boolean gateway = true)
 {
@@ -198,8 +221,17 @@ void Reset_ConfigurationLoRa(boolean gateway = true)
     configuration.ADDL = AddL;
     configuration.CHAN = Channel;
   }
+  configuration.SPED.uartParity = 0;
+  configuration.SPED.uartBaudRate = 0b11;
+  configuration.SPED.airDataRate = 0b10;
+  configuration.OPTION.fixedTransmission = FT_FIXED_TRANSMISSION;
+  configuration.OPTION.ioDriveMode = 0b1;
+  configuration.OPTION.wirelessWakeupTime = 0;
+  configuration.OPTION.fec = 0b1;
+  configuration.OPTION.transmissionPower = 0;
   lora.setConfiguration(configuration, WRITE_CFG_PWR_DWN_SAVE);
   c.close(); 
+  Serial.println("Configure LoRa");
 }
 void Delivery(void * pvParameters)
 {
@@ -210,21 +242,25 @@ void Delivery(void * pvParameters)
   uint8_t DeliveryChan;
   uint8_t Gateway_AddH = 0;
   uint8_t Gateway_AddL = 0;
-  uint8_t Gateway_Channel = 23;
-  
+  uint8_t Gateway_Channel = 0x17;
+  ResponseStatus rs;
   while(true)
   {
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
-    if(data.GetMode() == Default)
+    if(data.GetMode() == Default || data.GetMode() == LogData)
     {
-      lora.sendFixedMessage(Gateway_AddH,Gateway_AddL,Gateway_Channel,data.toString());
+      rs = lora.sendFixedMessage(Gateway_AddH,Gateway_AddL,Gateway_Channel,data.toString());
     }
     else
     {
+      Serial.println(data.toString(true));
       CalculateAddressChannel(data.GetID(),DeliveryH,DeliveryL,DeliveryChan);
-      lora.sendFixedMessage(DeliveryH,DeliveryL,DeliveryChan,data.toString());
+      Serial.println(DeliveryH);
+      Serial.println(DeliveryL);
+      Serial.println(DeliveryChan);
+      rs = lora.sendFixedMessage(DeliveryH,DeliveryL,DeliveryChan,data.toString());
     }
-
+    Serial.println(rs.getResponseDescription());
     Serial.print("Delivery Task: ");
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);
@@ -240,32 +276,16 @@ void Capture(void * pvParameters)
   while (true)
   {
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-    if(lora_flag && lora.available()>1)
+    if(lora.available()>1)
     {
       mess = lora.receiveMessageUntil();
       D_Pack.fromString(mess.data);
       Serial.print(ID);
       Serial.println(" receive:");
-      Serial.println(D_Pack.toString());  
+      Serial.println(D_Pack.toString(true));  
       if(D_Pack.expired == 0)
         continue;
       --D_Pack.expired;
-      // if(D_Pack.GetMode() == HelloNeighbor)
-      // {
-      //   if(D_Pack.GetID() != ID)
-      //   {
-      //     D_Pack.SetDataPackage("",ID,"");
-      //     xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
-      //   }
-      //   else
-      //   {
-      //     if(D_Pack.GetData() != "")
-      //     {
-            
-      //     }
-      //   }
-      //   continue;
-      // }
       if(D_Pack.GetID() == ID) //ReceiveIP & Infection mode 
       {
         if(D_Pack.GetMode() == Default) //Receive its data
@@ -309,18 +329,18 @@ void Init_LoRa()
   CalculateAddressChannel(ID,AddH,AddL,Channel);
   if(c.status.code == 1)
   {
-    if(configuration.OPTION.fixedTransmission == FT_FIXED_TRANSMISSION && configuration.ADDH == AddH && configuration.ADDL == AddL && configuration.CHAN == Channel)
-    {
-      Serial.println("Already Confingure");
-    }
-    else
-    {
-      configuration.OPTION.fixedTransmission = FT_FIXED_TRANSMISSION;
-      configuration.ADDH = AddH;
-      configuration.ADDL = AddL;
-      configuration.CHAN = Channel;
-      lora.setConfiguration(configuration, WRITE_CFG_PWR_DWN_SAVE);
-    }
+    configuration.OPTION.fixedTransmission = FT_FIXED_TRANSMISSION;
+    configuration.ADDH = AddH;
+    configuration.ADDL = AddL;
+    configuration.CHAN = Channel;
+    lora.setConfiguration(configuration, WRITE_CFG_PWR_DWN_SAVE);
+    configuration.SPED.uartParity = 0;
+    configuration.SPED.uartBaudRate = 0b11;
+    configuration.SPED.airDataRate = 0b10;
+    configuration.OPTION.ioDriveMode = 0b1;
+    configuration.OPTION.wirelessWakeupTime = 0;
+    configuration.OPTION.fec = 0b1;
+    configuration.OPTION.transmissionPower = 0;
     lora_flag = true;
     if(gateway_node == 0)
       gateway_node = 2;
@@ -545,7 +565,6 @@ void DataLog(void * pvParameters)
         else
           time_check_before_log = 0;
       }
-
       Root += "/";
       do
       {
