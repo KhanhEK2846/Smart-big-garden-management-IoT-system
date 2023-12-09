@@ -212,8 +212,10 @@ void Delivery(void * pvParameters)
   while(true)
   {
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
-    if(data.GetID() == ID)
+    if(data.GetMode() == Default)
+    {
       rs = lora.sendFixedMessage(0,0,23,data.toString());
+    }
     else
     {
       CalculateAddressChannel(data.GetID(),DeliveryH,DeliveryL,DeliveryChan);
