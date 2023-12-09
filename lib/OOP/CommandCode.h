@@ -16,5 +16,4 @@
 #define Infection "3" // Handle command & Broadcast
 #define LogData "4" //Log to Database
 #define HelloNeighbor "5" //Say hi to node surround
-//Message
-#define ContingencyOK "6"
+#define Ping "6"
