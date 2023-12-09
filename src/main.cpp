@@ -205,7 +205,6 @@ void Delivery(void * pvParameters)
 {
   DataPackage data;
   UBaseType_t uxHighWaterMark;
-  ResponseStatus rs;
   uint8_t DeliveryH;
   uint8_t DeliveryL;
   uint8_t DeliveryChan;
@@ -218,13 +217,12 @@ void Delivery(void * pvParameters)
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
     if(data.GetMode() == Default)
     {
-      rs = lora.sendFixedMessage(Gateway_AddH,Gateway_AddL,Gateway_Channel,data.toString());
-
+      lora.sendFixedMessage(Gateway_AddH,Gateway_AddL,Gateway_Channel,data.toString());
     }
     else
     {
       CalculateAddressChannel(data.GetID(),DeliveryH,DeliveryL,DeliveryChan);
-      rs = lora.sendFixedMessage(DeliveryH,DeliveryL,DeliveryChan,data.toString());
+      lora.sendFixedMessage(DeliveryH,DeliveryL,DeliveryChan,data.toString());
     }
 
     Serial.print("Delivery Task: ");
@@ -239,7 +237,6 @@ void Capture(void * pvParameters)
   ResponseContainer mess;
   UBaseType_t uxHighWaterMark;
   DataPackage ResponseMessange;
-  ResponseMessange.SetDataPackage("",ID,Response);
   while (true)
   {
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
@@ -253,43 +250,31 @@ void Capture(void * pvParameters)
       if(D_Pack.expired == 0)
         continue;
       --D_Pack.expired;
-      if(D_Pack.GetMode() == Response)
-      {
-        Serial.print("Receive Response: ");
-        Serial.println(D_Pack.toString(true));
-        continue;
-      }
-      else
-      {
-        ResponseMessange.SetDataPackage(D_Pack.GetID(),ID,Response);
-        xQueueSendToFront(Queue_Delivery,&ResponseMessange,pdMS_TO_TICKS(100));
-      }
-      if(D_Pack.GetMode() == HelloNeighbor)
-      {
-        if(D_Pack.GetID() != ID)
-        {
-          D_Pack.SetDataPackage("",ID,"");
-          xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
-        }
-        else
-        {
-          if(D_Pack.GetData() != "")
-          {
+      // if(D_Pack.GetMode() == HelloNeighbor)
+      // {
+      //   if(D_Pack.GetID() != ID)
+      //   {
+      //     D_Pack.SetDataPackage("",ID,"");
+      //     xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
+      //   }
+      //   else
+      //   {
+      //     if(D_Pack.GetData() != "")
+      //     {
             
-          }
-        }
-        continue;
-      }
-      if(D_Pack.GetID() == ID || D_Pack.GetMode() == Infection ) //ReceiveIP & Infection mode 
+      //     }
+      //   }
+      //   continue;
+      // }
+      if(D_Pack.GetID() == ID) //ReceiveIP & Infection mode 
       {
         if(D_Pack.GetMode() == Default) //Receive its data
           continue;
         D_Command = D_Pack.GetData();
         xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
-        if(D_Pack.GetMode() != Infection)
           continue;
       }
-      if (D_Pack.GetMode() == Broadcast || D_Pack.GetMode() == Infection) //Broadcast & Infection mode
+      if (D_Pack.GetMode() == Command) //Command for the other node
       {
         xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));    
         continue;
@@ -517,7 +502,7 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
     }
     if(flag)
     {    
-      MQTT_Data.SetDataPackage(t_ID,MQTT_Messange.substring(MQTT_Messange.indexOf("/")+1,MQTT_Messange.length()),Broadcast);
+      MQTT_Data.SetDataPackage(t_ID,MQTT_Messange.substring(MQTT_Messange.indexOf("/")+1,MQTT_Messange.length()),Command);
       xQueueSend(Queue_Delivery,&MQTT_Data,pdMS_TO_TICKS(100));
     }
 

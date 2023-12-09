@@ -11,9 +11,8 @@
 #define No_Response_Code 444
 #define Network_Authentication_Required 511
 //Mode
-#define Response "0" //Response
 #define Default "1" //Node -> Gateway
 #define Broadcast "2" // Send both except from sender
-#define Infection "3" // Handle command & Broadcast
+#define Command "3" // Handle command & Broadcast
 #define LogData "4" //Log to Database
 #define HelloNeighbor "5" //Say hi to node surround
