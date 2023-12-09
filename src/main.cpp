@@ -50,7 +50,7 @@ boolean LightStatus = false; //Current Status Light
 //WIFI Variable
 String sta_ssid = ""; 
 String sta_password = "" ;
-String ap_ssid = "ESP32_Server";
+String ap_ssid = "ESP32_Client";
 String ap_password = "123456789";
 const unsigned long Network_TimeOut = 5000;// Wait 5 seconds to Connect Wifi
 //LoRa Variable
@@ -209,19 +209,24 @@ void Delivery(void * pvParameters)
   uint8_t DeliveryH;
   uint8_t DeliveryL;
   uint8_t DeliveryChan;
+  uint8_t Gateway_AddH = 0;
+  uint8_t Gateway_AddL = 0;
+  uint8_t Gateway_Channel = 23;
+  
   while(true)
   {
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
     if(data.GetMode() == Default)
     {
-      rs = lora.sendFixedMessage(0,0,23,data.toString());
+      rs = lora.sendFixedMessage(Gateway_AddH,Gateway_AddL,Gateway_Channel,data.toString());
+
     }
     else
     {
       CalculateAddressChannel(data.GetID(),DeliveryH,DeliveryL,DeliveryChan);
       rs = lora.sendFixedMessage(DeliveryH,DeliveryL,DeliveryChan,data.toString());
     }
-    Serial.println(rs.getResponseDescription());
+
     Serial.print("Delivery Task: ");
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);
@@ -233,6 +238,8 @@ void Capture(void * pvParameters)
 {
   ResponseContainer mess;
   UBaseType_t uxHighWaterMark;
+  DataPackage ResponseMessange;
+  ResponseMessange.SetDataPackage("",ID,Response);
   while (true)
   {
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
@@ -245,7 +252,18 @@ void Capture(void * pvParameters)
       Serial.println(D_Pack.toString());  
       if(D_Pack.expired == 0)
         continue;
-      --D_Pack.expired; 
+      --D_Pack.expired;
+      if(D_Pack.GetMode() == Response)
+      {
+        Serial.print("Receive Response: ");
+        Serial.println(D_Pack.toString(true));
+        continue;
+      }
+      else
+      {
+        ResponseMessange.SetDataPackage(D_Pack.GetID(),ID,Response);
+        xQueueSendToFront(Queue_Delivery,&ResponseMessange,pdMS_TO_TICKS(100));
+      }
       if(D_Pack.GetMode() == HelloNeighbor)
       {
         if(D_Pack.GetID() != ID)
