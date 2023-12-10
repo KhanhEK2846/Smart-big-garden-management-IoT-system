@@ -50,7 +50,7 @@ boolean LightStatus = false; //Current Status Light
 //WIFI Variable
 String sta_ssid = ""; 
 String sta_password = "" ;
-String ap_ssid = "ESP32_Server";
+String ap_ssid = "ESP32_Client";
 String ap_password = "123456789";
 const unsigned long Network_TimeOut = 5000;// Wait 5 seconds to Connect Wifi
 //LoRa Variable
@@ -515,9 +515,9 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
         if(Ig_Pump)
           Ig_Pump = false;
         else{ 
-          if(t_command == "ON")
+          if(t_command == "N")
               Command_Pump = 1;
-          else if(t_command == "OFF")
+          else if(t_command == "F")
               Command_Pump = 2;
         }
       }else flag = true;
@@ -528,9 +528,9 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
         if(Ig_Led)
             Ig_Led = false;
         else{
-            if(t_command == "ON")
+            if(t_command == "N")
                 Command_Light = 1;
-            else if(t_command == "OFF")
+            else if(t_command == "F")
                 Command_Light = 2;
         }
       }else flag = true;
@@ -1034,19 +1034,19 @@ void Solve_Command() // TODO: Slove Command
     Serial.println(O_Command);
     String Actuator = O_Command.substring(0,O_Command.indexOf(" "));
     String Require = O_Command.substring(O_Command.indexOf(" ")+1,O_Command.length());
-    if(Actuator == "Light")
+    if(Actuator == "L")
     {
-      if(Require == "ON")
+      if(Require == "N")
           Command_Light = 1;
-      else if(Require == "OFF")
+      else if(Require == "F")
           Command_Light = 2;
       return;
     }
-    if(Actuator == "Pump")
+    if(Actuator == "P")
     {
-      if(Require == "ON")
+      if(Require == "N")
           Command_Pump = 1;
-      else if(Require == "OFF")
+      else if(Require == "F")
           Command_Pump = 2;
       return;
     }
@@ -1077,7 +1077,7 @@ void Init_Task()
   xTaskCreate(
     Capture,
     "Capture",
-    8000, //6948B left
+    4000, //6948B left
     NULL,
     0,
     &CaptureTask
