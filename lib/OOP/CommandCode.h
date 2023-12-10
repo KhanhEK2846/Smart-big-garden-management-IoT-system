@@ -11,6 +11,7 @@
 #define No_Response_Code 444
 #define Network_Authentication_Required 511
 //Mode
+#define ACK "0" // Send ACK
 #define Default "1" //Node -> Gateway
 #define Broadcast "2" // Send both except from sender
 #define Command "3" // Handle command & Broadcast

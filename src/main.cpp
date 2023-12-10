@@ -243,13 +243,12 @@ void Delivery(void * pvParameters)
   uint8_t Gateway_AddH = 0;
   uint8_t Gateway_AddL = 0;
   uint8_t Gateway_Channel = 0x17;
-  ResponseStatus rs;
   while(true)
   {
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
     if(data.GetMode() == Default || data.GetMode() == LogData)
     {
-      rs = lora.sendFixedMessage(Gateway_AddH,Gateway_AddL,Gateway_Channel,data.toString());
+      lora.sendFixedMessage(Gateway_AddH,Gateway_AddL,Gateway_Channel,data.toString());
     }
     else
     {
@@ -258,9 +257,8 @@ void Delivery(void * pvParameters)
       Serial.println(DeliveryH);
       Serial.println(DeliveryL);
       Serial.println(DeliveryChan);
-      rs = lora.sendFixedMessage(DeliveryH,DeliveryL,DeliveryChan,data.toString());
+      lora.sendFixedMessage(DeliveryH,DeliveryL,DeliveryChan,data.toString());
     }
-    Serial.println(rs.getResponseDescription());
     Serial.print("Delivery Task: ");
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);
@@ -273,6 +271,7 @@ void Capture(void * pvParameters)
   ResponseContainer mess;
   UBaseType_t uxHighWaterMark;
   DataPackage ResponseMessange;
+
   while (true)
   {
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
@@ -282,39 +281,55 @@ void Capture(void * pvParameters)
       D_Pack.fromString(mess.data);
       Serial.print(ID);
       Serial.println(" receive:");
-      Serial.println(D_Pack.toString(true));  
+      Serial.println(D_Pack.toString(true));
+      /*-----------------Check Expired---------------------------*/  
       if(D_Pack.expired == 0)
         continue;
       --D_Pack.expired;
-      if(D_Pack.GetID() == ID) //ReceiveIP & Infection mode 
+      /*-------------------------------------------------------*/  
+      if(D_Pack.GetID() == ID) //If message for node 
       {
-        if(D_Pack.GetMode() == Default) //Receive its data
-          continue;
-        D_Command = D_Pack.GetData();
-        xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
-          continue;
-      }
-      if (D_Pack.GetMode() == Command) //Command for the other node
-      {
-        xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));    
-        continue;
-      }
-      if(D_Pack.GetMode() == Default || D_Pack.GetMode() == LogData)
-      {
-        if(gateway_node == 0)
-          continue;
-        if(gateway_node == 1)// If it's a gateway -> Send to Database
+        if(D_Pack.GetMode() == HelloNeighbor)
         {
-          xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(100));
           continue;
         }
-        if(gateway_node ==2)//If it's a node -> Delivery to Gateway
+        if(D_Pack.GetMode() == Command) //Receive Command 
         {
-          xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
+          D_Command = D_Pack.GetData();
+          xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
           continue;
+        }
+      }
+      else
+      {
+        if(D_Pack.GetMode() == HelloNeighbor)
+        {
+          
+          continue;
+        }
+        if (D_Pack.GetMode() == Command) //Command for the other node
+        {
+          xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));    
+          continue;
+        }
+        if(D_Pack.GetMode() == Default || D_Pack.GetMode() == LogData)//Send to gateway or database
+        {
+          if(gateway_node == 0)
+            continue;
+          if(gateway_node == 1)// If it's a gateway -> Send to Database
+          {
+            xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(100));
+            continue;
+          }
+          if(gateway_node ==2)//If it's a node -> Delivery to Gateway
+          {
+            xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
+            continue;
+          }
         }
       }
     } else delay(100);
+
     Serial.print("Capture Task: ");
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);
