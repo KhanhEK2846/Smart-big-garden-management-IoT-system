@@ -713,6 +713,12 @@ void Init_Server() // FIXME: Fix backend server
     sercurity_backend_key = false;
     before_reset_key = 0;
   });
+  server.on("/BackEndSercure",HTTP_GET,[](AsyncWebServerRequest *request){
+    if(!tolerance_backend_key || ON_STA_FILTER(request) || !request->authenticate(auth_username.c_str(), auth_password.c_str()))
+      return request->send(Gone_Code);
+      MessLimit = "";
+    return request->send_P(Received_Code,"text/plain",MessLimit.c_str());
+  });
   server.on("/Tolerance",HTTP_GET,[](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request)) //Only for client from AP Mode
       return request->redirect("/NothingHereForYou");

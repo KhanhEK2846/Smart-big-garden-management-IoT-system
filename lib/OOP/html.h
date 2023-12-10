@@ -176,6 +176,7 @@ const char main_html[] PROGMEM = R"rawliteral(
     #NameTree{
       font-size: xx-large;
       font-weight: bolder;
+      text-align: center; 
     }
     .Error_Sensor{
       display: flex;
@@ -184,9 +185,6 @@ const char main_html[] PROGMEM = R"rawliteral(
       border: none;
       outline: none;
       background: transparent;
-    }
-    input{
-      text-align: center; 
     }
     .input_box{
       position: relative;
@@ -1238,12 +1236,12 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
       }
   </style>
 </head>
-<body>
+<body onload="InitDefaultValue()">
   <div class="bar">
     <button id="Back" onclick="history.back()">Back</button>
-    <button id="Authentication">Access</button>
-    <button id="Authorization">User</button>
-    <button id="Configuring">WiFi</button> 
+    <button id="Authentication">User</button>
+    <button id="Authorization">Owner</button>
+    <button id="Configuring">Access</button> 
     <div id="local"></div>
   </div> 
   <div class="box" id="card">
@@ -1264,6 +1262,18 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
     </div>
   </div>
   <script>
+    var DefaultValue = [];
+    function InitDefaultValue(){
+      var xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function(){
+        if (this.readyState == 4 && this.status == 200){
+          for( var data of String(this.responseText).split("/"))
+            DefaultValue.push(data);
+        }
+      };
+      xhr.open("GET", "/BackEndSercure", false);
+      xhr.send();
+    }
     var state = "Authorization"
     document.getElementById("Authentication").addEventListener("click",rotate)
     document.getElementById("Authorization").addEventListener("click",rotate)
@@ -1271,6 +1281,8 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
     document.getElementById("Accept").addEventListener("click",Change)
     document.getElementById("Decline").addEventListener("click",Delete)
     function rotate(){
+      document.getElementById("id").value = ""
+      document.getElementById("password").value = ""
       if(this.id == "Authentication" && (state == "Authorization" || state =="Configuring"))
       {
         if(state == "Authorization")

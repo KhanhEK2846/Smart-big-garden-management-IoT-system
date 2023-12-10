@@ -203,12 +203,12 @@
       }
   </style>
 </head>
-<body>
+<body onload="InitDefaultValue()">
   <div class="bar">
     <button id="Back" onclick="history.back()">Back</button>
-    <button id="Authentication">Access</button>
-    <button id="Authorization">User</button>
-    <button id="Configuring">WiFi</button> 
+    <button id="Authentication">User</button>
+    <button id="Authorization">Owner</button>
+    <button id="Configuring">Access</button> 
     <div id="local"></div>
   </div> 
   <div class="box" id="card">
@@ -229,6 +229,18 @@
     </div>
   </div>
   <script>
+    var DefaultValue = [];
+    function InitDefaultValue(){
+      var xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function(){
+        if (this.readyState == 4 && this.status == 200){
+          for( var data of String(this.responseText).split("/"))
+            DefaultValue.push(data);
+        }
+      };
+      xhr.open("GET", "/BackEndSercure", false);
+      xhr.send();
+    }
     var state = "Authorization"
     document.getElementById("Authentication").addEventListener("click",rotate)
     document.getElementById("Authorization").addEventListener("click",rotate)
@@ -236,6 +248,8 @@
     document.getElementById("Accept").addEventListener("click",Change)
     document.getElementById("Decline").addEventListener("click",Delete)
     function rotate(){
+      document.getElementById("id").value = ""
+      document.getElementById("password").value = ""
       if(this.id == "Authentication" && (state == "Authorization" || state =="Configuring"))
       {
         if(state == "Authorization")
