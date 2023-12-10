@@ -59,6 +59,9 @@ volatile boolean lora_flag = false;
 uint8_t AddH;
 uint8_t AddL;
 uint8_t Channel;
+volatile uint8_t Gateway_AddH = 0;
+volatile uint8_t Gateway_AddL = 0;
+volatile uint8_t Gateway_Channel = 0x17;
 //Ping
 WiFiClient PingClient;
 const unsigned long time_delay_to_ping = 300000; // 5 minutes/ping
@@ -240,9 +243,6 @@ void Delivery(void * pvParameters)
   uint8_t DeliveryH;
   uint8_t DeliveryL;
   uint8_t DeliveryChan;
-  uint8_t Gateway_AddH = 0;
-  uint8_t Gateway_AddL = 0;
-  uint8_t Gateway_Channel = 0x17;
   while(true)
   {
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
@@ -716,7 +716,24 @@ void Init_Server() // FIXME: Fix backend server
   server.on("/BackEndSercure",HTTP_GET,[](AsyncWebServerRequest *request){
     if(!tolerance_backend_key || ON_STA_FILTER(request) || !request->authenticate(auth_username.c_str(), auth_password.c_str()))
       return request->send(Gone_Code);
-      MessLimit = "";
+      MessLimit = String(Gateway_AddH);
+      MessLimit += "/";
+      MessLimit += String(Gateway_AddL);
+      MessLimit += "/";
+      MessLimit += String(Gateway_Channel);
+      MessLimit += "/";
+      MessLimit += auth_username;
+      MessLimit += "/";
+      MessLimit += auth_password;
+      MessLimit += "/";
+      MessLimit += http_username;
+      MessLimit += "/";
+      MessLimit += http_password;
+      MessLimit += "/";
+      MessLimit += ap_ssid;
+      MessLimit += "/";
+      MessLimit += ap_password;
+      MessLimit += "/";
     return request->send_P(Received_Code,"text/plain",MessLimit.c_str());
   });
   server.on("/Tolerance",HTTP_GET,[](AsyncWebServerRequest *request){

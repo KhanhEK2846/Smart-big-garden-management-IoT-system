@@ -1269,6 +1269,7 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
         if (this.readyState == 4 && this.status == 200){
           for( var data of String(this.responseText).split("/"))
             DefaultValue.push(data);
+          console.log(DefaultValue);
         }
       };
       xhr.open("GET", "/BackEndSercure", false);
