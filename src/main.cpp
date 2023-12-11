@@ -47,10 +47,12 @@ unsigned long Still_Pumps = 60000; //Water in 1 minute
 boolean PumpsStatus = false; //Current Status Pump
 //Light
 boolean LightStatus = false; //Current Status Light
+//Bits -> int
+int ConvertToInt = 0; //DHT_Err LDR_Err Soil_Err LightStatus PumpsStatus
 //WIFI Variable
 String sta_ssid = ""; 
 String sta_password = "" ;
-String ap_ssid = "ESP32_Client";
+String ap_ssid = "ESP32_Server";
 String ap_password = "123456789";
 const unsigned long Network_TimeOut = 5000;// Wait 5 seconds to Connect Wifi
 //LoRa Variable
@@ -378,13 +380,15 @@ void notifyClients(const String data) //Notify all local clients with a message
 void notifyClient(AsyncWebSocketClient *client)//Notify only one local client
 {
   String data ="{";
+  int Convert = 0; // DHT_Err LDR_Err Soil_Err LightStatus PumpsStatus
   data += Tree.Name;
   data += "/";
-  data += String(DHT_Err);
-  data += "/";
-  data += String(LDR_Err);
-  data += "/";
-  data += String(Soil_Err);
+  Convert |= DHT_Err <<4;
+  Convert |= LDR_Err <<3;
+  Convert |= Soil_Err <<2;
+  Convert |= LightStatus <<1;
+  Convert |= PumpsStatus <<0;
+  data += String(Convert);
   data += "/";
   if(DHT_Err)
     data += String(0);
@@ -405,10 +409,6 @@ void notifyClient(AsyncWebSocketClient *client)//Notify only one local client
     data += String(0);
   else  
     data += String(soilMoist);
-  data += "/"; 
-  data += String(LightStatus);
-  data += "/";  
-  data += String(PumpsStatus);
   data += "/";
   if(WiFi.status() != WL_CONNECTED)   
     data += "Wifi OFF";
@@ -808,11 +808,13 @@ void PrepareMess() //Decide what to send
   messanger.clear();
   messanger = Tree.Name;
   messanger += "/";
-  messanger += String(DHT_Err);
-  messanger += "/";
-  messanger += String(LDR_Err);
-  messanger += "/";
-  messanger += String(Soil_Err);
+  ConvertToInt = 0;
+  ConvertToInt |= DHT_Err <<4;
+  ConvertToInt |= LDR_Err <<3;
+  ConvertToInt |= Soil_Err <<2;
+  ConvertToInt |= LightStatus <<1;
+  ConvertToInt |= PumpsStatus <<0;
+  messanger += String(ConvertToInt);
   messanger += "/";
   if(DHT_Err)
     messanger += String(0);
@@ -833,10 +835,6 @@ void PrepareMess() //Decide what to send
     messanger += String(0);
   else
     messanger += String(soilMoist);
-  messanger += "/";
-  messanger += String(LightStatus);
-  messanger += "/";
-  messanger += String(PumpsStatus);
   messanger += "/";
   messanger += String(Tree.Days);
   if(Temp[0] != (int)DHT_Err)
@@ -1092,7 +1090,7 @@ void Init_Task()
   xTaskCreate(
     DataLog,
     "DataLog",
-    8000,//2000B left
+    7000,//2000B left
     NULL,
     0,
     &DatabaseTask
@@ -1100,7 +1098,7 @@ void Init_Task()
   xTaskCreate(
     Capture,
     "Capture",
-    4000, //6948B left
+    3000, //2936B left
     NULL,
     0,
     &CaptureTask

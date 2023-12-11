@@ -89,11 +89,12 @@ void DataPackage::DataToJson(FirebaseJson* slave)
     String t_data = this->data;
     slave->set("Name",t_data.substring(0,t_data.indexOf("/")));//Name
     t_data = t_data.substring(t_data.indexOf("/")+1);
-    slave->set("Error/DHT11",t_data.substring(0,t_data.indexOf("/"))); //Status DHT
-    t_data = t_data.substring(t_data.indexOf("/")+1);
-    slave->set("Error/LDR",t_data.substring(0,t_data.indexOf("/")));//Status Light Sensor
-    t_data = t_data.substring(t_data.indexOf("/")+1);
-    slave->set("Error/Soil",t_data.substring(0,t_data.indexOf("/"))); //Soid moisure sensor
+    int tempNumber = atof(t_data.substring(0,t_data.indexOf("/")).c_str());
+    slave->set("Error/DHT11",String((tempNumber>>4)&1)); //Status DHT
+    slave->set("Error/LDR",String((tempNumber>>3)&1));//Status Light Sensor
+    slave->set("Error/Soil",String((tempNumber>>2)&1)); //Soid moisure sensor
+    slave->set("Status/Led",String((tempNumber>>1)&1));//Light
+    slave->set("Status/Pump",String((tempNumber>>0)&1));//Pump
     t_data = t_data.substring(t_data.indexOf("/")+1);
     slave->set("Sensor/DHT11/Humi",t_data.substring(0,t_data.indexOf("/")));//Humi
     t_data = t_data.substring(t_data.indexOf("/")+1);
@@ -102,10 +103,6 @@ void DataPackage::DataToJson(FirebaseJson* slave)
     slave->set("Sensor/Light",t_data.substring(0,t_data.indexOf("/")));//Bright
     t_data = t_data.substring(t_data.indexOf("/")+1);
     slave->set("Sensor/Solid",t_data.substring(0,t_data.indexOf("/")));//Mois
-    t_data = t_data.substring(t_data.indexOf("/")+1);
-    slave->set("Status/Led",t_data.substring(0,t_data.indexOf("/")));//Light
-    t_data = t_data.substring(t_data.indexOf("/")+1);
-    slave->set("Status/Pump",t_data.substring(0,t_data.indexOf("/")));//Pump
     t_data = t_data.substring(t_data.indexOf("/")+1);
     slave->set("Plant/Days",t_data); // Day pass
     //slave->toString(t_data,true);
