@@ -4,8 +4,9 @@ DataPackage ::DataPackage()
 {
     data = "";
     ID = "";
+    From = "";
     Mode = "";
-    expired = 10;
+    expired = 9;
 }
 
 String DataPackage:: GetID() const
@@ -23,12 +24,19 @@ String DataPackage::GetMode() const
     return this->Mode;
 }
 
-void DataPackage::SetDataPackage(const String t_id, const String t_data, const String t_mode)
+String DataPackage::GetFrom() const
+{
+    return this->From;
+}
+
+void DataPackage::SetDataPackage(const String t_id,const String t_from, const String t_data, const String t_mode)
 {
     if(t_id != "")
         this->ID = t_id;
     if(t_data != "")
         this->data = t_data;
+    if(t_from != "")
+        this->From = t_from;
     if(t_mode != "")
         this->Mode = t_mode;
 }
@@ -38,10 +46,16 @@ void DataPackage::SetMode(const String mode)
     this->Mode = mode;
 }
 
+void DataPackage::SetFrom(const String address)
+{
+    this->From = address;
+}
+
 DataPackage ::~DataPackage()
 {
     data.remove(0);
     ID.remove(0);
+    From.remove(0);
     Mode.remove(0);
 }
 
@@ -49,6 +63,7 @@ DataPackage& DataPackage::operator=(const DataPackage temp)
 {
     data = temp.data;
     ID = temp.ID;
+    From = temp.From;
     Mode = temp.Mode;
     expired = temp.expired;
     return *this;
@@ -62,6 +77,11 @@ String DataPackage::toString(boolean prettier) const
     else
         temp = "{";
     temp += this->ID;
+    if(prettier)
+        temp += "\nFrom: ";
+    else
+        temp += ",";
+    temp += this->From;
     if(prettier)
         temp += "\nMode: ";
     else
@@ -113,6 +133,8 @@ void DataPackage::fromString(const String data)
 {
     String temp = data.substring(data.indexOf("{") + 1, data.lastIndexOf("}"));
     this->ID = temp.substring(0,temp.indexOf(","));
+    temp = temp.substring(temp.indexOf(",")+1);
+    this->From = temp.substring(0,temp.indexOf(","));
     temp = temp.substring(temp.indexOf(",")+1);
     this->Mode = temp.substring(0,temp.indexOf(","));
     temp = temp.substring(temp.indexOf(",")+1);

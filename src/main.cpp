@@ -64,6 +64,7 @@ uint8_t Channel;
 volatile uint8_t Gateway_AddH = 0;
 volatile uint8_t Gateway_AddL = 0;
 volatile uint8_t Gateway_Channel = 0x17;
+String address = "";
 //Ping
 WiFiClient PingClient;
 const unsigned long time_delay_to_ping = 300000; // 5 minutes/ping
@@ -149,6 +150,8 @@ void Make_Day()//Counter Day
     Time_Passed = millis();
     Tree.Days ++;
   }
+  if(Tree.Days > 999)
+    Tree.Days = 0;
 }
 #pragma endregion
 #pragma region Check Internet Connected from Wifi
@@ -206,7 +209,12 @@ void CalculateAddressChannel(const String id, uint8_t &H, uint8_t &L, uint8_t &c
   while(H > 0xFF) H -= 0xFF;
   while(L > 0xFF) L -= 0xFF;
   while(chan > 0x1F) chan -= 0x1F;
-
+}
+String EnCodeAddressChannel(const uint8_t H,const uint8_t L,const uint8_t chan)
+{
+  char macStr[3] = { 0 };
+  sprintf(macStr,"%02x%02x%02x", H,L,chan);
+  return String(macStr);
 }
 void Reset_ConfigurationLoRa(boolean gateway = true)
 {
@@ -248,17 +256,13 @@ void Delivery(void * pvParameters)
   while(true)
   {
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
-    if(data.GetMode() == Default || data.GetMode() == LogData)
+    if(data.GetMode() == Default || data.GetMode() == LogData) //Send to Gateway
     {
       lora.sendFixedMessage(Gateway_AddH,Gateway_AddL,Gateway_Channel,data.toString());
     }
-    else
+    else //Send to Node
     {
-      Serial.println(data.toString(true));
       CalculateAddressChannel(data.GetID(),DeliveryH,DeliveryL,DeliveryChan);
-      Serial.println(DeliveryH);
-      Serial.println(DeliveryL);
-      Serial.println(DeliveryChan);
       lora.sendFixedMessage(DeliveryH,DeliveryL,DeliveryChan,data.toString());
     }
     Serial.print("Delivery Task: ");
@@ -288,7 +292,16 @@ void Capture(void * pvParameters)
       if(D_Pack.expired == 0)
         continue;
       --D_Pack.expired;
-      /*-------------------------------------------------------*/  
+      /*------------------------Response------------------------*/
+      if(D_Pack.GetMode() == ACK)
+      {
+        continue;
+      }
+      if(D_Pack.GetMode() == Command || D_Pack.GetMode() == LogData)
+      {
+        
+      }
+      /*------------------------Itself or other-----------------*/  
       if(D_Pack.GetID() == ID) //If message for node 
       {
         if(D_Pack.GetMode() == HelloNeighbor)
@@ -344,6 +357,9 @@ void Init_LoRa()
   ResponseStructContainer c = lora.getConfiguration();
   Configuration configuration = *(Configuration*) c.data;
   CalculateAddressChannel(ID,AddH,AddL,Channel);
+  address = EnCodeAddressChannel(AddH,AddL,Channel);
+  O_Pack.SetFrom(address);
+  MQTT_Data.SetFrom(address);
   if(c.status.code == 1)
   {
     configuration.OPTION.fixedTransmission = FT_FIXED_TRANSMISSION;
@@ -537,7 +553,7 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
     }
     if(flag)
     {    
-      MQTT_Data.SetDataPackage(t_ID,MQTT_Messange.substring(MQTT_Messange.indexOf("/")+1,MQTT_Messange.length()),Command);
+      MQTT_Data.SetDataPackage(t_ID,"",MQTT_Messange.substring(MQTT_Messange.indexOf("/")+1,MQTT_Messange.length()),Command);
       xQueueSend(Queue_Delivery,&MQTT_Data,pdMS_TO_TICKS(100));
     }
 
@@ -906,7 +922,7 @@ void SendMess() //Send mess prepared to who
     {
       Last_datalogging_time = millis();
       own_wait_time = millis(); //Renew realtime send
-      O_Pack.SetDataPackage(ID,messanger,LogData);
+      O_Pack.SetDataPackage(ID,"",messanger,LogData);
       switch (gateway_node)
       {
       case 1: // Gateway -> Database
@@ -924,7 +940,7 @@ void SendMess() //Send mess prepared to who
   {
     if(valueChange_flag)
     {
-      O_Pack.SetDataPackage(ID,messanger,Default);
+      O_Pack.SetDataPackage(ID,"",messanger,Default);
       if(gateway_node == 2 && ((unsigned long)(millis() - own_wait_time)>own_delay_send )) //Send to Gateway only if It's a node
       {
         own_wait_time = millis();
@@ -948,7 +964,7 @@ int Get_Sensor(int anaPin)// Get Data From Light Sensor & Soild Sensor
 } 
 void Check()// Check error sensor
 {
-  if(isnan(Humidity) || isnan(Temperature) || Humidity > 90 || Temperature > 50 ){
+  if(isnan(Humidity) || isnan(Temperature) || Humidity > 90 || Humidity < 20|| Temperature > 50 || Temperature < 0 ){
       DHT_Err = true;
     }
   else{
@@ -1082,7 +1098,7 @@ void Init_Task()
   xTaskCreate(
     Delivery,
     "Delivery",
-    3000, //1684B left
+    3000, //1676B left
     NULL,
     0,
     &DeliveryTask
@@ -1098,7 +1114,7 @@ void Init_Task()
   xTaskCreate(
     Capture,
     "Capture",
-    3000, //2936B left
+    3000, //2088B left
     NULL,
     0,
     &CaptureTask
