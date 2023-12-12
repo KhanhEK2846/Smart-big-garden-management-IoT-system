@@ -52,7 +52,7 @@ int ConvertToInt = 0; //DHT_Err LDR_Err Soil_Err LightStatus PumpsStatus
 //WIFI Variable
 String sta_ssid = ""; 
 String sta_password = "" ;
-String ap_ssid = "ESP32_Server";
+String ap_ssid = "ESP32_Client";
 String ap_password = "123456789";
 const unsigned long Network_TimeOut = 5000;// Wait 5 seconds to Connect Wifi
 //LoRa Variable
@@ -216,6 +216,10 @@ String EnCodeAddressChannel(const uint8_t H,const uint8_t L,const uint8_t chan)
   sprintf(macStr,"%02x%02x%02x", H,L,chan);
   return String(macStr);
 }
+void DeCodeAddressChannel(const String address, uint8_t &H, uint8_t &L, uint8_t &chan)
+{
+  sscanf(address.c_str(),"%02x%02x%02x",&H,&L,&chan);
+}
 void Reset_ConfigurationLoRa(boolean gateway = true)
 {
   if(!lora_flag)
@@ -262,7 +266,10 @@ void Delivery(void * pvParameters)
     }
     else //Send to Node
     {
-      CalculateAddressChannel(data.GetID(),DeliveryH,DeliveryL,DeliveryChan);
+      if(data.GetMode() == ACK)
+        DeCodeAddressChannel(data.GetID(),DeliveryH,DeliveryL,DeliveryChan);
+      else
+        CalculateAddressChannel(data.GetID(),DeliveryH,DeliveryL,DeliveryChan);
       lora.sendFixedMessage(DeliveryH,DeliveryL,DeliveryChan,data.toString());
     }
     Serial.print("Delivery Task: ");
@@ -276,8 +283,9 @@ void Capture(void * pvParameters)
 {
   ResponseContainer mess;
   UBaseType_t uxHighWaterMark;
-  DataPackage ResponseMessange;
-
+  DataPackage ResponseACK;
+  ResponseACK.SetMode(ACK);
+  ResponseACK.SetFrom(*((String*)pvParameters));
   while (true)
   {
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
@@ -295,11 +303,14 @@ void Capture(void * pvParameters)
       /*------------------------Response------------------------*/
       if(D_Pack.GetMode() == ACK)
       {
+        Serial.println("Receive ACK");
         continue;
       }
       if(D_Pack.GetMode() == Command || D_Pack.GetMode() == LogData)
       {
-        
+        ResponseACK.SetDataPackage(D_Pack.GetFrom(),"","","");
+        Serial.println("Prepare to Send ACK");
+        xQueueSendToFront(Queue_Delivery,&ResponseACK,pdMS_TO_TICKS(100));
       }
       /*------------------------Itself or other-----------------*/  
       if(D_Pack.GetID() == ID) //If message for node 
@@ -1098,7 +1109,7 @@ void Init_Task()
   xTaskCreate(
     Delivery,
     "Delivery",
-    3000, //1676B left
+    3000, //2072B left
     NULL,
     0,
     &DeliveryTask
@@ -1114,8 +1125,8 @@ void Init_Task()
   xTaskCreate(
     Capture,
     "Capture",
-    3000, //2088B left
-    NULL,
+    3000, //1976B left
+    (void*)&address,
     0,
     &CaptureTask
   );
