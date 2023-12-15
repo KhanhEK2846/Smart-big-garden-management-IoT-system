@@ -110,6 +110,7 @@ String D_Command;
 DataPackage MQTT_Data;
 const unsigned long own_delay_send = 5000; // 5 seconds/send
 unsigned long own_wait_time = 0;
+volatile boolean sent_RTDB = false;
 //Task Delivery Data
 TaskHandle_t DeliveryTask = NULL;
 TaskHandle_t DatabaseTask = NULL;
@@ -243,6 +244,8 @@ void Delivery(void * pvParameters)
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
     if(data.GetMode() == Default || data.GetMode() == LogData) //Send to Gateway
     {
+      if(data.GetMode() == Default && data.GetID() == ID)
+        sent_RTDB = false;
       lora.sendFixedMessage(Gateway_AddH,Gateway_AddL,Gateway_Channel,data.toString());
     }
     else //Send to Node
@@ -936,10 +939,11 @@ void SendMess() //Send mess prepared to who
     if(valueChange_flag)
     {
       O_Pack.SetDataPackage(ID,"",messanger,Default);
-      if(gateway_node == 2 && ((unsigned long)(millis() - own_wait_time)>own_delay_send )) //Send to Gateway only if It's a node
+      if(!sent_RTDB && gateway_node == 2 && ((unsigned long)(millis() - own_wait_time)>own_delay_send )) //Send to Gateway only if It's a node
       {
         own_wait_time = millis();
         xQueueSend(Queue_Delivery,&O_Pack,pdMS_TO_TICKS(10));
+        sent_RTDB = true;
       }
       if(WiFi.status() == WL_CONNECTED && ping_flag && !first_sta && Firebase.ready()) //Send to database
       {
