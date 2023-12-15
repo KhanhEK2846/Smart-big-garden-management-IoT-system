@@ -14,6 +14,7 @@
 #include "Plant.h"
 #include "URL.h"
 #include "html.h"
+#include "CommonFunction.h"
 //Port GPIOs
 #define DHTPIN 21 //Read DHT22 Sensor
 #define LDR 34 //Read Light Sensor
@@ -199,27 +200,7 @@ void Cycle_Ping()// Cycle Ping to Host // FIX:
 
 // 	Serial.println("----------------------------------------");
 // }
-void CalculateAddressChannel(const String id, uint8_t &H, uint8_t &L, uint8_t &chan)
-{
-  int tempid[6];
-  sscanf(id.c_str(), "%02x:%02x:%02x:%02x:%02x:%02x", &tempid[0], &tempid[1], &tempid[2], &tempid[3], &tempid[4], &tempid[5]);
-	H = tempid[0] + tempid[1] + tempid[2];
-	L = tempid[3] + tempid[4] + tempid[5];
-	chan = tempid[0] + tempid[1] + tempid[2] + tempid[3] + tempid[4] + tempid[5];
-  while(H > 0xFF) H -= 0xFF;
-  while(L > 0xFF) L -= 0xFF;
-  while(chan > 0x1F) chan -= 0x1F;
-}
-String EnCodeAddressChannel(const uint8_t H,const uint8_t L,const uint8_t chan)
-{
-  char macStr[3] = { 0 };
-  sprintf(macStr,"%02x%02x%02x", H,L,chan);
-  return String(macStr);
-}
-void DeCodeAddressChannel(const String address, uint8_t &H, uint8_t &L, uint8_t &chan)
-{
-  sscanf(address.c_str(),"%02x%02x%02x",&H,&L,&chan);
-}
+
 void Reset_ConfigurationLoRa(boolean gateway = true)
 {
   if(!lora_flag)
@@ -285,7 +266,7 @@ void Capture(void * pvParameters)
   UBaseType_t uxHighWaterMark;
   DataPackage ResponseACK;
   ResponseACK.SetMode(ACK);
-  ResponseACK.SetFrom(*((String*)pvParameters));
+  // ResponseACK.SetFrom(*((String*)pvParameters));
   while (true)
   {
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
@@ -308,7 +289,10 @@ void Capture(void * pvParameters)
       }
       if(D_Pack.GetMode() == Command || D_Pack.GetMode() == LogData)
       {
-        ResponseACK.SetDataPackage(D_Pack.GetFrom(),"","","");
+        if(gateway_node == 1)
+          ResponseACK.SetDataPackage(D_Pack.GetFrom(),"000017","","");
+        if(gateway_node == 2)
+          ResponseACK.SetDataPackage(D_Pack.GetFrom(),*((String*)pvParameters),"","");
         Serial.println("Prepare to Send ACK");
         xQueueSendToFront(Queue_Delivery,&ResponseACK,pdMS_TO_TICKS(100));
       }
