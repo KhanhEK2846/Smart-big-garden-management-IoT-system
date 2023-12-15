@@ -294,7 +294,7 @@ void Capture(void * pvParameters)
         if(gateway_node == 2)
           ResponseACK.SetDataPackage(D_Pack.GetFrom(),*((String*)pvParameters),"","");
         Serial.println("Prepare to Send ACK");
-        xQueueSendToFront(Queue_Delivery,&ResponseACK,pdMS_TO_TICKS(100));
+        xQueueSendToFront(Queue_Delivery,&ResponseACK,pdMS_TO_TICKS(10));
       }
       /*------------------------Itself or other-----------------*/  
       if(D_Pack.GetID() == ID) //If message for node 
@@ -306,7 +306,7 @@ void Capture(void * pvParameters)
         if(D_Pack.GetMode() == Command) //Receive Command 
         {
           D_Command = D_Pack.GetData();
-          xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(100));
+          xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(10));
           continue;
         }
       }
@@ -319,7 +319,7 @@ void Capture(void * pvParameters)
         }
         if (D_Pack.GetMode() == Command) //Command for the other node
         {
-          xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));    
+          xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(10));    
           continue;
         }
         if(D_Pack.GetMode() == Default || D_Pack.GetMode() == LogData)//Send to gateway or database
@@ -328,17 +328,17 @@ void Capture(void * pvParameters)
             continue;
           if(gateway_node == 1)// If it's a gateway -> Send to Database
           {
-            xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(100));
+            xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(10));
             continue;
           }
           if(gateway_node ==2)//If it's a node -> Delivery to Gateway
           {
-            xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(100));
+            xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(10));
             continue;
           }
         }
       }
-    } else delay(100);
+    } else delay(10);
 
     Serial.print("Capture Task: ");
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
@@ -549,7 +549,7 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
     if(flag)
     {    
       MQTT_Data.SetDataPackage(t_ID,"",MQTT_Messange.substring(MQTT_Messange.indexOf("/")+1,MQTT_Messange.length()),Command);
-      xQueueSend(Queue_Delivery,&MQTT_Data,pdMS_TO_TICKS(100));
+      xQueueSend(Queue_Delivery,&MQTT_Data,pdMS_TO_TICKS(10));
     }
 
 }
@@ -921,10 +921,10 @@ void SendMess() //Send mess prepared to who
       switch (gateway_node)
       {
       case 1: // Gateway -> Database
-        xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(100));
+        xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(10));
         break;
       case 2: //Node -> Gateway
-        xQueueSend(Queue_Delivery,&O_Pack,pdMS_TO_TICKS(100));
+        xQueueSend(Queue_Delivery,&O_Pack,pdMS_TO_TICKS(10));
         break;
       default:
         break;
@@ -939,11 +939,11 @@ void SendMess() //Send mess prepared to who
       if(gateway_node == 2 && ((unsigned long)(millis() - own_wait_time)>own_delay_send )) //Send to Gateway only if It's a node
       {
         own_wait_time = millis();
-        xQueueSend(Queue_Delivery,&O_Pack,pdMS_TO_TICKS(100));
+        xQueueSend(Queue_Delivery,&O_Pack,pdMS_TO_TICKS(10));
       }
       if(WiFi.status() == WL_CONNECTED && ping_flag && !first_sta && Firebase.ready()) //Send to database
       {
-        xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(100));
+        xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(10));
       }  
     }
   }
