@@ -66,6 +66,9 @@ volatile uint8_t Gateway_AddH = 0;
 volatile uint8_t Gateway_AddL = 0;
 volatile uint8_t Gateway_Channel = 0x17;
 String address = "";
+String GatewayAddress = "000017";
+volatile int toGateway = 0;
+volatile int toNode = 0;
 //Ping
 WiFiClient PingClient;
 const unsigned long time_delay_to_ping = 300000; // 5 minutes/ping
@@ -247,13 +250,17 @@ void Delivery(void * pvParameters)
       if(data.GetMode() == Default && data.GetID() == ID)
         sent_RTDB = false;
       lora.sendFixedMessage(Gateway_AddH,Gateway_AddL,Gateway_Channel,data.toString());
+      toGateway++;
     }
     else //Send to Node
     {
       if(data.GetMode() == ACK)
         DeCodeAddressChannel(data.GetID(),DeliveryH,DeliveryL,DeliveryChan);
       else
+      {
+        toNode ++;
         CalculateAddressChannel(data.GetID(),DeliveryH,DeliveryL,DeliveryChan);
+      }
       lora.sendFixedMessage(DeliveryH,DeliveryL,DeliveryChan,data.toString());
     }
     Serial.print("Delivery Task: ");
@@ -288,6 +295,10 @@ void Capture(void * pvParameters)
       if(D_Pack.GetMode() == ACK)
       {
         Serial.println("Receive ACK");
+        if(D_Pack.GetFrom() == GatewayAddress)
+          toGateway --;
+        else
+          toNode --;
         continue;
       }
       if(D_Pack.GetMode() == Command || D_Pack.GetMode() == LogData)
