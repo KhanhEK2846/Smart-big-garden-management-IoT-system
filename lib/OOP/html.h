@@ -1247,11 +1247,11 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
     <form autocomplete="off">
       <div class="input_box">
         <input type="text" id="id" name="user" required><br>
-        <label for="password">Name: </label>
+        <label id="first_label" for="ssid">Username: </label>
       </div>
       <div class="input_box">
         <input type="password" id="password" name="password" required><br>
-        <label for="ssid">Password: </label>
+        <label id="last_label" for="password">Password: </label>
       </div>
     </form>
     <div class="butt_cont">
@@ -1281,16 +1281,19 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
     document.getElementById("Accept").addEventListener("click",Change)
     document.getElementById("Decline").addEventListener("click",Delete)
     function rotate(){
-      document.getElementById("id").value = ""
-      document.getElementById("password").value = ""
       if(this.id == "Gateway" && state != "Gateway")
       {
         document.getElementById("card").style.animation = "Flip 0.5s linear"; 
         document.body.style.backgroundPosition = "left";  
         document.getElementById("local").style.left = "calc(2*((100% - 4*150px)/8) + 1.15*150px)";
         document.body.style.backgroundPosition = "0% 50%";    
-        setTimeout(()=>{document.getElementById("Title").innerHTML = "Gateway";},250)
-        
+        setTimeout(()=>{
+          document.getElementById("Title").innerHTML = "Gateway";
+          document.getElementById("first_label").innerHTML = "Address (0000 - FFFF):";
+          document.getElementById("last_label").innerHTML = "Channel (00 - 1F):";
+          document.getElementById("id").value = DefaultValue[0];
+          document.getElementById("password").value = DefaultValue[1];
+        },250)
       }
 
       if(this.id == "Authentication" && state != "Authentication")
@@ -1298,21 +1301,39 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
         document.getElementById("card").style.animation = "Flip 0.5s linear"; 
         document.getElementById("local").style.left = "calc(4*((100% - 4*150px)/8) + 1.5*150px)";
         document.body.style.backgroundPosition = "25% 50%";     
-        setTimeout(()=>{document.getElementById("Title").innerHTML = "Authorized";},250)
+        setTimeout(()=>{
+          document.getElementById("Title").innerHTML = "Authorized";
+          document.getElementById("first_label").innerHTML = "Username:";
+          document.getElementById("last_label").innerHTML = "Password:";
+          document.getElementById("id").value = DefaultValue[4];
+          document.getElementById("password").value = DefaultValue[5];
+        },250)
       }
       if(this.id == "Authorization" && state != "Authorization")
       {
         document.getElementById("card").style.animation = "Flip 0.5s linear"; 
         document.getElementById("local").style.left = "calc(6*((100% - 4*150px)/8) + 1.8*150px)";
         document.body.style.backgroundPosition = "50% 50%";    
-        setTimeout(()=>{document.getElementById("Title").innerHTML = "Login";},250)
+        setTimeout(()=>{
+          document.getElementById("Title").innerHTML = "Login";
+          document.getElementById("first_label").innerHTML = "Username:";
+          document.getElementById("last_label").innerHTML = "Password:";
+          document.getElementById("id").value = DefaultValue[2];
+          document.getElementById("password").value = DefaultValue[3];
+        },250)
       }
       if(this.id == "Configuring" && state != "Configuring")
       {
         document.getElementById("card").style.animation = "Flip 0.5s linear"; 
         document.getElementById("local").style.left = "calc(8*((100% - 4*150px)/8) + 2.1*150px)";
         document.body.style.backgroundPosition = "75% 50%";    
-        setTimeout(()=>{document.getElementById("Title").innerHTML = "AP";},250)
+        setTimeout(()=>{
+          document.getElementById("Title").innerHTML = "AP";
+          document.getElementById("first_label").innerHTML = "SSID:";
+          document.getElementById("last_label").innerHTML = "Password:";
+          document.getElementById("id").value = DefaultValue[6];
+          document.getElementById("password").value = DefaultValue[7];
+        },250)
       }
       if(state == this.id)
         document.getElementById("card").style.animation = "Shock 0.1s 5 linear";
@@ -1355,7 +1376,6 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
   </script>
 </body>
 </html>
-
 )rawliteral";
 #pragma endregion Sercurity_html
 #pragma region Parameters_html //TODO: make script for Apply

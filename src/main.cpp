@@ -354,10 +354,10 @@ void Capture(void * pvParameters)
       }
     } else delay(10);
 
-    Serial.print("Capture Task: ");
-    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-    Serial.println(uxHighWaterMark);
-    Serial.println();
+    // Serial.print("Capture Task: ");
+    // uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+    // Serial.println(uxHighWaterMark);
+    // Serial.println();
   }
 }
 void Init_LoRa()
@@ -715,7 +715,12 @@ void Init_Server() // FIXME: Fix backend server
     /*-----------------------------Address & Channel-------------------------*/
     if(String((char*) data).indexOf("Gateway: ")>=0)
     {
-
+      int tmp0 = 0;
+      int tmp1 = 0;
+      sscanf(TmpID.c_str(),"%02x%02x",&tmp0,&tmp1);
+      Gateway_AddH = tmp0;
+      Gateway_AddL = tmp1;
+      sscanf(TmpPass.c_str(),"%02x",&Gateway_Channel);
       return request->send(No_Content_Code);
     }
     /*--------------------Username & Password---------------------------*/
@@ -745,13 +750,15 @@ void Init_Server() // FIXME: Fix backend server
       request->send(No_Response_Code);
   });
   server.on("/BackEndSercure",HTTP_GET,[](AsyncWebServerRequest *request){
-    if(!tolerance_backend_key || ON_STA_FILTER(request) || !request->authenticate(auth_username.c_str(), auth_password.c_str()))
+    if(!sercurity_backend_key || ON_STA_FILTER(request) || !request->authenticate(auth_username.c_str(), auth_password.c_str()))
       return request->send(Gone_Code);
-      MessLimit = String(Gateway_AddH);
+      char temp0[2] = { 0 };
+      char temp1[1] = {0};
+      sprintf(temp0,"%02x%02x",Gateway_AddH,Gateway_AddL);
+      MessLimit = String(temp0);
       MessLimit += "/";
-      MessLimit += String(Gateway_AddL);
-      MessLimit += "/";
-      MessLimit += String(Gateway_Channel);
+      sprintf(temp1,"%02x",Gateway_Channel);
+      MessLimit += String(temp1);
       MessLimit += "/";
       MessLimit += auth_username;
       MessLimit += "/";
@@ -1130,7 +1137,7 @@ void Init_Task()
   xTaskCreate(
     Capture,
     "Capture",
-    3000, //1976B left
+    3000, //1940B left
     (void*)&address,
     0,
     &CaptureTask
