@@ -1073,7 +1073,7 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
         width: 100vw;
         background-image: linear-gradient(to right top, #41ff53, #00eeb6, #00d5ff, #00b3ff, #0088ff, #076fff, #474fff, #7500f5, #9500ee, #ad0ce7, #c11de1, #d22ddb);
         background-size: 300% 100%;
-        background-position: center;
+        background-position: 75% 50%;
         overflow: hidden;
         display: flex;
         justify-content: flex-start;
@@ -1191,35 +1191,7 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
         border: 5px solid rgba(255, 255, 255, 0.8);
         border-radius: 100px;
         z-index: 1;
-        left: calc(5*((100% - 4*150px)/8) + 2*150px);
-      }
-      @keyframes FlipLeft{
-        0% {
-          transform: rotateY(0deg);
-          left: calc(50% - 250px);
-        }
-        25% {
-          transform: rotateY(0deg);
-          left: calc(100% - 500px);
-        }
-        100% {
-          transform: rotateY(360deg);
-          left: calc(50% - 250px);
-        }
-      }
-      @keyframes FlipRight{
-        0% {
-          transform: rotateY(0deg);
-          right: calc(50% - 250px);
-        }
-        25% {
-          transform: rotateY(0deg);
-          right: calc(100% - 500px);
-        }
-        100% {
-          transform: rotateY(-360deg);
-          right: calc(50% - 250px);
-        }
+        left: calc(6*((100% - 4*150px)/8) + 1.8*150px);
       }
       @keyframes Flip{
         0%{
@@ -1264,6 +1236,7 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
 <body onload="InitDefaultValue()">
   <div class="bar">
     <button id="Back" onclick="history.back()">Back</button>
+    <button id="Gateway">Gateway</button>
     <button id="Authentication">User</button>
     <button id="Authorization">Owner</button>
     <button id="Configuring">Access</button> 
@@ -1301,6 +1274,7 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
       xhr.send();
     }
     var state = "Authorization"
+    document.getElementById("Gateway").addEventListener("click",rotate)
     document.getElementById("Authentication").addEventListener("click",rotate)
     document.getElementById("Authorization").addEventListener("click",rotate)
     document.getElementById("Configuring").addEventListener("click",rotate)
@@ -1309,34 +1283,35 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
     function rotate(){
       document.getElementById("id").value = ""
       document.getElementById("password").value = ""
-      if(this.id == "Authentication" && (state == "Authorization" || state =="Configuring"))
+      if(this.id == "Gateway" && state != "Gateway")
       {
-        if(state == "Authorization")
-          document.getElementById("card").style.animation = "FlipRight 0.5s linear";
-        if(state == "Configuring")
-          document.getElementById("card").style.animation = "Flip 0.5s linear"; 
-        document.getElementById("local").style.left = "calc(3*((100% - 4*150px)/8) + 1*150px)";
-        document.body.style.backgroundPosition = "left";    
+        document.getElementById("card").style.animation = "Flip 0.5s linear"; 
+        document.body.style.backgroundPosition = "left";  
+        document.getElementById("local").style.left = "calc(2*((100% - 4*150px)/8) + 1.15*150px)";
+        document.body.style.backgroundPosition = "0% 50%";    
+        setTimeout(()=>{document.getElementById("Title").innerHTML = "Gateway";},250)
+        
+      }
+
+      if(this.id == "Authentication" && state != "Authentication")
+      {
+        document.getElementById("card").style.animation = "Flip 0.5s linear"; 
+        document.getElementById("local").style.left = "calc(4*((100% - 4*150px)/8) + 1.5*150px)";
+        document.body.style.backgroundPosition = "25% 50%";     
         setTimeout(()=>{document.getElementById("Title").innerHTML = "Authorized";},250)
       }
-      if(this.id == "Authorization" && (state =="Configuring" || state == "Authentication"))
+      if(this.id == "Authorization" && state != "Authorization")
       {
-        if(state =="Configuring")
-          document.getElementById("card").style.animation = "FlipRight 0.5s linear reverse"; 
-        if(state =="Authentication")
-          document.getElementById("card").style.animation = "FlipLeft 0.5s linear reverse";
-        document.getElementById("local").style.left = "calc(5*((100% - 4*150px)/8) + 2*150px)";
-        document.body.style.backgroundPosition = "center";
+        document.getElementById("card").style.animation = "Flip 0.5s linear"; 
+        document.getElementById("local").style.left = "calc(6*((100% - 4*150px)/8) + 1.8*150px)";
+        document.body.style.backgroundPosition = "50% 50%";    
         setTimeout(()=>{document.getElementById("Title").innerHTML = "Login";},250)
       }
-      if(this.id == "Configuring" && (state == "Authorization" || state == "Authentication"))
+      if(this.id == "Configuring" && state != "Configuring")
       {
-        if(state == "Authorization")
-          document.getElementById("card").style.animation = "FlipLeft 0.5s linear";
-        if(state == "Authentication")
-          document.getElementById("card").style.animation = "Flip 0.5s linear reverse";
-        document.getElementById("local").style.left = "calc(7*((100% - 4*150px)/8) + 3*150px)";
-        document.body.style.backgroundPosition = "right";
+        document.getElementById("card").style.animation = "Flip 0.5s linear"; 
+        document.getElementById("local").style.left = "calc(8*((100% - 4*150px)/8) + 2.1*150px)";
+        document.body.style.backgroundPosition = "75% 50%";    
         setTimeout(()=>{document.getElementById("Title").innerHTML = "AP";},250)
       }
       if(state == this.id)
@@ -1362,6 +1337,8 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
             noti = "Connect again"
         };
       var DataSend = "{";
+      if(state == "Gateway")
+        DataSend +="Gateway: ";
       if (state =="Authentication")
         DataSend +="Authentication: ";
       if(state == "Authorization")
@@ -1378,6 +1355,7 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
   </script>
 </body>
 </html>
+
 )rawliteral";
 #pragma endregion Sercurity_html
 #pragma region Parameters_html //TODO: make script for Apply

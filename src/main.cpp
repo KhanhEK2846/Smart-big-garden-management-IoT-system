@@ -707,25 +707,33 @@ void Init_Server() // FIXME: Fix backend server
   server.on("/BackEndSercure",HTTP_POST,[](AsyncWebServerRequest *request){},NULL,[](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
     if(!sercurity_backend_key || ON_STA_FILTER(request) || !request->authenticate(auth_username.c_str(), auth_password.c_str()))
       return request->send(Gone_Code);
+    sercurity_backend_key = false;
+    before_reset_key = 0;
     String Filter = String((char*) data).substring(String((char*) data).indexOf('{')+1,String((char*) data).indexOf('}'));
     String TmpID = Filter.substring(Filter.indexOf(" ")+1,Filter.indexOf('/'));
     String TmpPass = Filter.substring(Filter.indexOf('/')+1,Filter.length());
-    if(TmpID.length() > 63 || TmpID == NULL || TmpPass.indexOf(' ') >= 0 || ( TmpPass.length() < 8 && TmpPass != NULL))
+    /*-----------------------------Address & Channel-------------------------*/
+    if(String((char*) data).indexOf("Gateway: ")>=0)
+    {
+
+      return request->send(No_Content_Code);
+    }
+    /*--------------------Username & Password---------------------------*/
+    if((TmpID.length() > 63 || TmpID == NULL || TmpPass.indexOf(' ') >= 0 || ( TmpPass.length() < 8 && TmpPass != NULL)))
       return request->send(Bad_Request_Code);
-     
     if(String((char*) data).indexOf("Authentication: ")>=0)
     {
       http_username = TmpID;
       http_password = TmpPass;
-      request->send(No_Content_Code);
+      return request->send(No_Content_Code);
     }
-    else if(String((char*) data).indexOf("Authorization: ")>=0)
+    if(String((char*) data).indexOf("Authorization: ")>=0)
     {
       auth_username = TmpID;
       auth_password = TmpPass;
-      request->send(No_Content_Code);
+      return request->send(No_Content_Code);
     }
-    else if(String((char*) data).indexOf("AP: ")>=0)
+    if(String((char*) data).indexOf("AP: ")>=0)
     {
       ap_ssid = TmpID;
       ap_password = TmpPass;
@@ -735,8 +743,6 @@ void Init_Server() // FIXME: Fix backend server
     }
     else
       request->send(No_Response_Code);
-    sercurity_backend_key = false;
-    before_reset_key = 0;
   });
   server.on("/BackEndSercure",HTTP_GET,[](AsyncWebServerRequest *request){
     if(!tolerance_backend_key || ON_STA_FILTER(request) || !request->authenticate(auth_username.c_str(), auth_password.c_str()))
