@@ -431,7 +431,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_base.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_base.js"
             },
             "ui_button": {
                 "name": "ui_button",
@@ -442,7 +442,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_button.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_button.js"
             },
             "ui_dropdown": {
                 "name": "ui_dropdown",
@@ -453,7 +453,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_dropdown.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_dropdown.js"
             },
             "ui_switch": {
                 "name": "ui_switch",
@@ -464,7 +464,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_switch.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_switch.js"
             },
             "ui_slider": {
                 "name": "ui_slider",
@@ -475,7 +475,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_slider.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_slider.js"
             },
             "ui_numeric": {
                 "name": "ui_numeric",
@@ -486,7 +486,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_numeric.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_numeric.js"
             },
             "ui_text_input": {
                 "name": "ui_text_input",
@@ -497,7 +497,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_text_input.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_text_input.js"
             },
             "ui_date_picker": {
                 "name": "ui_date_picker",
@@ -508,7 +508,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_date_picker.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_date_picker.js"
             },
             "ui_colour_picker": {
                 "name": "ui_colour_picker",
@@ -519,7 +519,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_colour_picker.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_colour_picker.js"
             },
             "ui_form": {
                 "name": "ui_form",
@@ -530,7 +530,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_form.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_form.js"
             },
             "ui_text": {
                 "name": "ui_text",
@@ -541,7 +541,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_text.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_text.js"
             },
             "ui_gauge": {
                 "name": "ui_gauge",
@@ -552,7 +552,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_gauge.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_gauge.js"
             },
             "ui_chart": {
                 "name": "ui_chart",
@@ -563,7 +563,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_chart.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_chart.js"
             },
             "ui_audio": {
                 "name": "ui_audio",
@@ -574,7 +574,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_audio.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_audio.js"
             },
             "ui_toast": {
                 "name": "ui_toast",
@@ -585,7 +585,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_toast.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_toast.js"
             },
             "ui_ui_control": {
                 "name": "ui_ui_control",
@@ -596,7 +596,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_ui_control.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_ui_control.js"
             },
             "ui_template": {
                 "name": "ui_template",
@@ -607,7 +607,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_template.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_template.js"
             },
             "ui_link": {
                 "name": "ui_link",
@@ -618,7 +618,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_link.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_link.js"
             },
             "ui_tab": {
                 "name": "ui_tab",
@@ -629,7 +629,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_tab.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_tab.js"
             },
             "ui_group": {
                 "name": "ui_group",
@@ -640,7 +640,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_group.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_group.js"
             },
             "ui_spacer": {
                 "name": "ui_spacer",
@@ -651,7 +651,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_spacer.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-dashboard\\nodes\\ui_spacer.js"
             }
         }
     },
@@ -670,7 +670,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-node-ui-table",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-node-ui-table\\node.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-node-ui-table\\node.js"
             }
         }
     },
@@ -689,7 +689,7 @@
                 "local": true,
                 "user": false,
                 "module": "@gogovega/node-red-contrib-firebase-realtime-database",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\@gogovega\\node-red-contrib-firebase-realtime-database\\build\\nodes\\database.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\@gogovega\\node-red-contrib-firebase-realtime-database\\build\\nodes\\database.js"
             },
             "firebase-in": {
                 "name": "firebase-in",
@@ -700,7 +700,7 @@
                 "local": true,
                 "user": false,
                 "module": "@gogovega/node-red-contrib-firebase-realtime-database",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\@gogovega\\node-red-contrib-firebase-realtime-database\\build\\nodes\\firebase-in.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\@gogovega\\node-red-contrib-firebase-realtime-database\\build\\nodes\\firebase-in.js"
             },
             "firebase-get": {
                 "name": "firebase-get",
@@ -711,7 +711,7 @@
                 "local": true,
                 "user": false,
                 "module": "@gogovega/node-red-contrib-firebase-realtime-database",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\@gogovega\\node-red-contrib-firebase-realtime-database\\build\\nodes\\firebase-get.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\@gogovega\\node-red-contrib-firebase-realtime-database\\build\\nodes\\firebase-get.js"
             },
             "firebase-out": {
                 "name": "firebase-out",
@@ -722,7 +722,7 @@
                 "local": true,
                 "user": false,
                 "module": "@gogovega/node-red-contrib-firebase-realtime-database",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\@gogovega\\node-red-contrib-firebase-realtime-database\\build\\nodes\\firebase-out.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\@gogovega\\node-red-contrib-firebase-realtime-database\\build\\nodes\\firebase-out.js"
             },
             "on-disconnect": {
                 "name": "on-disconnect",
@@ -733,7 +733,7 @@
                 "local": true,
                 "user": false,
                 "module": "@gogovega/node-red-contrib-firebase-realtime-database",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\@gogovega\\node-red-contrib-firebase-realtime-database\\build\\nodes\\on-disconnect.js"
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\@gogovega\\node-red-contrib-firebase-realtime-database\\build\\nodes\\on-disconnect.js"
             }
         }
     }

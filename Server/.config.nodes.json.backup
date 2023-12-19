@@ -673,5 +673,68 @@
                 "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\node-red-node-ui-table\\node.js"
             }
         }
+    },
+    "@gogovega/node-red-contrib-firebase-realtime-database": {
+        "name": "@gogovega/node-red-contrib-firebase-realtime-database",
+        "version": "0.5.4",
+        "local": true,
+        "user": true,
+        "nodes": {
+            "database-config": {
+                "name": "database-config",
+                "types": [
+                    "database-config"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "@gogovega/node-red-contrib-firebase-realtime-database",
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\@gogovega\\node-red-contrib-firebase-realtime-database\\build\\nodes\\database.js"
+            },
+            "firebase-in": {
+                "name": "firebase-in",
+                "types": [
+                    "firebase-in"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "@gogovega/node-red-contrib-firebase-realtime-database",
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\@gogovega\\node-red-contrib-firebase-realtime-database\\build\\nodes\\firebase-in.js"
+            },
+            "firebase-get": {
+                "name": "firebase-get",
+                "types": [
+                    "firebase-get"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "@gogovega/node-red-contrib-firebase-realtime-database",
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\@gogovega\\node-red-contrib-firebase-realtime-database\\build\\nodes\\firebase-get.js"
+            },
+            "firebase-out": {
+                "name": "firebase-out",
+                "types": [
+                    "firebase-out"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "@gogovega/node-red-contrib-firebase-realtime-database",
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\@gogovega\\node-red-contrib-firebase-realtime-database\\build\\nodes\\firebase-out.js"
+            },
+            "on-disconnect": {
+                "name": "on-disconnect",
+                "types": [
+                    "on-disconnect"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "@gogovega/node-red-contrib-firebase-realtime-database",
+                "file": "D:\\UIT\\Project\\Project2\\Clone\\Server\\node_modules\\@gogovega\\node-red-contrib-firebase-realtime-database\\build\\nodes\\on-disconnect.js"
+            }
+        }
     }
 }
