@@ -32,14 +32,6 @@
         "env": []
     },
     {
-        "id": "9ac4d9966c4e93f1",
-        "type": "tab",
-        "label": "Test",
-        "disabled": true,
-        "info": "",
-        "env": []
-    },
-    {
         "id": "7b18e51371b9da08",
         "type": "group",
         "z": "2c7549e3267c360c",
@@ -128,6 +120,110 @@
         "y": 819,
         "w": 592,
         "h": 162
+    },
+    {
+        "id": "023e8dd112056349",
+        "type": "group",
+        "z": "2c7549e3267c360c",
+        "style": {
+            "stroke": "#999999",
+            "stroke-opacity": "1",
+            "fill": "none",
+            "fill-opacity": "1",
+            "label": true,
+            "label-position": "nw",
+            "color": "#a4a4a4"
+        },
+        "nodes": [
+            "2eae1b674da8ac56",
+            "acc6064e2a03de44",
+            "a25a23be5ee49cf3",
+            "3196f6a9a464587e",
+            "b39117e482f11951",
+            "1baa948961d6858b",
+            "1f74a850eaccfd6a",
+            "bdcd2c72ac2df9aa",
+            "33faa9d40ae28c8d",
+            "6277b121ad5d390b",
+            "f57d3fcd46625af5",
+            "2f653756cb17ab6c",
+            "288b9e12f42a0db8",
+            "8d036ecfab9b4dd2",
+            "90d19f6ec7300101",
+            "254800bc9fc77a08",
+            "47b36bb436f6002a",
+            "b175a675c6e62914",
+            "ced982086979f9e5",
+            "f4010ba443c8dfe3"
+        ],
+        "x": 2134,
+        "y": 1459,
+        "w": 1112,
+        "h": 442
+    },
+    {
+        "id": "91e380ed61976399",
+        "type": "group",
+        "z": "2c7549e3267c360c",
+        "style": {
+            "stroke": "#999999",
+            "stroke-opacity": "1",
+            "fill": "none",
+            "fill-opacity": "1",
+            "label": true,
+            "label-position": "nw",
+            "color": "#a4a4a4"
+        },
+        "nodes": [
+            "46e148d07ac6102f",
+            "4a66da85d87be410",
+            "6528fd5d3ee8d0b3",
+            "1bfe123ef8d5b84f",
+            "4dc9d46353f6c0b0",
+            "1158fc32c2f67da5",
+            "75e6d8186dab0494",
+            "d77f089beb5368a9",
+            "a93aed49adb55830",
+            "9f33a0f28b9b0a97",
+            "aba749fbac219d65",
+            "19f86b3acfb3afad"
+        ],
+        "x": 2134,
+        "y": 1919,
+        "w": 772,
+        "h": 262
+    },
+    {
+        "id": "db7606b5814f193e",
+        "type": "group",
+        "z": "2c7549e3267c360c",
+        "style": {
+            "stroke": "#999999",
+            "stroke-opacity": "1",
+            "fill": "none",
+            "fill-opacity": "1",
+            "label": true,
+            "label-position": "nw",
+            "color": "#a4a4a4"
+        },
+        "nodes": [
+            "096b9ba5e71e12e3",
+            "10f484760b87e4b4",
+            "cedc9c3de9e09dc2",
+            "a7f49ba1651975be",
+            "99cfab1e7104b787",
+            "c763c99dddac6023",
+            "d1c10cd53e422046",
+            "fc41757ebb3851df",
+            "39d8fcc6b201b851",
+            "e24a9c333204f2ae",
+            "e04bfbdd7baf05c9",
+            "c2093c2969c1d22e"
+        ],
+        "x": 2144,
+        "y": 2199,
+        "w": 762,
+        "h": 282
     },
     {
         "id": "f532af6f73a050bd",
@@ -419,46 +515,6 @@
         "className": ""
     },
     {
-        "id": "2b8f6ea34a2674e5",
-        "type": "ui_spacer",
-        "z": "2c7549e3267c360c",
-        "name": "spacer",
-        "group": "cc0ce2d6280183e7",
-        "order": 4,
-        "width": 24,
-        "height": 1
-    },
-    {
-        "id": "cfaedb97685473b5",
-        "type": "ui_spacer",
-        "z": "2c7549e3267c360c",
-        "name": "spacer",
-        "group": "cc0ce2d6280183e7",
-        "order": 5,
-        "width": 1,
-        "height": 1
-    },
-    {
-        "id": "f2aa37bbb315ccee",
-        "type": "ui_spacer",
-        "z": "2c7549e3267c360c",
-        "name": "spacer",
-        "group": "cc0ce2d6280183e7",
-        "order": 7,
-        "width": 6,
-        "height": 1
-    },
-    {
-        "id": "9745c1de038316d0",
-        "type": "ui_spacer",
-        "z": "2c7549e3267c360c",
-        "name": "spacer",
-        "group": "cc0ce2d6280183e7",
-        "order": 9,
-        "width": 1,
-        "height": 1
-    },
-    {
         "id": "b89b7c34fae54a61",
         "type": "ui_group",
         "name": "Name",
@@ -520,9 +576,40 @@
         "height": 1
     },
     {
+        "id": "020fd4977107b08c",
+        "type": "ui_spacer",
+        "z": "2c7549e3267c360c",
+        "name": "spacer",
+        "group": "cc0ce2d6280183e7",
+        "order": 4,
+        "width": 2,
+        "height": 1
+    },
+    {
+        "id": "c0b1a1bc6b0accdc",
+        "type": "ui_spacer",
+        "z": "2c7549e3267c360c",
+        "name": "spacer",
+        "group": "cc0ce2d6280183e7",
+        "order": 6,
+        "width": 4,
+        "height": 1
+    },
+    {
+        "id": "0a98aabce6222647",
+        "type": "ui_spacer",
+        "z": "2c7549e3267c360c",
+        "name": "spacer",
+        "group": "cc0ce2d6280183e7",
+        "order": 8,
+        "width": 2,
+        "height": 1
+    },
+    {
         "id": "2eae1b674da8ac56",
         "type": "function",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "Humi",
         "func": "var logic = context.get(\"logic\") || false;\nvar data = context.get(\"data\") || 0;\n\nif (msg.topic == \"error_dht\"){\n    logic = msg.payload;\n    msg.payload = data;\n    context.set(\"logic\",logic);\n}\n\nif (msg.topic == \"humi\"){\n    data = msg.payload;\n    context.set(\"data\",data);\n}    \n    if(logic == true)\n        msg.payload = 0;\nmsg.topic = \"Data\"; \nreturn msg;",
         "outputs": 1,
@@ -530,8 +617,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2450,
-        "y": 1740,
+        "x": 2310,
+        "y": 1720,
         "wires": [
             [
                 "acc6064e2a03de44",
@@ -543,6 +630,7 @@
         "id": "acc6064e2a03de44",
         "type": "ui_gauge",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "Humidity_App",
         "group": "ce929204a5830711",
         "order": 1,
@@ -563,14 +651,15 @@
         "seg2": "",
         "diff": false,
         "className": "",
-        "x": 2700,
-        "y": 1740,
+        "x": 2560,
+        "y": 1720,
         "wires": []
     },
     {
         "id": "a25a23be5ee49cf3",
         "type": "function",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "Temp",
         "func": "var logic = context.get(\"logic\") || false;\nvar data = context.get(\"data\") || 0;\n\nif (msg.topic == \"error_dht\"){\n    logic = msg.payload;\n    msg.payload = data;\n    context.set(\"logic\",logic);\n}\n\nif (msg.topic == \"temp\"){\n    data = msg.payload;\n    context.set(\"data\",data);\n}    \n    if(logic == true)\n        msg.payload = 0;\nmsg.topic = \"Data\";   \nreturn msg;",
         "outputs": 1,
@@ -578,8 +667,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2450,
-        "y": 1660,
+        "x": 2310,
+        "y": 1640,
         "wires": [
             [
                 "3196f6a9a464587e",
@@ -591,6 +680,7 @@
         "id": "3196f6a9a464587e",
         "type": "ui_gauge",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "Temperature_App",
         "group": "ce929204a5830711",
         "order": 4,
@@ -611,8 +701,8 @@
         "seg2": "",
         "diff": false,
         "className": "",
-        "x": 2710,
-        "y": 1660,
+        "x": 2570,
+        "y": 1640,
         "wires": []
     },
     {
@@ -624,9 +714,9 @@
         "label": "Light",
         "tooltip": "",
         "group": "cc0ce2d6280183e7",
-        "order": 1,
-        "width": 0,
-        "height": 0,
+        "order": 2,
+        "width": 12,
+        "height": 1,
         "passthru": true,
         "decouple": "false",
         "topic": "topic",
@@ -678,9 +768,9 @@
         "label": "Pump",
         "tooltip": "",
         "group": "cc0ce2d6280183e7",
-        "order": 2,
-        "width": 0,
-        "height": 0,
+        "order": 3,
+        "width": 12,
+        "height": 1,
         "passthru": true,
         "decouple": "false",
         "topic": "topic",
@@ -727,6 +817,7 @@
         "id": "46e148d07ac6102f",
         "type": "function",
         "z": "2c7549e3267c360c",
+        "g": "91e380ed61976399",
         "name": "LDR",
         "func": "var logic = context.get(\"logic\") || false;\nvar data = context.get(\"data\") || 0;\n\nif (msg.topic == \"error_light\"){\n    logic = msg.payload;\n    msg.payload = data;\n    context.set(\"logic\",logic);\n}\n\nif (msg.topic == \"ligh\"){\n    data = msg.payload;\n    context.set(\"data\",data);\n}    \n    if(logic == true)\n        msg.payload = 0;\nmsg.topic = \"Data\";\nreturn msg;",
         "outputs": 1,
@@ -734,7 +825,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2510,
+        "x": 2370,
         "y": 2060,
         "wires": [
             [
@@ -747,6 +838,7 @@
         "id": "4a66da85d87be410",
         "type": "ui_gauge",
         "z": "2c7549e3267c360c",
+        "g": "91e380ed61976399",
         "name": "LDR_App",
         "group": "ce929204a5830711",
         "order": 7,
@@ -767,7 +859,7 @@
         "seg2": "",
         "diff": false,
         "className": "",
-        "x": 2740,
+        "x": 2600,
         "y": 2100,
         "wires": []
     },
@@ -775,6 +867,7 @@
         "id": "096b9ba5e71e12e3",
         "type": "function",
         "z": "2c7549e3267c360c",
+        "g": "db7606b5814f193e",
         "name": "Soil_Moisture",
         "func": "var logic = context.get(\"logic\") || false;\nvar data = context.get(\"data\") || 0;\n\nif (msg.topic == \"error_soil\"){\n    logic = msg.payload;\n    msg.payload = data;\n    context.set(\"logic\",logic);\n}\n\nif (msg.topic == \"soil\"){\n    data = msg.payload;\n    context.set(\"data\",data);\n}    \n    if(logic == true)\n        msg.payload = 0;\nmsg.topic = \"Data\";\nreturn msg;",
         "outputs": 1,
@@ -782,8 +875,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2540,
-        "y": 2360,
+        "x": 2400,
+        "y": 2380,
         "wires": [
             [
                 "10f484760b87e4b4",
@@ -795,6 +888,7 @@
         "id": "10f484760b87e4b4",
         "type": "ui_gauge",
         "z": "2c7549e3267c360c",
+        "g": "db7606b5814f193e",
         "name": "Soil_Moisture_App",
         "group": "ce929204a5830711",
         "order": 10,
@@ -815,8 +909,8 @@
         "seg2": "",
         "diff": false,
         "className": "",
-        "x": 2770,
-        "y": 2360,
+        "x": 2630,
+        "y": 2380,
         "wires": []
     },
     {
@@ -836,6 +930,7 @@
         "id": "6528fd5d3ee8d0b3",
         "type": "ui_chart",
         "z": "2c7549e3267c360c",
+        "g": "91e380ed61976399",
         "name": "Light_Chart",
         "group": "ce929204a5830711",
         "order": 8,
@@ -870,7 +965,7 @@
         "outputs": 1,
         "useDifferentColor": false,
         "className": "",
-        "x": 2910,
+        "x": 2770,
         "y": 2000,
         "wires": [
             []
@@ -880,6 +975,7 @@
         "id": "cedc9c3de9e09dc2",
         "type": "ui_chart",
         "z": "2c7549e3267c360c",
+        "g": "db7606b5814f193e",
         "name": "Soil_Moisture_Chart",
         "group": "ce929204a5830711",
         "order": 11,
@@ -914,8 +1010,8 @@
         "outputs": 1,
         "useDifferentColor": false,
         "className": "",
-        "x": 2920,
-        "y": 2260,
+        "x": 2780,
+        "y": 2280,
         "wires": [
             []
         ]
@@ -924,6 +1020,7 @@
         "id": "b39117e482f11951",
         "type": "ui_chart",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "Temperature_Chart",
         "group": "ce929204a5830711",
         "order": 5,
@@ -958,8 +1055,8 @@
         "outputs": 1,
         "useDifferentColor": false,
         "className": "",
-        "x": 2850,
-        "y": 1560,
+        "x": 2710,
+        "y": 1540,
         "wires": [
             []
         ]
@@ -968,6 +1065,7 @@
         "id": "1baa948961d6858b",
         "type": "ui_chart",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "Humidity_Chart",
         "group": "ce929204a5830711",
         "order": 2,
@@ -1002,8 +1100,8 @@
         "outputs": 1,
         "useDifferentColor": false,
         "className": "",
-        "x": 2840,
-        "y": 1840,
+        "x": 2700,
+        "y": 1820,
         "wires": [
             []
         ]
@@ -1012,6 +1110,7 @@
         "id": "1bfe123ef8d5b84f",
         "type": "ui_switch",
         "z": "2c7549e3267c360c",
+        "g": "91e380ed61976399",
         "name": "",
         "label": "Status",
         "tooltip": "",
@@ -1034,7 +1133,7 @@
         "offcolor": "red",
         "animate": false,
         "className": "",
-        "x": 2730,
+        "x": 2590,
         "y": 2140,
         "wires": [
             [
@@ -1046,6 +1145,7 @@
         "id": "a7f49ba1651975be",
         "type": "ui_switch",
         "z": "2c7549e3267c360c",
+        "g": "db7606b5814f193e",
         "name": "",
         "label": "Status",
         "tooltip": "",
@@ -1068,8 +1168,8 @@
         "offcolor": "red",
         "animate": false,
         "className": "",
-        "x": 2730,
-        "y": 2420,
+        "x": 2590,
+        "y": 2440,
         "wires": [
             [
                 "c763c99dddac6023"
@@ -1080,6 +1180,7 @@
         "id": "99cfab1e7104b787",
         "type": "function",
         "z": "2c7549e3267c360c",
+        "g": "db7606b5814f193e",
         "name": "NOT",
         "func": "if (msg.payload == \"1\")\n    msg.payload = false;\nelse\n    msg.payload = true;\nflow.set(\"Soil\", msg.payload);\nreturn msg;",
         "outputs": 1,
@@ -1087,8 +1188,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2510,
-        "y": 2420,
+        "x": 2370,
+        "y": 2440,
         "wires": [
             [
                 "a7f49ba1651975be"
@@ -1099,6 +1200,7 @@
         "id": "1f74a850eaccfd6a",
         "type": "function",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "NOT",
         "func": "if (msg.payload == \"1\")\n    msg.payload = false;\nelse\n    msg.payload = true;\nflow.set(\"dht\", msg.payload);\nreturn msg;",
         "outputs": 1,
@@ -1106,8 +1208,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2450,
-        "y": 1700,
+        "x": 2310,
+        "y": 1680,
         "wires": [
             [
                 "bdcd2c72ac2df9aa"
@@ -1118,6 +1220,7 @@
         "id": "c763c99dddac6023",
         "type": "function",
         "z": "2c7549e3267c360c",
+        "g": "db7606b5814f193e",
         "name": "Can_Not_Change",
         "func": "var temp = flow.get(\"Soil\");\nif ((!msg.payload && temp) || (msg.payload && !temp)) {\n    if (temp)\n        msg.payload = true;\n    else\n        msg.payload = false;\n    return msg;\n}\n",
         "outputs": 1,
@@ -1125,8 +1228,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2930,
-        "y": 2420,
+        "x": 2790,
+        "y": 2440,
         "wires": [
             [
                 "a7f49ba1651975be"
@@ -1137,6 +1240,7 @@
         "id": "4dc9d46353f6c0b0",
         "type": "function",
         "z": "2c7549e3267c360c",
+        "g": "91e380ed61976399",
         "name": "NOT",
         "func": "if (msg.payload == \"1\")\n    msg.payload = false;\nelse\n    msg.payload = true;\nflow.set(\"ldr\",msg.payload);\nreturn msg;",
         "outputs": 1,
@@ -1144,7 +1248,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2510,
+        "x": 2370,
         "y": 2140,
         "wires": [
             [
@@ -1238,6 +1342,7 @@
         "id": "1158fc32c2f67da5",
         "type": "function",
         "z": "2c7549e3267c360c",
+        "g": "91e380ed61976399",
         "name": "Can_Not_Change",
         "func": "var temp = flow.get(\"ldr\");\nif((!msg.payload && temp) || (msg.payload && !temp))\n{\n    if(temp)\n        msg.payload = true;\n    else\n        msg.payload= false;\n    return msg;\n}\n",
         "outputs": 1,
@@ -1245,7 +1350,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2930,
+        "x": 2790,
         "y": 2140,
         "wires": [
             [
@@ -1257,6 +1362,7 @@
         "id": "bdcd2c72ac2df9aa",
         "type": "ui_switch",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "",
         "label": "Status",
         "tooltip": "",
@@ -1279,8 +1385,8 @@
         "offcolor": "red",
         "animate": false,
         "className": "",
-        "x": 2890,
-        "y": 1700,
+        "x": 2750,
+        "y": 1680,
         "wires": [
             [
                 "6277b121ad5d390b"
@@ -1291,6 +1397,7 @@
         "id": "33faa9d40ae28c8d",
         "type": "function",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "Can_Not_Change",
         "func": "var temp = flow.get(\"dht\");\nif ((!msg.payload && temp) || (msg.payload && !temp)) {\n    if (temp)\n        msg.payload = true;\n    else\n        msg.payload = false;\n    return msg;\n}",
         "outputs": 1,
@@ -1298,8 +1405,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 3270,
-        "y": 1700,
+        "x": 3130,
+        "y": 1680,
         "wires": [
             [
                 "bdcd2c72ac2df9aa"
@@ -1310,6 +1417,7 @@
         "id": "6277b121ad5d390b",
         "type": "ui_switch",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "",
         "label": "Status",
         "tooltip": "",
@@ -1332,8 +1440,8 @@
         "offcolor": "red",
         "animate": false,
         "className": "",
-        "x": 3070,
-        "y": 1700,
+        "x": 2930,
+        "y": 1680,
         "wires": [
             [
                 "33faa9d40ae28c8d"
@@ -1344,6 +1452,7 @@
         "id": "75e6d8186dab0494",
         "type": "rbe",
         "z": "2c7549e3267c360c",
+        "g": "91e380ed61976399",
         "name": "",
         "func": "rbei",
         "gap": "",
@@ -1352,7 +1461,7 @@
         "septopics": true,
         "property": "payload",
         "topi": "topic",
-        "x": 2730,
+        "x": 2590,
         "y": 2000,
         "wires": [
             [
@@ -1364,6 +1473,7 @@
         "id": "d1c10cd53e422046",
         "type": "rbe",
         "z": "2c7549e3267c360c",
+        "g": "db7606b5814f193e",
         "name": "",
         "func": "rbei",
         "gap": "",
@@ -1372,8 +1482,8 @@
         "septopics": true,
         "property": "payload",
         "topi": "topic",
-        "x": 2730,
-        "y": 2260,
+        "x": 2590,
+        "y": 2280,
         "wires": [
             [
                 "cedc9c3de9e09dc2"
@@ -1384,6 +1494,7 @@
         "id": "f57d3fcd46625af5",
         "type": "rbe",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "",
         "func": "rbei",
         "gap": "",
@@ -1392,8 +1503,8 @@
         "septopics": true,
         "property": "payload",
         "topi": "topic",
-        "x": 2670,
-        "y": 1560,
+        "x": 2530,
+        "y": 1540,
         "wires": [
             [
                 "b39117e482f11951"
@@ -1404,6 +1515,7 @@
         "id": "2f653756cb17ab6c",
         "type": "rbe",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "",
         "func": "rbei",
         "gap": "",
@@ -1412,8 +1524,8 @@
         "septopics": true,
         "property": "payload",
         "topi": "topic",
-        "x": 2670,
-        "y": 1840,
+        "x": 2530,
+        "y": 1820,
         "wires": [
             [
                 "1baa948961d6858b"
@@ -1427,7 +1539,7 @@
         "g": "0768b1be5520f542",
         "name": "Record Table",
         "group": "cc0ce2d6280183e7",
-        "order": 8,
+        "order": 7,
         "width": 8,
         "height": 1,
         "passthru": false,
@@ -1499,7 +1611,7 @@
         "g": "0768b1be5520f542",
         "name": "Setting",
         "group": "cc0ce2d6280183e7",
-        "order": 6,
+        "order": 5,
         "width": 8,
         "height": 1,
         "passthru": false,
@@ -1755,12 +1867,13 @@
         "id": "288b9e12f42a0db8",
         "type": "link in",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "DHT_Error",
         "links": [
             "5536a1c9cc2b4b8f"
         ],
-        "x": 2315,
-        "y": 1700,
+        "x": 2175,
+        "y": 1680,
         "wires": [
             [
                 "1f74a850eaccfd6a",
@@ -1786,11 +1899,12 @@
         "id": "d77f089beb5368a9",
         "type": "link in",
         "z": "2c7549e3267c360c",
+        "g": "91e380ed61976399",
         "name": "LDR_Error",
         "links": [
             "f45a57816103943f"
         ],
-        "x": 2315,
+        "x": 2175,
         "y": 2100,
         "wires": [
             [
@@ -1816,12 +1930,13 @@
         "id": "fc41757ebb3851df",
         "type": "link in",
         "z": "2c7549e3267c360c",
+        "g": "db7606b5814f193e",
         "name": "Soil_Error",
         "links": [
             "fe6c622918f62e85"
         ],
-        "x": 2325,
-        "y": 2400,
+        "x": 2185,
+        "y": 2420,
         "wires": [
             [
                 "096b9ba5e71e12e3",
@@ -1846,12 +1961,13 @@
         "id": "8d036ecfab9b4dd2",
         "type": "link in",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "Humi_Value",
         "links": [
             "a62d817fb69bf1bf"
         ],
-        "x": 2315,
-        "y": 1780,
+        "x": 2175,
+        "y": 1760,
         "wires": [
             [
                 "2eae1b674da8ac56"
@@ -1875,12 +1991,13 @@
         "id": "90d19f6ec7300101",
         "type": "link in",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "Temp_Value",
         "links": [
             "f11e9ab21e5f121a"
         ],
-        "x": 2315,
-        "y": 1620,
+        "x": 2175,
+        "y": 1600,
         "wires": [
             [
                 "a25a23be5ee49cf3"
@@ -1904,11 +2021,12 @@
         "id": "a93aed49adb55830",
         "type": "link in",
         "z": "2c7549e3267c360c",
+        "g": "91e380ed61976399",
         "name": "Light_Value",
         "links": [
             "f4cb6e8d6b4fc8a9"
         ],
-        "x": 2315,
+        "x": 2175,
         "y": 2000,
         "wires": [
             [
@@ -1933,12 +2051,13 @@
         "id": "39d8fcc6b201b851",
         "type": "link in",
         "z": "2c7549e3267c360c",
+        "g": "db7606b5814f193e",
         "name": "Solid_Value",
         "links": [
             "27018220695bd59d"
         ],
-        "x": 2325,
-        "y": 2320,
+        "x": 2185,
+        "y": 2340,
         "wires": [
             [
                 "096b9ba5e71e12e3"
@@ -1954,9 +2073,9 @@
         "tooltip": "",
         "place": "",
         "group": "cc0ce2d6280183e7",
-        "order": 3,
-        "width": 0,
-        "height": 0,
+        "order": 1,
+        "width": 12,
+        "height": 2,
         "passthru": true,
         "multiple": false,
         "options": [],
@@ -2120,12 +2239,13 @@
         "id": "254800bc9fc77a08",
         "type": "link in",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "Clear_Chair",
         "links": [
             "b74a9c9f08aca778"
         ],
-        "x": 2705,
-        "y": 1880,
+        "x": 2565,
+        "y": 1860,
         "wires": [
             [
                 "1baa948961d6858b"
@@ -2136,12 +2256,13 @@
         "id": "47b36bb436f6002a",
         "type": "link in",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "Clear_Chair",
         "links": [
             "b74a9c9f08aca778"
         ],
-        "x": 2705,
-        "y": 1520,
+        "x": 2565,
+        "y": 1500,
         "wires": [
             [
                 "b39117e482f11951"
@@ -2152,11 +2273,12 @@
         "id": "9f33a0f28b9b0a97",
         "type": "link in",
         "z": "2c7549e3267c360c",
+        "g": "91e380ed61976399",
         "name": "Clear_Chair",
         "links": [
             "b74a9c9f08aca778"
         ],
-        "x": 2765,
+        "x": 2625,
         "y": 2040,
         "wires": [
             [
@@ -2168,12 +2290,13 @@
         "id": "e24a9c333204f2ae",
         "type": "link in",
         "z": "2c7549e3267c360c",
+        "g": "db7606b5814f193e",
         "name": "Clear_Chair",
         "links": [
             "b74a9c9f08aca778"
         ],
-        "x": 2765,
-        "y": 2220,
+        "x": 2625,
+        "y": 2240,
         "wires": [
             [
                 "cedc9c3de9e09dc2"
@@ -2432,12 +2555,13 @@
         "id": "b175a675c6e62914",
         "type": "link in",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "Temp_Chart",
         "links": [
             "314216c91649e2e1"
         ],
-        "x": 2705,
-        "y": 1600,
+        "x": 2565,
+        "y": 1580,
         "wires": [
             [
                 "b39117e482f11951"
@@ -2448,12 +2572,13 @@
         "id": "ced982086979f9e5",
         "type": "link in",
         "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
         "name": "Humi_Chart",
         "links": [
             "3bf9b677fa3a6fe4"
         ],
-        "x": 2705,
-        "y": 1800,
+        "x": 2565,
+        "y": 1780,
         "wires": [
             [
                 "1baa948961d6858b"
@@ -2464,11 +2589,12 @@
         "id": "aba749fbac219d65",
         "type": "link in",
         "z": "2c7549e3267c360c",
+        "g": "91e380ed61976399",
         "name": "Light_Chair",
         "links": [
             "9bedd419c212be44"
         ],
-        "x": 2765,
+        "x": 2625,
         "y": 1960,
         "wires": [
             [
@@ -2480,12 +2606,13 @@
         "id": "e04bfbdd7baf05c9",
         "type": "link in",
         "z": "2c7549e3267c360c",
+        "g": "db7606b5814f193e",
         "name": "Soil_Chair",
         "links": [
             "ac34c487c9382149"
         ],
-        "x": 2765,
-        "y": 2300,
+        "x": 2625,
+        "y": 2320,
         "wires": [
             [
                 "cedc9c3de9e09dc2"
@@ -2578,6 +2705,39 @@
         "info": "",
         "x": 790,
         "y": 940,
+        "wires": []
+    },
+    {
+        "id": "f4010ba443c8dfe3",
+        "type": "comment",
+        "z": "2c7549e3267c360c",
+        "g": "023e8dd112056349",
+        "name": "DHT11",
+        "info": "",
+        "x": 3170,
+        "y": 1500,
+        "wires": []
+    },
+    {
+        "id": "19f86b3acfb3afad",
+        "type": "comment",
+        "z": "2c7549e3267c360c",
+        "g": "91e380ed61976399",
+        "name": "Light Sensor",
+        "info": "",
+        "x": 2310,
+        "y": 1960,
+        "wires": []
+    },
+    {
+        "id": "c2093c2969c1d22e",
+        "type": "comment",
+        "z": "2c7549e3267c360c",
+        "g": "db7606b5814f193e",
+        "name": "Soil Moisture Sensor",
+        "info": "",
+        "x": 2350,
+        "y": 2240,
         "wires": []
     },
     {

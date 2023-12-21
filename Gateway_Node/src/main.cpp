@@ -53,7 +53,7 @@ int ConvertToInt = 0; //DHT_Err LDR_Err Soil_Err LightStatus PumpsStatus
 //WIFI Variable
 String sta_ssid = ""; 
 String sta_password = "" ;
-String ap_ssid = "ESP32_Client";
+String ap_ssid = "ESP32_Gateway";
 String ap_password = "123456789";
 const unsigned long Network_TimeOut = 5000;// Wait 5 seconds to Connect Wifi
 //LoRa Variable
@@ -96,8 +96,6 @@ String MessLimit;
 //Command from client
 int Command_Pump = 0; // 0: Nothing, 1:ON, 2:OFF
 int Command_Light = 0; // 0: Nothing, 1:ON, 2:OFF
-boolean Ig_Pump = false;// Ignore Command_Pump
-boolean Ig_Led = false;// Ignore Command_Light 
 //flag
 boolean sta_flag = false;
 boolean first_sta = true;
@@ -276,7 +274,7 @@ void Capture(void * pvParameters)
   UBaseType_t uxHighWaterMark;
   DataPackage ResponseACK;
   ResponseACK.SetMode(ACK);
-  // ResponseACK.SetFrom(*((String*)pvParameters));
+  const String Own_Adrress = *((String*)pvParameters);
   while (true)
   {
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
@@ -292,21 +290,21 @@ void Capture(void * pvParameters)
         continue;
       --D_Pack.expired;
       /*------------------------Response------------------------*/
-      if(D_Pack.GetMode() == ACK)
+      if(D_Pack.GetMode() == ACK) //Receive ACK
       {
         Serial.println("Receive ACK");
         if(D_Pack.GetFrom() == GatewayAddress)
-          toGateway --;
+          toGateway = 0;
         else
-          toNode --;
+          toNode = (toNode > 0)? toNode-1 : 0;
         continue;
       }
-      if(D_Pack.GetMode() == Command || D_Pack.GetMode() == LogData)
+      if(D_Pack.GetMode() == Command || D_Pack.GetMode() == LogData) //Send ACK
       {
         if(gateway_node == 1)
           ResponseACK.SetDataPackage(D_Pack.GetFrom(),"000017","","");
         if(gateway_node == 2)
-          ResponseACK.SetDataPackage(D_Pack.GetFrom(),*((String*)pvParameters),"","");
+          ResponseACK.SetDataPackage(D_Pack.GetFrom(),Own_Adrress,"","");
         Serial.println("Prepare to Send ACK");
         xQueueSendToFront(Queue_Delivery,&ResponseACK,pdMS_TO_TICKS(10));
       }
@@ -473,16 +471,12 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) //Handle messa
         Command_Pump = 2;
       else
         Command_Pump = 1;
-      if(WiFi.status() == WL_CONNECTED)
-        Ig_Pump = true;
     }
     if(String((char*)data).indexOf("LED") >= 0){
       if(LightStatus)
         Command_Light = 2;
       else
         Command_Light = 1;
-      if(WiFi.status() == WL_CONNECTED)
-        Ig_Led = true;
     }
   }
 }//Handle messange from local clients
@@ -537,27 +531,19 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
     if(String(topic) == MQTT_Pump_TOPIC){ 
       if(t_ID == ID)
       {
-        if(Ig_Pump)
-          Ig_Pump = false;
-        else{ 
-          if(t_command == "N")
-              Command_Pump = 1;
-          else if(t_command == "F")
-              Command_Pump = 2;
-        }
+        if(t_command == "N")
+            Command_Pump = 1;
+        else if(t_command == "F")
+            Command_Pump = 2;
       }else flag = true;
     }
     if(String(topic) == MQTT_LED_TOPIC){ 
       if(t_ID == ID)
       {
-        if(Ig_Led)
-            Ig_Led = false;
-        else{
-            if(t_command == "N")
-                Command_Light = 1;
-            else if(t_command == "F")
-                Command_Light = 2;
-        }
+        if(t_command == "N")
+            Command_Light = 1;
+        else if(t_command == "F")
+            Command_Light = 2;
       }else flag = true;
     }
     if(flag)
