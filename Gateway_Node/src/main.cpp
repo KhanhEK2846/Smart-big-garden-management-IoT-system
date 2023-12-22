@@ -59,9 +59,9 @@ const unsigned long Network_TimeOut = 5000;// Wait 5 seconds to Connect Wifi
 //LoRa Variable
 LoRa_E32 lora(&Serial2,4,5,18); //16-->TX 17-->RX 4-->AUX 5-->M1 18-->M0 
 volatile boolean lora_flag = false;
-uint8_t AddH;
-uint8_t AddL;
-uint8_t Channel;
+uint8_t Own_AddH;
+uint8_t Own_AddL;
+uint8_t Own_Channel;
 volatile uint8_t Gateway_AddH = 0;
 volatile uint8_t Gateway_AddL = 0;
 volatile uint8_t Gateway_Channel = 0x17;
@@ -102,7 +102,7 @@ boolean first_sta = true;
 boolean valueChange_flag = false;
 boolean contingency_flag = false;
 //Type of server
-int gateway_node = 0; // 0:default 1: gateway 2:node
+volatile int gateway_node = 0; // 0:default 1: gateway 2:node
 //Own & Deliver
 DataPackage O_Pack;
 String O_Command;
@@ -216,9 +216,9 @@ void Reset_ConfigurationLoRa(boolean gateway = true)
   }
   else
   {
-    configuration.ADDH = AddH;
-    configuration.ADDL = AddL;
-    configuration.CHAN = Channel;
+    configuration.ADDH = Own_AddH;
+    configuration.ADDL = Own_AddL;
+    configuration.CHAN = Own_Channel;
   }
   configuration.SPED.uartParity = 0;
   configuration.SPED.uartBaudRate = 0b11;
@@ -279,7 +279,7 @@ void Delivery(void * pvParameters)
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);
     Serial.println();
-    delay(3500);
+    delay(3000);
   }
 }
 void Capture(void * pvParameters)
@@ -397,17 +397,17 @@ void Init_LoRa()
   lora.begin();
   ResponseStructContainer c = lora.getConfiguration();
   Configuration configuration = *(Configuration*) c.data;
-  CalculateAddressChannel(ID,AddH,AddL,Channel);
-  address = EnCodeAddressChannel(AddH,AddL,Channel);
+  CalculateAddressChannel(ID,Own_AddH,Own_AddL,Own_Channel);
+  address = EnCodeAddressChannel(Own_AddH,Own_AddL,Own_Channel);
   O_Pack.SetFrom(address);
-  MQTT_Data.SetFrom(address);
+  MQTT_Data.SetFrom("000017"); //MQTT work only when it's gateway
   Serial.println(address);
   if(c.status.code == 1)
   {
     configuration.OPTION.fixedTransmission = FT_FIXED_TRANSMISSION;
-    configuration.ADDH = AddH;
-    configuration.ADDL = AddL;
-    configuration.CHAN = Channel;
+    configuration.ADDH = Own_AddH;
+    configuration.ADDL = Own_AddL;
+    configuration.CHAN = Own_Channel;
     lora.setConfiguration(configuration, WRITE_CFG_PWR_DWN_SAVE);
     configuration.SPED.uartParity = 0;
     configuration.SPED.uartBaudRate = 0b11;
