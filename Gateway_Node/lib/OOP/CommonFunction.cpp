@@ -21,3 +21,11 @@ void DeCodeAddressChannel(const String address, uint8_t &H, uint8_t &L, uint8_t 
 {
   sscanf(address.c_str(),"%02x%02x%02x",&H,&L,&chan);
 }
+String CalculateToEncode(const String id)
+{
+  uint8_t H = 0;
+  uint8_t L = 0;
+  uint8_t chan = 0;
+  CalculateAddressChannel(id,H,L,chan);
+  return EnCodeAddressChannel(H,L,chan);
+}

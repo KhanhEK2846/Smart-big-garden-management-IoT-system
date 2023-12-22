@@ -6,7 +6,7 @@ DataPackage ::DataPackage()
     ID = "";
     From = "";
     Mode = "";
-    expired = 9;
+    expired = 4;
 }
 
 String DataPackage:: GetID() const
@@ -92,13 +92,12 @@ String DataPackage::toString(boolean prettier) const
     else
         temp += "," ;
     temp += this->data ;
-    if(prettier)
+    if(prettier) //Not Send expired
+    {
         temp += "\nExpired: ";
-    else
-        temp += "," ;
-    temp += this->expired;
-    if(prettier)
+        temp += this->expired;
         temp += "\n}";
+    }  
     else
         temp += "}";
     return temp;
@@ -137,8 +136,5 @@ void DataPackage::fromString(const String data)
     this->From = temp.substring(0,temp.indexOf(","));
     temp = temp.substring(temp.indexOf(",")+1);
     this->Mode = temp.substring(0,temp.indexOf(","));
-    temp = temp.substring(temp.indexOf(",")+1);
-    this->data = temp.substring(0,temp.indexOf(","));
-    temp = temp.substring(temp.indexOf(",")+1);
-    this->expired = atof(temp.c_str());
+    this->data = temp.substring(temp.indexOf(",")+1);
 }

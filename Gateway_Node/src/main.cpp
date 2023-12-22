@@ -53,7 +53,7 @@ int ConvertToInt = 0; //DHT_Err LDR_Err Soil_Err LightStatus PumpsStatus
 //WIFI Variable
 String sta_ssid = ""; 
 String sta_password = "" ;
-String ap_ssid = "ESP32_Gateway";
+String ap_ssid = "ESP32_Node";
 String ap_password = "123456789";
 const unsigned long Network_TimeOut = 5000;// Wait 5 seconds to Connect Wifi
 //LoRa Variable
@@ -104,7 +104,6 @@ boolean contingency_flag = false;
 //Type of server
 int gateway_node = 0; // 0:default 1: gateway 2:node
 //Own & Deliver
-DataPackage D_Pack;
 DataPackage O_Pack;
 String O_Command;
 String D_Command;
@@ -243,11 +242,18 @@ void Delivery(void * pvParameters)
   while(true)
   {
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
+    /*-----------------Check Expired---------------------------*/  
+    if(data.expired == 0)
+      continue;
+    /*--------------------------------------------------------*/
     if(data.GetMode() == Default || data.GetMode() == LogData) //Send to Gateway
     {
       if(data.GetMode() == Default && data.GetID() == ID)
         sent_RTDB = false;
       lora.sendFixedMessage(Gateway_AddH,Gateway_AddL,Gateway_Channel,data.toString());
+      data.expired--;
+      if(data.GetMode() == LogData)
+        xQueueSendToBack(Queue_Delivery,&data,pdMS_TO_TICKS(10));
       toGateway++;
     }
     else //Send to Node
@@ -259,13 +265,21 @@ void Delivery(void * pvParameters)
         toNode ++;
         CalculateAddressChannel(data.GetID(),DeliveryH,DeliveryL,DeliveryChan);
       }
+      if(data.GetMode() == ACK){
+        Serial.print("Before Send Ack: ");
+        Serial.println(data.toString());
+      }
       lora.sendFixedMessage(DeliveryH,DeliveryL,DeliveryChan,data.toString());
+
+      data.expired--;
+      if(data.GetMode() == Command)
+        xQueueSendToBack(Queue_Delivery,&data,pdMS_TO_TICKS(10));
     }
     Serial.print("Delivery Task: ");
     uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     Serial.println(uxHighWaterMark);
     Serial.println();
-    delay(2000);
+    delay(3500);
   }
 }
 void Capture(void * pvParameters)
@@ -273,6 +287,9 @@ void Capture(void * pvParameters)
   ResponseContainer mess;
   UBaseType_t uxHighWaterMark;
   DataPackage ResponseACK;
+  DataPackage tempData;
+  String TempAddress;
+  DataPackage D_Pack;
   ResponseACK.SetMode(ACK);
   const String Own_Adrress = *((String*)pvParameters);
   while (true)
@@ -285,14 +302,31 @@ void Capture(void * pvParameters)
       Serial.print(ID);
       Serial.println(" receive:");
       Serial.println(D_Pack.toString(true));
-      /*-----------------Check Expired---------------------------*/  
-      if(D_Pack.expired == 0)
-        continue;
-      --D_Pack.expired;
       /*------------------------Response------------------------*/
       if(D_Pack.GetMode() == ACK) //Receive ACK
       {
         Serial.println("Receive ACK");
+        for(int i = 0; i<Queue_Length;i++) //Find the data for that ACK
+        {
+          if(xQueueReceive(Queue_Delivery,&tempData,0) == pdPASS)
+          {
+            if(D_Pack.GetID() == tempData.GetFrom() && D_Pack.GetData() == tempData.GetMode())
+            {
+              if(D_Pack.GetData() == LogData)
+                TempAddress = EnCodeAddressChannel(Gateway_AddH,Gateway_AddL,Gateway_Channel);
+              else
+                TempAddress = CalculateToEncode(tempData.GetID());
+              if(D_Pack.GetFrom() == TempAddress)
+              {
+                Serial.println("Remove Messange");
+                break;
+              }
+            }
+            xQueueSend(Queue_Delivery,&tempData,0);
+          }
+          else break;
+
+        }
         if(D_Pack.GetFrom() == GatewayAddress)
           toGateway = 0;
         else
@@ -302,9 +336,9 @@ void Capture(void * pvParameters)
       if(D_Pack.GetMode() == Command || D_Pack.GetMode() == LogData) //Send ACK
       {
         if(gateway_node == 1)
-          ResponseACK.SetDataPackage(D_Pack.GetFrom(),"000017","","");
+          ResponseACK.SetDataPackage(D_Pack.GetFrom(),"000017",D_Pack.GetMode(),"");
         if(gateway_node == 2)
-          ResponseACK.SetDataPackage(D_Pack.GetFrom(),Own_Adrress,"","");
+          ResponseACK.SetDataPackage(D_Pack.GetFrom(),Own_Adrress,D_Pack.GetMode(),"");
         Serial.println("Prepare to Send ACK");
         xQueueSendToFront(Queue_Delivery,&ResponseACK,pdMS_TO_TICKS(10));
       }
@@ -367,6 +401,7 @@ void Init_LoRa()
   address = EnCodeAddressChannel(AddH,AddL,Channel);
   O_Pack.SetFrom(address);
   MQTT_Data.SetFrom(address);
+  Serial.println(address);
   if(c.status.code == 1)
   {
     configuration.OPTION.fixedTransmission = FT_FIXED_TRANSMISSION;
