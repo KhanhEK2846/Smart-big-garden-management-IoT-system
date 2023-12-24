@@ -15,6 +15,7 @@
 #include "URL.h"
 #include "html.h"
 #include "CommonFunction.h"
+#include "Remember.h"
 //Port GPIOs
 #define DHTPIN 21 //Read DHT22 Sensor
 #define LDR 34 //Read Light Sensor
@@ -133,6 +134,8 @@ const unsigned long reset_key_time = 300000; // 5 minutes to reset
 unsigned long before_reset_key = 0;
 //ID
 const String ID = WiFi.macAddress();
+//Remember From
+Remember Locate;
 //Loop variable
 int i;
 // Store Recent Value
@@ -244,7 +247,13 @@ void Delivery(void * pvParameters)
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
     /*-----------------Check Expired---------------------------*/  
     if(data.expired == 0)
-      continue;
+    {
+      if(data.GetMode() == Command)
+      {
+        //Send to else
+      }
+      else continue;
+    }
     /*--------------------------------------------------------*/
     if(data.GetMode() == Default || data.GetMode() == LogData) //Send to Gateway
     {
@@ -325,7 +334,6 @@ void Capture(void * pvParameters)
             xQueueSend(Queue_Delivery,&tempData,0);
           }
           else break;
-
         }
         if(D_Pack.GetFrom() == GatewayAddress)
           toGateway = 0;
@@ -333,6 +341,7 @@ void Capture(void * pvParameters)
           toNode = (toNode > 0)? toNode-1 : 0;
         continue;
       }
+      Locate.Add(D_Pack.GetFrom());
       if(D_Pack.GetMode() == Command || D_Pack.GetMode() == LogData) //Send ACK
       {
         if(gateway_node == 1)
