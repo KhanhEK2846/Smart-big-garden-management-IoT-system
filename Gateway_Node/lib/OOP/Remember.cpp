@@ -49,3 +49,18 @@ bool Remember::Add(const String Address)
 
     return true;
 }
+
+String Remember::GetAddrress(int index)
+{
+    if(index != -1)
+        return this->NodeAdrress[index];
+    else
+    {
+        for(int i =0;i<5;i++)
+        {
+            if(this->NodeAdrress[i] != "")
+                return this->NodeAdrress[i];
+        }
+    }
+    return "";
+}

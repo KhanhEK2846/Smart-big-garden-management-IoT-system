@@ -242,6 +242,8 @@ void Delivery(void * pvParameters)
   uint8_t DeliveryH;
   uint8_t DeliveryL;
   uint8_t DeliveryChan;
+  boolean another_flag =false;
+  String tmpAddress = "";
   while(true)
   {
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
@@ -250,9 +252,16 @@ void Delivery(void * pvParameters)
     {
       if(data.GetMode() == Command)
       {
-        //Send to else
+        tmpAddress = Locate.GetAddrress();
+        another_flag = true;
       }
-      else continue;
+      if(data.GetMode() == LogData)
+      {
+        Gateway_AddH = 0;
+        Gateway_AddL = 0;
+        Gateway_Channel = 0x17;
+        continue;
+      }
     }
     /*--------------------------------------------------------*/
     if(data.GetMode() == Default || data.GetMode() == LogData) //Send to Gateway
@@ -269,14 +278,13 @@ void Delivery(void * pvParameters)
     {
       if(data.GetMode() == ACK)
         DeCodeAddressChannel(data.GetID(),DeliveryH,DeliveryL,DeliveryChan);
-      else
+      else if(another_flag && tmpAddress != "")
+      {
+        DeCodeAddressChannel(tmpAddress,DeliveryH,DeliveryL,DeliveryChan);
+      }else
       {
         toNode ++;
         CalculateAddressChannel(data.GetID(),DeliveryH,DeliveryL,DeliveryChan);
-      }
-      if(data.GetMode() == ACK){
-        Serial.print("Before Send Ack: ");
-        Serial.println(data.toString());
       }
       lora.sendFixedMessage(DeliveryH,DeliveryL,DeliveryChan,data.toString());
 

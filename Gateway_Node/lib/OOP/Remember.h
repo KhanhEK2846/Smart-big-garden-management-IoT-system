@@ -11,5 +11,5 @@ public:
     Remember();
     ~Remember();
     bool Add(const String Address = "");
-    String GetAddrress(int index = 0);
+    String GetAddrress(int index = -1);
 };
