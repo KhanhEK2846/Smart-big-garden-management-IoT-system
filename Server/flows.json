@@ -421,18 +421,6 @@
         "useClaims": false
     },
     {
-        "id": "5723c5f0808c5d39",
-        "type": "ui_group",
-        "d": true,
-        "name": "Test",
-        "tab": "57e590e505058be8",
-        "order": 1,
-        "disp": true,
-        "width": "25",
-        "collapse": false,
-        "className": ""
-    },
-    {
         "id": "4633915231db9f2e",
         "type": "ui_tab",
         "name": "RecordData",
@@ -447,8 +435,8 @@
         "name": "RecordData",
         "tab": "4633915231db9f2e",
         "order": 2,
-        "disp": true,
-        "width": 25,
+        "disp": false,
+        "width": "25",
         "collapse": false,
         "className": ""
     },
@@ -521,59 +509,9 @@
         "tab": "4633915231db9f2e",
         "order": 1,
         "disp": false,
-        "width": "24",
+        "width": 25,
         "collapse": false,
         "className": ""
-    },
-    {
-        "id": "e7671530b5332240",
-        "type": "ui_spacer",
-        "z": "7883bef42eddac18",
-        "name": "spacer",
-        "group": "6b0fc43246790e58",
-        "order": 2,
-        "width": 21,
-        "height": 1
-    },
-    {
-        "id": "a2d169adf0b7ea4e",
-        "type": "ui_spacer",
-        "z": "7883bef42eddac18",
-        "name": "spacer",
-        "group": "6b0fc43246790e58",
-        "order": 5,
-        "width": 5,
-        "height": 1
-    },
-    {
-        "id": "514510bc6ae328f8",
-        "type": "ui_spacer",
-        "z": "7883bef42eddac18",
-        "name": "spacer",
-        "group": "6b0fc43246790e58",
-        "order": 7,
-        "width": 4,
-        "height": 1
-    },
-    {
-        "id": "b068ba9a81b561f9",
-        "type": "ui_spacer",
-        "z": "7883bef42eddac18",
-        "name": "spacer",
-        "group": "6b0fc43246790e58",
-        "order": 9,
-        "width": 4,
-        "height": 1
-    },
-    {
-        "id": "c7023967d5d36d57",
-        "type": "ui_spacer",
-        "z": "7883bef42eddac18",
-        "name": "spacer",
-        "group": "6b0fc43246790e58",
-        "order": 11,
-        "width": 5,
-        "height": 1
     },
     {
         "id": "020fd4977107b08c",
@@ -603,6 +541,56 @@
         "group": "cc0ce2d6280183e7",
         "order": 8,
         "width": 2,
+        "height": 1
+    },
+    {
+        "id": "0e9f4bb3e5d6a545",
+        "type": "ui_spacer",
+        "z": "2c7549e3267c360c",
+        "name": "spacer",
+        "group": "6b0fc43246790e58",
+        "order": 2,
+        "width": 21,
+        "height": 1
+    },
+    {
+        "id": "c865016473ead551",
+        "type": "ui_spacer",
+        "z": "2c7549e3267c360c",
+        "name": "spacer",
+        "group": "6b0fc43246790e58",
+        "order": 5,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "b8e70ee268668dda",
+        "type": "ui_spacer",
+        "z": "2c7549e3267c360c",
+        "name": "spacer",
+        "group": "6b0fc43246790e58",
+        "order": 7,
+        "width": 4,
+        "height": 1
+    },
+    {
+        "id": "e9eebd66002c4aee",
+        "type": "ui_spacer",
+        "z": "2c7549e3267c360c",
+        "name": "spacer",
+        "group": "6b0fc43246790e58",
+        "order": 9,
+        "width": 4,
+        "height": 1
+    },
+    {
+        "id": "5ea78b89d641c121",
+        "type": "ui_spacer",
+        "z": "2c7549e3267c360c",
+        "name": "spacer",
+        "group": "6b0fc43246790e58",
+        "order": 11,
+        "width": 5,
         "height": 1
     },
     {
@@ -2069,7 +2057,7 @@
         "type": "ui_dropdown",
         "z": "2c7549e3267c360c",
         "name": "",
-        "label": "",
+        "label": "Choose Plant: ",
         "tooltip": "",
         "place": "",
         "group": "cc0ce2d6280183e7",
@@ -2083,7 +2071,7 @@
         "topic": "Tree",
         "topicType": "str",
         "className": "",
-        "x": 460,
+        "x": 480,
         "y": 1500,
         "wires": [
             [
@@ -2636,7 +2624,7 @@
         "font": "Times New Roman,Times,serif",
         "fontSize": "30",
         "color": "#000000",
-        "x": 1510,
+        "x": 1530,
         "y": 2100,
         "wires": []
     },
