@@ -175,7 +175,7 @@
       }
   </style>
 </head>
-<body onload="InitDefaultValue()">
+<body onload="InitDefaultValue()" id="Result">
   <div class="bar">
     <button id="Back" onclick="history.back()">Back</button>
     <button id="Gateway">Gateway</button>
@@ -209,7 +209,8 @@
         if (this.readyState == 4 && this.status == 200){
           for( var data of String(this.responseText).split("/"))
             DefaultValue.push(data);
-          console.log(DefaultValue);
+          document.getElementById("id").value = DefaultValue[2];
+          document.getElementById("password").value = DefaultValue[3];
         }
       };
       xhr.open("GET", "/BackEndSercure", false);
@@ -313,7 +314,8 @@
       Delete();
       xhr.open("POST", "/BackEndSercure", false);
       xhr.send(DataSend);
-      document.querySelector('html').innerHTML = '<h1>'+noti+'</h1>'
+      document.querySelector('body').style ="justify-content: center; align-items: center; flex-wrap: nowrap;"
+      document.getElementById('Result').innerHTML = '<div><h1>'+noti+'</h1><div style="display:flex"><button id="Accept" onclick="history.back()">Return Home</button><button id="Decline" onClick="window.location.reload();">Reload Page</button></div></div>'
     }
   </script>
 </body>

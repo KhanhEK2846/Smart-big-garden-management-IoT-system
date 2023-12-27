@@ -719,7 +719,7 @@ void Reset_Key()
     before_reset_key = 0;
   }
 }
-void Init_Server() // FIXME: Fix backend server
+void Init_Server()
 {
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request)) //Only for client from AP Mode
@@ -1124,7 +1124,7 @@ void Light_Up()//Light up choice
 }
 #pragma endregion
 #pragma region Main System
-void Solve_Command() // TODO: Slove Command
+void Solve_Command()
 {
   if(xQueueReceive(Queue_Command,&O_Command,0) == pdPASS)
   {

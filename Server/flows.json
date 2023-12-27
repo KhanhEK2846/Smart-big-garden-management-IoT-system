@@ -403,15 +403,6 @@
         "className": ""
     },
     {
-        "id": "57e590e505058be8",
-        "type": "ui_tab",
-        "name": "Test",
-        "icon": "dashboard",
-        "order": 5,
-        "disabled": true,
-        "hidden": false
-    },
-    {
         "id": "9bdf6ea296ef5609",
         "type": "database-config",
         "name": "My Database",

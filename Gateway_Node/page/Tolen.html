@@ -43,6 +43,14 @@
         color: whitesmoke;
         background-color: black;
       }
+      #Accept:hover{
+        color: whitesmoke;
+        background-color: yellowgreen;
+      }
+      #Decline:hover{
+        color: whitesmoke;
+        background-color:red;
+      }
       .container{
         margin: auto;
         width: 100%;
@@ -186,7 +194,7 @@
       }
     </style>
 </head>
-<body onload="InitDefaultValue()">
+<body onload="InitDefaultValue()"  id="Result">
   <button id="Back" onclick="history.back()">Back</button>
     <div class="container">
         <h1>Tolerance Ranges</h1>
@@ -319,7 +327,8 @@
                         "/"+document.getElementById("L").value+"}";
         xhr.open("POST", "/BackEndTolerance", false);
         xhr.send(DataSend);
-        document.querySelector('html').innerHTML = '<h1>'+noti+'</h1>'
+        document.querySelector('body').style ="justify-content: center; align-items: center; flex-wrap: nowrap;"
+        document.getElementById('Result').innerHTML = '<div><h1>'+noti+'</h1><div style="display:flex"><button id="Accept" onclick="history.back()">Return Home</button><button id="Decline" onClick="window.location.reload();">Reload Page</button></div></div>'
       }
   </script>
 </body>

@@ -1054,7 +1054,7 @@ button {
 </html>
 )rawliteral";
 #pragma endregion 404_Error
-#pragma region Sercurity_html // TODO: make script for Submit
+#pragma region Sercurity_html
 const char Sercurity_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
@@ -1233,7 +1233,7 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
       }
   </style>
 </head>
-<body onload="InitDefaultValue()">
+<body onload="InitDefaultValue()" id="Result">
   <div class="bar">
     <button id="Back" onclick="history.back()">Back</button>
     <button id="Gateway">Gateway</button>
@@ -1267,7 +1267,8 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
         if (this.readyState == 4 && this.status == 200){
           for( var data of String(this.responseText).split("/"))
             DefaultValue.push(data);
-          console.log(DefaultValue);
+          document.getElementById("id").value = DefaultValue[2];
+          document.getElementById("password").value = DefaultValue[3];
         }
       };
       xhr.open("GET", "/BackEndSercure", false);
@@ -1371,14 +1372,15 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
       Delete();
       xhr.open("POST", "/BackEndSercure", false);
       xhr.send(DataSend);
-      document.querySelector('html').innerHTML = '<h1>'+noti+'</h1>'
+      document.querySelector('body').style ="justify-content: center; align-items: center; flex-wrap: nowrap;"
+      document.getElementById('Result').innerHTML = '<div><h1>'+noti+'</h1><div style="display:flex"><button id="Accept" onclick="history.back()">Return Home</button><button id="Decline" onClick="window.location.reload();">Reload Page</button></div></div>'
     }
   </script>
 </body>
 </html>
 )rawliteral";
 #pragma endregion Sercurity_html
-#pragma region Parameters_html //TODO: make script for Apply
+#pragma region Parameters_html
 const char Tolerance_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
@@ -1424,6 +1426,14 @@ const char Tolerance_html[] PROGMEM = R"rawliteral(
       button:hover{
         color: whitesmoke;
         background-color: black;
+      }
+      #Accept:hover{
+        color: whitesmoke;
+        background-color: yellowgreen;
+      }
+      #Decline:hover{
+        color: whitesmoke;
+        background-color:red;
       }
       .container{
         margin: auto;
@@ -1568,7 +1578,7 @@ const char Tolerance_html[] PROGMEM = R"rawliteral(
       }
     </style>
 </head>
-<body onload="InitDefaultValue()">
+<body onload="InitDefaultValue()"  id="Result">
   <button id="Back" onclick="history.back()">Back</button>
     <div class="container">
         <h1>Tolerance Ranges</h1>
@@ -1701,7 +1711,8 @@ const char Tolerance_html[] PROGMEM = R"rawliteral(
                         "/"+document.getElementById("L").value+"}";
         xhr.open("POST", "/BackEndTolerance", false);
         xhr.send(DataSend);
-        document.querySelector('html').innerHTML = '<h1>'+noti+'</h1>'
+        document.querySelector('body').style ="justify-content: center; align-items: center; flex-wrap: nowrap;"
+        document.getElementById('Result').innerHTML = '<div><h1>'+noti+'</h1><div style="display:flex"><button id="Accept" onclick="history.back()">Return Home</button><button id="Decline" onClick="window.location.reload();">Reload Page</button></div></div>'
       }
   </script>
 </body>
