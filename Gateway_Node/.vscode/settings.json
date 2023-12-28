@@ -1,0 +1,7 @@
+{
+    "cmake.configureOnOpen": false,
+    "cmake.sourceDirectory": "D:/UIT/Project/Project2/Code/Node/lib/AsyncTCP-master",
+    "files.associations": {
+        "random": "cpp"
+    }
+}
