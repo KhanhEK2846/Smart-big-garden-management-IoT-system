@@ -310,7 +310,6 @@
       if (state == "Configuring")
         DataSend +="AP: ";
       DataSend += document.getElementById("id").value + "/"+ document.getElementById("password").value + "}";
-      console.log(DataSend)
       Delete();
       xhr.open("POST", "/BackEndSercure", false);
       xhr.send(DataSend);

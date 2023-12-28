@@ -407,16 +407,10 @@ const char main_html[] PROGMEM = R"rawliteral(
       setTimeout(initWebSocket, 2000);
     }
     function onMessage(event){
-      console.log(String(event.data))
       var pre_data = String(event.data).substring(String(event.data).indexOf("{")+1,String(event.data).indexOf("}"))
       if(pre_data.length > 15)
       {
         document.getElementById("NameTree").defaultValue = String(pre_data).split("/")[0];
-        console.log((Number(String(pre_data).split("/")[1])>>4)&1)
-        console.log((Number(String(pre_data).split("/")[1])>>3)&1)
-        console.log((Number(String(pre_data).split("/")[1])>>2)&1)
-        console.log((Number(String(pre_data).split("/")[1])>>1)&1)
-        console.log((Number(String(pre_data).split("/")[1])>>0)&1)
         if((Number(String(pre_data).split("/")[1])>>4)&1 == 1)
           document.getElementById("DHT11_Status").innerHTML = "Error";
         else
@@ -546,7 +540,6 @@ const char main_html[] PROGMEM = R"rawliteral(
       document.getElementById("Wifi").style.display = "flex";
       document.getElementById("Wifi").style.zIndex = 4;
       document.getElementById("Wifi").innerHTML = "<b>Lost Connection to Server<b>";
-      
     }
   </script>
 </body>
@@ -1368,7 +1361,6 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
       if (state == "Configuring")
         DataSend +="AP: ";
       DataSend += document.getElementById("id").value + "/"+ document.getElementById("password").value + "}";
-      console.log(DataSend)
       Delete();
       xhr.open("POST", "/BackEndSercure", false);
       xhr.send(DataSend);

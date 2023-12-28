@@ -233,7 +233,6 @@ void Reset_ConfigurationLoRa(boolean gateway = true)
   configuration.OPTION.transmissionPower = 0;
   lora.setConfiguration(configuration, WRITE_CFG_PWR_DWN_SAVE);
   c.close(); 
-  Serial.println("Configure LoRa");
 }
 void Delivery(void * pvParameters)
 {
@@ -335,7 +334,6 @@ void Capture(void * pvParameters)
                 TempAddress = CalculateToEncode(tempData.GetID());
               if(D_Pack.GetFrom() == TempAddress)
               {
-                Serial.println("Remove Messange");
                 break;
               }
             }
@@ -536,12 +534,10 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
 {
   switch (type) {
     case WS_EVT_CONNECT:
-      Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
       Person += 1;
       notifyClient(client);
       break;
     case WS_EVT_DISCONNECT:
-      Serial.printf("WebSocket client #%u disconnected\n", client->id());
         Person = (Person > 0)? Person-1 : 0;
       break;
     case WS_EVT_DATA:
@@ -558,7 +554,7 @@ void initWebSocket() //Initialize the WebSocket protocol
   server.addHandler(&ws);
 }
 #pragma endregion
-#pragma region MQTT Protocol //FIXME Stop mqtt when connected gateway
+#pragma region MQTT Protocol
 void connect_to_broker() // Connect to the broker
 {
   while (!client.connected()) {
@@ -1128,8 +1124,6 @@ void Solve_Command()
 {
   if(xQueueReceive(Queue_Command,&O_Command,0) == pdPASS)
   {
-    Serial.print("Receive command: ");
-    Serial.println(O_Command);
     String Actuator = O_Command.substring(0,O_Command.indexOf(" "));
     String Require = O_Command.substring(O_Command.indexOf(" ")+1,O_Command.length());
     if(Actuator == "L")
