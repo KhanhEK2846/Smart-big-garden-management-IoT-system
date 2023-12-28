@@ -9,13 +9,13 @@
 #include "addons/RTDBHelper.h"
 #include <time.h>
 #include <HTTPClient.h>
-#include "DataPackage.h"
-#include "CommandCode.h"
-#include "Plant.h"
+#include <DataPackage.h>
+#include <Remember.h>
+#include <Plant.h>
+#include <CommonFunction.h>
 #include "URL.h"
 #include "html.h"
-#include "CommonFunction.h"
-#include "Remember.h"
+#include "CommandCode.h"
 //Port GPIOs
 #define DHTPIN 21 //Read DHT22 Sensor
 #define LDR 34 //Read Light Sensor
@@ -182,29 +182,6 @@ void Cycle_Ping()// Cycle Ping to Host // FIX:
 }
 #pragma endregion
 #pragma region LoRa
-// void printParameters(struct Configuration configuration)
-// {
-//   Serial.println("----------------------------------------");
-
-// 	Serial.print(F("HEAD BIN: "));  Serial.print(configuration.HEAD, BIN);Serial.print(" ");Serial.print(configuration.HEAD, DEC);Serial.print(" ");Serial.println(configuration.HEAD, HEX);
-// 	Serial.println(F(" "));
-// 	Serial.print(F("AddH BIN: "));  Serial.println(configuration.ADDH, DEC);
-// 	Serial.print(F("AddL BIN: "));  Serial.println(configuration.ADDL, DEC);
-// 	Serial.print(F("Chan BIN: "));  Serial.print(configuration.CHAN, DEC); Serial.print(" -> "); Serial.println(configuration.getChannelDescription());
-// 	Serial.println(F(" "));
-// 	Serial.print(F("SpeedParityBit BIN    : "));  Serial.print(configuration.SPED.uartParity, BIN);Serial.print(" -> "); Serial.println(configuration.SPED.getUARTParityDescription());
-// 	Serial.print(F("SpeedUARTDataRate BIN : "));  Serial.print(configuration.SPED.uartBaudRate, BIN);Serial.print(" -> "); Serial.println(configuration.SPED.getUARTBaudRate());
-// 	Serial.print(F("SpeedAirDataRate BIN  : "));  Serial.print(configuration.SPED.airDataRate, BIN);Serial.print(" -> "); Serial.println(configuration.SPED.getAirDataRate());
-
-// 	Serial.print(F("OptionTrans BIN       : "));  Serial.print(configuration.OPTION.fixedTransmission, BIN);Serial.print(" -> "); Serial.println(configuration.OPTION.getFixedTransmissionDescription());
-// 	Serial.print(F("OptionPullup BIN      : "));  Serial.print(configuration.OPTION.ioDriveMode, BIN);Serial.print(" -> "); Serial.println(configuration.OPTION.getIODroveModeDescription());
-// 	Serial.print(F("OptionWakeup BIN      : "));  Serial.print(configuration.OPTION.wirelessWakeupTime, BIN);Serial.print(" -> "); Serial.println(configuration.OPTION.getWirelessWakeUPTimeDescription());
-// 	Serial.print(F("OptionFEC BIN         : "));  Serial.print(configuration.OPTION.fec, BIN);Serial.print(" -> "); Serial.println(configuration.OPTION.getFECDescription());
-// 	Serial.print(F("OptionPower BIN       : "));  Serial.print(configuration.OPTION.transmissionPower, BIN);Serial.print(" -> "); Serial.println(configuration.OPTION.getTransmissionPowerDescription());
-
-// 	Serial.println("----------------------------------------");
-// }
-
 void Reset_ConfigurationLoRa(boolean gateway = true)
 {
   if(!lora_flag)
