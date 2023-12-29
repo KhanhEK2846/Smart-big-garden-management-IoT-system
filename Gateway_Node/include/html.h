@@ -404,7 +404,6 @@ const char main_html[] PROGMEM = R"rawliteral(
       console.log('Connection closed');
       document.getElementById('status').style.backgroundColor = "gray";
       TheEnd()
-      setTimeout(initWebSocket, 2000);
     }
     function onMessage(event){
       var pre_data = String(event.data).substring(String(event.data).indexOf("{")+1,String(event.data).indexOf("}"))
@@ -541,6 +540,16 @@ const char main_html[] PROGMEM = R"rawliteral(
       document.getElementById("Wifi").style.zIndex = 4;
       document.getElementById("Wifi").innerHTML = "<b>Lost Connection to Server<b>";
     }
+
+    /*----------------------Detect DevTool------------------------------------*/
+    function OnDevToolIsOpen(){
+        document.querySelector('html').textContent = ''
+    }
+    class DevToolChecker extends Error{
+        toString(){}
+        get message(){OnDevToolIsOpen();}
+    }
+    console.log(new DevToolChecker())
   </script>
 </body>
 </html>
@@ -1367,9 +1376,19 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
       document.querySelector('body').style ="justify-content: center; align-items: center; flex-wrap: nowrap;"
       document.getElementById('Result').innerHTML = '<div><h1>'+noti+'</h1><div style="display:flex"><button id="Accept" onclick="history.back()">Return Home</button><button id="Decline" onClick="window.location.reload();">Reload Page</button></div></div>'
     }
+      /*----------------------Detect DevTool------------------------------------*/
+    function OnDevToolIsOpen(){
+        document.querySelector('html').textContent = ''
+    }
+    class DevToolChecker extends Error{
+        toString(){}
+        get message(){OnDevToolIsOpen();}
+    }
+    console.log(new DevToolChecker())
   </script>
 </body>
 </html>
+
 )rawliteral";
 #pragma endregion Sercurity_html
 #pragma region Parameters_html
@@ -1706,6 +1725,15 @@ const char Tolerance_html[] PROGMEM = R"rawliteral(
         document.querySelector('body').style ="justify-content: center; align-items: center; flex-wrap: nowrap;"
         document.getElementById('Result').innerHTML = '<div><h1>'+noti+'</h1><div style="display:flex"><button id="Accept" onclick="history.back()">Return Home</button><button id="Decline" onClick="window.location.reload();">Reload Page</button></div></div>'
       }
+    /*----------------------Detect DevTool------------------------------------*/
+    function OnDevToolIsOpen(){
+      document.querySelector('html').textContent = ''
+  }
+  class DevToolChecker extends Error{
+      toString(){}
+      get message(){OnDevToolIsOpen();}
+  }
+  console.log(new DevToolChecker())
   </script>
 </body>
 </html>

@@ -398,7 +398,6 @@
       console.log('Connection closed');
       document.getElementById('status').style.backgroundColor = "gray";
       TheEnd()
-      setTimeout(initWebSocket, 2000);
     }
     function onMessage(event){
       var pre_data = String(event.data).substring(String(event.data).indexOf("{")+1,String(event.data).indexOf("}"))
@@ -535,6 +534,16 @@
       document.getElementById("Wifi").style.zIndex = 4;
       document.getElementById("Wifi").innerHTML = "<b>Lost Connection to Server<b>";
     }
+
+    /*----------------------Detect DevTool------------------------------------*/
+    function OnDevToolIsOpen(){
+        document.querySelector('html').textContent = ''
+    }
+    class DevToolChecker extends Error{
+        toString(){}
+        get message(){OnDevToolIsOpen();}
+    }
+    console.log(new DevToolChecker())
   </script>
 </body>
 </html>

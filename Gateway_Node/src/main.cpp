@@ -136,6 +136,9 @@ unsigned long before_reset_key = 0;
 const String ID = WiFi.macAddress();
 //Remember From
 Remember Locate;
+//Slove Command
+String Actuator = "";
+String Require = "";
 //Loop variable
 int i;
 // Store Recent Value
@@ -1101,8 +1104,8 @@ void Solve_Command()
 {
   if(xQueueReceive(Queue_Command,&O_Command,0) == pdPASS)
   {
-    String Actuator = O_Command.substring(0,O_Command.indexOf(" "));
-    String Require = O_Command.substring(O_Command.indexOf(" ")+1,O_Command.length());
+    Actuator = O_Command.substring(0,O_Command.indexOf(" "));
+    Require = O_Command.substring(O_Command.indexOf(" ")+1,O_Command.length());
     if(Actuator == "L")
     {
       if(Require == "N")

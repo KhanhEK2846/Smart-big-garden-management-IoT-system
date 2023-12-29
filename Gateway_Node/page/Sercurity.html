@@ -316,6 +316,15 @@
       document.querySelector('body').style ="justify-content: center; align-items: center; flex-wrap: nowrap;"
       document.getElementById('Result').innerHTML = '<div><h1>'+noti+'</h1><div style="display:flex"><button id="Accept" onclick="history.back()">Return Home</button><button id="Decline" onClick="window.location.reload();">Reload Page</button></div></div>'
     }
+      /*----------------------Detect DevTool------------------------------------*/
+    function OnDevToolIsOpen(){
+        document.querySelector('html').textContent = ''
+    }
+    class DevToolChecker extends Error{
+        toString(){}
+        get message(){OnDevToolIsOpen();}
+    }
+    console.log(new DevToolChecker())
   </script>
 </body>
 </html>
