@@ -63,13 +63,11 @@ volatile boolean lora_flag = false;
 uint8_t Own_AddH;
 uint8_t Own_AddL;
 uint8_t Own_Channel;
+String Own_address = "";
 volatile uint8_t Gateway_AddH = 0;
 volatile uint8_t Gateway_AddL = 0;
 volatile uint8_t Gateway_Channel = 0x17;
-String address = "";
-String GatewayAddress = "000017";
-volatile int toGateway = 0;
-volatile int toNode = 0;
+String Gateway_Address = "000017";
 //Ping
 WiFiClient PingClient;
 const unsigned long time_delay_to_ping = 300000; // 5 minutes/ping
@@ -232,6 +230,8 @@ void Delivery(void * pvParameters)
       if(data.GetMode() == Command)
       {
         tmpAddress = Locate.GetAddrress();
+        if(tmpAddress == "")
+          tmpAddress = Gateway_Address;
         another_flag = true;
       }
       if(data.GetMode() == LogData)
@@ -239,9 +239,10 @@ void Delivery(void * pvParameters)
         Gateway_AddH = 0;
         Gateway_AddL = 0;
         Gateway_Channel = 0x17;
+        Gateway_Address = "000017";
         continue;
       }
-    }
+    }else if(data.expired < 0) continue;
     /*--------------------------------------------------------*/
     if(data.GetMode() == Default || data.GetMode() == LogData) //Send to Gateway
     {
@@ -251,7 +252,6 @@ void Delivery(void * pvParameters)
       data.expired--;
       if(data.GetMode() == LogData)
         xQueueSendToBack(Queue_Delivery,&data,pdMS_TO_TICKS(10));
-      toGateway++;
     }
     else //Send to Node
     {
@@ -262,7 +262,6 @@ void Delivery(void * pvParameters)
         DeCodeAddressChannel(tmpAddress,DeliveryH,DeliveryL,DeliveryChan);
       }else
       {
-        toNode ++;
         CalculateAddressChannel(data.GetID(),DeliveryH,DeliveryL,DeliveryChan);
       }
       lora.sendFixedMessage(DeliveryH,DeliveryL,DeliveryChan,data.toString());
@@ -321,11 +320,6 @@ void Capture(void * pvParameters)
           }
           else break;
         }
-        if(D_Pack.GetFrom() == GatewayAddress)
-          toGateway = 0;
-        else
-          toNode = (toNode > 0)? toNode-1 : 0;
-        continue;
       }
       Locate.Add(D_Pack.GetFrom());
       if(D_Pack.GetMode() == Command || D_Pack.GetMode() == LogData) //Send ACK
@@ -340,10 +334,6 @@ void Capture(void * pvParameters)
       /*------------------------Itself or other-----------------*/  
       if(D_Pack.GetID() == ID) //If message for node 
       {
-        if(D_Pack.GetMode() == HelloNeighbor)
-        {
-          continue;
-        }
         if(D_Pack.GetMode() == Command) //Receive Command 
         {
           D_Command = D_Pack.GetData();
@@ -353,11 +343,6 @@ void Capture(void * pvParameters)
       }
       else
       {
-        if(D_Pack.GetMode() == HelloNeighbor)
-        {
-          
-          continue;
-        }
         if (D_Pack.GetMode() == Command) //Command for the other node
         {
           xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(10));    
@@ -393,10 +378,9 @@ void Init_LoRa()
   ResponseStructContainer c = lora.getConfiguration();
   Configuration configuration = *(Configuration*) c.data;
   CalculateAddressChannel(ID,Own_AddH,Own_AddL,Own_Channel);
-  address = EnCodeAddressChannel(Own_AddH,Own_AddL,Own_Channel);
-  O_Pack.SetFrom(address);
+  Own_address = EnCodeAddressChannel(Own_AddH,Own_AddL,Own_Channel);
+  O_Pack.SetFrom(Own_address);
   MQTT_Data.SetFrom("000017"); //MQTT work only when it's gateway
-  Serial.println(address);
   if(c.status.code == 1)
   {
     configuration.OPTION.fixedTransmission = FT_FIXED_TRANSMISSION;
@@ -735,6 +719,7 @@ void Init_Server()
       Gateway_AddH = tmp0;
       Gateway_AddL = tmp1;
       sscanf(TmpPass.c_str(),"%02x",&Gateway_Channel);
+      Gateway_Address = EnCodeAddressChannel(Gateway_AddH,Gateway_AddL,Gateway_Channel);
       return request->send(No_Content_Code);
     }
     /*--------------------Username & Password---------------------------*/
@@ -1150,7 +1135,7 @@ void Init_Task()
     Capture,
     "Capture",
     3000, //1940B left
-    (void*)&address,
+    (void*)&Own_address,
     0,
     &CaptureTask
   );
