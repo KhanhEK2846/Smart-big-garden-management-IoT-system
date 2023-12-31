@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <pgmspace.h>
 
-
 #pragma region main_default_html
 const char main_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML><html> 
@@ -40,8 +39,8 @@ const char main_html[] PROGMEM = R"rawliteral(
       margin: 5px 25px;
     }
     button:hover{
-    color: whitesmoke;
-    background-color: black;
+      color: whitesmoke;
+      background-color: black;
     }
     #overlay{
       position: fixed;
@@ -111,11 +110,6 @@ const char main_html[] PROGMEM = R"rawliteral(
     .hide{
         display: none;
     }
-    .gauge{
-      width: 160px;
-      height: 160px;
-      position: relative;
-    }
     .outer{
       width: 160px;
       height: 160px;
@@ -153,6 +147,11 @@ const char main_html[] PROGMEM = R"rawliteral(
       top: 0;
       left: 0;
     }
+    .container_gauge{
+      display: flex;
+      justify-content: space-around;
+      width: 50%;
+    }
     .Sensor_Value{
       display: flex;
       height: 200px;
@@ -161,17 +160,22 @@ const char main_html[] PROGMEM = R"rawliteral(
       flex-wrap: wrap;
     }
     .gauge{
-      margin: 0 10px 0 10px;
-      margin-bottom: 20px;
+      width: 160px;
+      height: 160px;
+      position: relative;
+      margin: 0 10px 100px 10px;
     }
     .gauge h3{
       text-align: center;
     }
     #Bool{
-      margin: 5px 0 0 25px;
+      margin: 200px 0 0 25px;
       display: flex;
       justify-content: space-between;
       width: 100vw;
+      height: 300px;
+      align-items: center;
+      flex-wrap: wrap;
     }
     #NameTree{
       font-size: xx-large;
@@ -248,6 +252,16 @@ const char main_html[] PROGMEM = R"rawliteral(
         transform: rotate(360deg);
       }
     }
+    @media(max-width: 62em)
+    {
+      body{
+        height: 100vw;
+      }
+      .container_gauge{
+        flex-direction: column;
+        align-items: center;
+      }
+    }
   </style>
 </head>
 <body>
@@ -262,69 +276,73 @@ const char main_html[] PROGMEM = R"rawliteral(
     <input type="text" id="NameTree" value="No Name" maxlength="4" name="NameTree">
   </div>
 <div class="Sensor_Value">
-<!--Độ ẩm không khí-->
-<div class="gauge">
-  <h3>Humidity</h3>
-  <div class="outer">
-    <div class="inner">
-      <div id="humi" class="number">
-        %HUMIDITY%
+  <div class="container_gauge">
+    <!--Độ ẩm không khí-->
+    <div class="gauge">
+      <h3>Humidity</h3>
+      <div class="outer">
+        <div class="inner">
+          <div id="humi" class="number">
+            %HUMIDITY%
+          </div>
+        </div>
       </div>
+      <svg width="160px" height="160px">
+        <defs>
+          <linearGradient id="GradientColor">
+              <stop offset="0%" stop-color="#e91e63" stop-opacity="1"/>
+              <stop offset="50%" stop-color="#f503e7" stop-opacity="1"/>
+              <stop offset="100%" stop-color="#673ab7" stop-opacity="1"/>
+          </linearGradient>
+        </defs>
+        <circle id="c_humi" cx="80" cy="80" r="70" stroke-linecap="round">
+      </svg>
+    </div>
+    <!--Độ ẩm đất-->
+    <div class="gauge">
+      <h3>Moisture</h3>
+      <div class="outer">
+        <div class="inner">
+          <div class="number" id="mois">
+            %MOISTURE%
+          </div>
+        </div>
+      </div>
+      <svg width="160px" height="160px">
+        <circle id="c_mois" cx="80" cy="80" r="70" stroke-linecap="round">
+      </svg>
     </div>
   </div>
-  <svg width="160px" height="160px">
-    <defs>
-       <linearGradient id="GradientColor">
-          <stop offset="0%" stop-color="#e91e63" stop-opacity="1"/>
-          <stop offset="50%" stop-color="#f503e7" stop-opacity="1"/>
-          <stop offset="100%" stop-color="#673ab7" stop-opacity="1"/>
-       </linearGradient>
-    </defs>
-    <circle id="c_humi" cx="80" cy="80" r="70" stroke-linecap="round">
-  </svg>
-</div>
-<!--Độ ẩm đất-->
-<div class="gauge">
-  <h3>Moisture</h3>
-  <div class="outer">
-    <div class="inner">
-      <div class="number" id="mois">
-        %MOISTURE%
+  <div class="container_gauge">
+    <!--Nhiệt độ-->
+    <div class="gauge">
+      <h3>Temperature</h3>
+      <div class="outer">
+        <div class="inner">
+          <div class="number" id="temp">
+            %TEMPERATURE%
+          </div>
+        </div>
       </div>
+      <svg width="160px" height="160px">
+        <circle id="c_temp" cx="80" cy="80" r="70" stroke-linecap="round">
+      </svg>
+    </div>
+    <!--ÁNh sáng-->
+    <div class="gauge">
+      <h3>Light</h3>
+      <div class="outer">
+        <div class="inner">
+          <div class="number" id="ligh">
+            %LIGHT%
+          </div>
+        </div>
+      </div>
+      <svg width="160px" height="160px">
+        <circle id="c_ligh" cx="80" cy="80" r="70" stroke-linecap="round">
+      </svg>
     </div>
   </div>
-  <svg width="160px" height="160px">
-    <circle id="c_mois" cx="80" cy="80" r="70" stroke-linecap="round">
-  </svg>
-</div>
-<!--Nhiệt độ-->
-<div class="gauge">
-  <h3>Temperature</h3>
-  <div class="outer">
-    <div class="inner">
-      <div class="number" id="temp">
-        %TEMPERATURE%
-      </div>
-    </div>
-  </div>
-  <svg width="160px" height="160px">
-    <circle id="c_temp" cx="80" cy="80" r="70" stroke-linecap="round">
-  </svg>
-</div>
-<!--ÁNh sáng-->
-<div class="gauge">
-  <h3>Light</h3>
-  <div class="outer">
-    <div class="inner">
-      <div class="number" id="ligh">
-        %LIGHT%
-      </div>
-    </div>
-  </div>
-  <svg width="160px" height="160px">
-    <circle id="c_ligh" cx="80" cy="80" r="70" stroke-linecap="round">
-  </svg>
-</div>
 </div>
 <div id="Bool">
   <div id="All_Status">
@@ -1113,8 +1131,8 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
       }
       .box{
         top: calc(50% - 250px);
-        width: 500px;
-        height: 500px;
+        min-width: 500px;
+        min-height: 500px;
         border-radius: 50px;
         position: fixed;
         display: flex;
@@ -1231,6 +1249,37 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
           top: calc(50% - 250px);
           left: calc(50% - 250px);
           background-color:rgba(255, 0, 0, 0.1);
+        }
+      }
+      @media(max-width: 62em){
+        #local{
+          visibility: hidden;
+        }
+        .box{
+          min-width: 50%;
+          min-height: 50%;
+        }
+        @keyframes Shock{
+          0%{
+            top: calc(50% - 250px);
+            background-color:rgba(255, 0, 0, 0.1)
+          }
+          25%{
+            top: calc(50% - 250px + 5px);
+            background-color:rgba(255, 0, 0, 0.2)
+          }
+          50%{
+            top: calc(50% - 250px + 5px);
+            background-color:rgba(255, 0, 0, 0.3)
+          }
+          75%{
+            top: calc(50% - 250px);
+            background-color:rgba(255, 0, 0, 0.2)
+          }
+          100%{
+            top: calc(50% - 250px);
+            background-color:rgba(255, 0, 0, 0.1);
+          }
         }
       }
   </style>
@@ -1388,7 +1437,6 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
   </script>
 </body>
 </html>
-
 )rawliteral";
 #pragma endregion Sercurity_html
 #pragma region Parameters_html

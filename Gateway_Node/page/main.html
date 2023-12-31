@@ -34,8 +34,8 @@
       margin: 5px 25px;
     }
     button:hover{
-    color: whitesmoke;
-    background-color: black;
+      color: whitesmoke;
+      background-color: black;
     }
     #overlay{
       position: fixed;
@@ -105,11 +105,6 @@
     .hide{
         display: none;
     }
-    .gauge{
-      width: 160px;
-      height: 160px;
-      position: relative;
-    }
     .outer{
       width: 160px;
       height: 160px;
@@ -147,6 +142,11 @@
       top: 0;
       left: 0;
     }
+    .container_gauge{
+      display: flex;
+      justify-content: space-around;
+      width: 50%;
+    }
     .Sensor_Value{
       display: flex;
       height: 200px;
@@ -155,17 +155,22 @@
       flex-wrap: wrap;
     }
     .gauge{
-      margin: 0 10px 0 10px;
-      margin-bottom: 20px;
+      width: 160px;
+      height: 160px;
+      position: relative;
+      margin: 0 10px 100px 10px;
     }
     .gauge h3{
       text-align: center;
     }
     #Bool{
-      margin: 5px 0 0 25px;
+      margin: 200px 0 0 25px;
       display: flex;
       justify-content: space-between;
       width: 100vw;
+      height: 300px;
+      align-items: center;
+      flex-wrap: wrap;
     }
     #NameTree{
       font-size: xx-large;
@@ -242,6 +247,16 @@
         transform: rotate(360deg);
       }
     }
+    @media(max-width: 62em)
+    {
+      body{
+        height: 100vw;
+      }
+      .container_gauge{
+        flex-direction: column;
+        align-items: center;
+      }
+    }
   </style>
 </head>
 <body>
@@ -256,69 +271,73 @@
     <input type="text" id="NameTree" value="No Name" maxlength="4" name="NameTree">
   </div>
 <div class="Sensor_Value">
-<!--Độ ẩm không khí-->
-<div class="gauge">
-  <h3>Humidity</h3>
-  <div class="outer">
-    <div class="inner">
-      <div id="humi" class="number">
-        %HUMIDITY%
+  <div class="container_gauge">
+    <!--Độ ẩm không khí-->
+    <div class="gauge">
+      <h3>Humidity</h3>
+      <div class="outer">
+        <div class="inner">
+          <div id="humi" class="number">
+            %HUMIDITY%
+          </div>
+        </div>
       </div>
+      <svg width="160px" height="160px">
+        <defs>
+          <linearGradient id="GradientColor">
+              <stop offset="0%" stop-color="#e91e63" stop-opacity="1"/>
+              <stop offset="50%" stop-color="#f503e7" stop-opacity="1"/>
+              <stop offset="100%" stop-color="#673ab7" stop-opacity="1"/>
+          </linearGradient>
+        </defs>
+        <circle id="c_humi" cx="80" cy="80" r="70" stroke-linecap="round">
+      </svg>
+    </div>
+    <!--Độ ẩm đất-->
+    <div class="gauge">
+      <h3>Moisture</h3>
+      <div class="outer">
+        <div class="inner">
+          <div class="number" id="mois">
+            %MOISTURE%
+          </div>
+        </div>
+      </div>
+      <svg width="160px" height="160px">
+        <circle id="c_mois" cx="80" cy="80" r="70" stroke-linecap="round">
+      </svg>
     </div>
   </div>
-  <svg width="160px" height="160px">
-    <defs>
-       <linearGradient id="GradientColor">
-          <stop offset="0%" stop-color="#e91e63" stop-opacity="1"/>
-          <stop offset="50%" stop-color="#f503e7" stop-opacity="1"/>
-          <stop offset="100%" stop-color="#673ab7" stop-opacity="1"/>
-       </linearGradient>
-    </defs>
-    <circle id="c_humi" cx="80" cy="80" r="70" stroke-linecap="round">
-  </svg>
-</div>
-<!--Độ ẩm đất-->
-<div class="gauge">
-  <h3>Moisture</h3>
-  <div class="outer">
-    <div class="inner">
-      <div class="number" id="mois">
-        %MOISTURE%
+  <div class="container_gauge">
+    <!--Nhiệt độ-->
+    <div class="gauge">
+      <h3>Temperature</h3>
+      <div class="outer">
+        <div class="inner">
+          <div class="number" id="temp">
+            %TEMPERATURE%
+          </div>
+        </div>
       </div>
+      <svg width="160px" height="160px">
+        <circle id="c_temp" cx="80" cy="80" r="70" stroke-linecap="round">
+      </svg>
+    </div>
+    <!--ÁNh sáng-->
+    <div class="gauge">
+      <h3>Light</h3>
+      <div class="outer">
+        <div class="inner">
+          <div class="number" id="ligh">
+            %LIGHT%
+          </div>
+        </div>
+      </div>
+      <svg width="160px" height="160px">
+        <circle id="c_ligh" cx="80" cy="80" r="70" stroke-linecap="round">
+      </svg>
     </div>
   </div>
-  <svg width="160px" height="160px">
-    <circle id="c_mois" cx="80" cy="80" r="70" stroke-linecap="round">
-  </svg>
-</div>
-<!--Nhiệt độ-->
-<div class="gauge">
-  <h3>Temperature</h3>
-  <div class="outer">
-    <div class="inner">
-      <div class="number" id="temp">
-        %TEMPERATURE%
-      </div>
-    </div>
-  </div>
-  <svg width="160px" height="160px">
-    <circle id="c_temp" cx="80" cy="80" r="70" stroke-linecap="round">
-  </svg>
-</div>
-<!--ÁNh sáng-->
-<div class="gauge">
-  <h3>Light</h3>
-  <div class="outer">
-    <div class="inner">
-      <div class="number" id="ligh">
-        %LIGHT%
-      </div>
-    </div>
-  </div>
-  <svg width="160px" height="160px">
-    <circle id="c_ligh" cx="80" cy="80" r="70" stroke-linecap="round">
-  </svg>
-</div>
 </div>
 <div id="Bool">
   <div id="All_Status">

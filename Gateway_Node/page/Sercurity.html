@@ -53,8 +53,8 @@
       }
       .box{
         top: calc(50% - 250px);
-        width: 500px;
-        height: 500px;
+        min-width: 500px;
+        min-height: 500px;
         border-radius: 50px;
         position: fixed;
         display: flex;
@@ -171,6 +171,37 @@
           top: calc(50% - 250px);
           left: calc(50% - 250px);
           background-color:rgba(255, 0, 0, 0.1);
+        }
+      }
+      @media(max-width: 62em){
+        #local{
+          visibility: hidden;
+        }
+        .box{
+          min-width: 50%;
+          min-height: 50%;
+        }
+        @keyframes Shock{
+          0%{
+            top: calc(50% - 250px);
+            background-color:rgba(255, 0, 0, 0.1)
+          }
+          25%{
+            top: calc(50% - 250px + 5px);
+            background-color:rgba(255, 0, 0, 0.2)
+          }
+          50%{
+            top: calc(50% - 250px + 5px);
+            background-color:rgba(255, 0, 0, 0.3)
+          }
+          75%{
+            top: calc(50% - 250px);
+            background-color:rgba(255, 0, 0, 0.2)
+          }
+          100%{
+            top: calc(50% - 250px);
+            background-color:rgba(255, 0, 0, 0.1);
+          }
         }
       }
   </style>
