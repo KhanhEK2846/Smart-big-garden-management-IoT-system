@@ -1,65 +1,59 @@
 #include "Remember.h"
 
+dataRemeber::dataRemeber()
+{
+    NodeAdrress = "";
+    ID= "";
+}
+
+dataRemeber::~dataRemeber()
+{
+    NodeAdrress.remove(0);
+    ID.remove(0);
+}
+
 Remember::Remember()
 {
-    NodeAdrress[0] = "";
-    NodeAdrress[1] = "";
-    NodeAdrress[2] = "";
-    NodeAdrress[3] = "";
-    NodeAdrress[4] = "";
     count = 0;
     flag = 0;
 }
 
-Remember::~Remember()
-{
-    NodeAdrress[0].remove(0);
-    NodeAdrress[1].remove(0);
-    NodeAdrress[2].remove(0);
-    NodeAdrress[3].remove(0);
-    NodeAdrress[4].remove(0);
-}
+Remember::~Remember(){}
 
-bool Remember::Add(const String Address)
+bool Remember::Add(const String ID, const String From)
 {
-    if( Address == "")
+    if(ID == "" || From == "" || From == CalculateToEncode(ID)) //Ignore Command Direct
         return false;
-    if(count == 5) //Overwrite
+    for(flag = 0; flag<10;flag++)
     {
-        for(int i =0;i<5;i++)
+        if(data[flag].ID == ID) //Update from
         {
-            if(this->NodeAdrress[i] == Address)
-                break;
+            data[flag].NodeAdrress = From;
+            return true;
         }
-        this->NodeAdrress[flag] = Address;
-        flag = (flag>=4)? 0:flag+1;
-    }
-    else //Add
-    {
-        for(int i =0; i < 5;i++)
-        {
-            if(this->NodeAdrress[i] != "")
-                continue;
-
-            this->NodeAdrress[i] = Address;
-            count = (count >= 5)? 5:count+1;
+        if(data[flag].ID == "")
             break;
-        }
     }
-
+    if(count == 10)
+        return false;
+    data[flag].ID = ID;
+    data[flag].NodeAdrress = From;
+    count ++;
     return true;
 }
 
-String Remember::GetAddrress(int index)
+String Remember::GetAddrress(const String ID)
 {
-    if(index != -1)
-        return this->NodeAdrress[index];
+    if(ID == "")
+        return "";
     else
     {
-        for(int i =0;i<5;i++)
+        for(flag = 0;flag <10; flag++)
         {
-            if(this->NodeAdrress[i] != "")
-                return this->NodeAdrress[i];
+            if(data[flag].ID == ID)
+                return data[flag].NodeAdrress;
+            if(data[flag].ID == "")
+                break;
         }
     }
     return "";

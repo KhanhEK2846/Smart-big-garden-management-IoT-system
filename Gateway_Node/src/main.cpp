@@ -12,7 +12,6 @@
 #include <DataPackage.h>
 #include <Remember.h>
 #include <Plant.h>
-#include <CommonFunction.h>
 #include "URL.h"
 #include "html.h"
 #include "CommandCode.h"
@@ -219,7 +218,6 @@ void Delivery(void * pvParameters)
   uint8_t DeliveryH;
   uint8_t DeliveryL;
   uint8_t DeliveryChan;
-  boolean another_flag =false;
   String tmpAddress = "";
   while(true)
   {
@@ -227,13 +225,15 @@ void Delivery(void * pvParameters)
     /*-----------------Check Expired---------------------------*/  
     if(data.expired == 0)
     {
-      if(data.GetMode() == Command)
+      if(data.GetMode() == CommandDirect)
       {
-        tmpAddress = Locate.GetAddrress();
+        tmpAddress = Locate.GetAddrress(data.GetID());
         if(tmpAddress == "")
-          tmpAddress = Gateway_Address;
-        another_flag = true;
+          continue; //TODO: Solution for ID not found
+        data.ResetExpired();
       }
+      if(data.GetMode() == CommandNotDirect)
+        continue;
       if(data.GetMode() == LogData)
       {
         Gateway_AddH = 0;
@@ -242,7 +242,7 @@ void Delivery(void * pvParameters)
         Gateway_Address = "000017";
         continue;
       }
-    }else if(data.expired < 0) continue;
+    };
     /*--------------------------------------------------------*/
     if(data.GetMode() == Default || data.GetMode() == LogData) //Send to Gateway
     {
@@ -257,7 +257,7 @@ void Delivery(void * pvParameters)
     {
       if(data.GetMode() == ACK)
         DeCodeAddressChannel(data.GetID(),DeliveryH,DeliveryL,DeliveryChan);
-      else if(another_flag && tmpAddress != "")
+      else if(data.GetMode() == CommandNotDirect)
       {
         DeCodeAddressChannel(tmpAddress,DeliveryH,DeliveryL,DeliveryChan);
       }else
@@ -267,7 +267,7 @@ void Delivery(void * pvParameters)
       lora.sendFixedMessage(DeliveryH,DeliveryL,DeliveryChan,data.toString());
 
       data.expired--;
-      if(data.GetMode() == Command)
+      if(data.GetMode() == CommandDirect || data.GetMode() == CommandNotDirect)
         xQueueSendToBack(Queue_Delivery,&data,pdMS_TO_TICKS(10));
     }
     Serial.print("Delivery Task: ");
@@ -318,11 +318,12 @@ void Capture(void * pvParameters)
             }
             xQueueSend(Queue_Delivery,&tempData,0);
           }
-          else break;
+          else break; //Empty Queue
         }
+        continue;//No mess fit ack
       }
-      Locate.Add(D_Pack.GetFrom());
-      if(D_Pack.GetMode() == Command || D_Pack.GetMode() == LogData) //Send ACK
+      Locate.Add(D_Pack.GetID(),D_Pack.GetFrom());//Remember
+      if(D_Pack.GetMode() == CommandDirect || D_Pack.GetMode() == CommandNotDirect || D_Pack.GetMode() == LogData) //Send ACK
       {
         if(gateway_node == 1)
           ResponseACK.SetDataPackage(D_Pack.GetFrom(),"000017",D_Pack.GetMode(),"");
@@ -334,7 +335,7 @@ void Capture(void * pvParameters)
       /*------------------------Itself or other-----------------*/  
       if(D_Pack.GetID() == ID) //If message for node 
       {
-        if(D_Pack.GetMode() == Command) //Receive Command 
+        if(D_Pack.GetMode() == CommandDirect || D_Pack.GetMode() == CommandNotDirect) //Receive Command 
         {
           D_Command = D_Pack.GetData();
           xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(10));
@@ -343,8 +344,9 @@ void Capture(void * pvParameters)
       }
       else
       {
-        if (D_Pack.GetMode() == Command) //Command for the other node
+        if (D_Pack.GetMode() == CommandDirect || D_Pack.GetMode() == CommandNotDirect) //Command for the other node
         {
+          D_Pack.SetMode(CommandDirect); //Not direct -> Direct
           xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(10));    
           continue;
         }
@@ -560,7 +562,7 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
     }
     if(flag)
     {    
-      MQTT_Data.SetDataPackage(t_ID,"",MQTT_Messange.substring(MQTT_Messange.indexOf("/")+1,MQTT_Messange.length()),Command);
+      MQTT_Data.SetDataPackage(t_ID,"",MQTT_Messange.substring(MQTT_Messange.indexOf("/")+1,MQTT_Messange.length()),CommandDirect);
       xQueueSend(Queue_Delivery,&MQTT_Data,pdMS_TO_TICKS(10));
     }
 

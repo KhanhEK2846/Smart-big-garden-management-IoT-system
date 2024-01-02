@@ -23,4 +23,5 @@ public:
     String toString(boolean prettier = false) const;
     void DataToJson(FirebaseJson * slave);
     void fromString(const String data);
+    void ResetExpired();
 };

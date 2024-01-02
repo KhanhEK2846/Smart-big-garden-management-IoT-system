@@ -138,3 +138,8 @@ void DataPackage::fromString(const String data)
     this->Mode = temp.substring(0,temp.indexOf(","));
     this->data = temp.substring(temp.indexOf(",")+1);
 }
+
+void DataPackage::ResetExpired()
+{
+    this->expired = 4;
+}

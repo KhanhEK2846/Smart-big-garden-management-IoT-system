@@ -1,15 +1,27 @@
-#include <stdlib.h>
-#include <WString.h>
+#include <CommonFunction.h>
+
+class dataRemeber
+{
+private:
+    friend class Remember;
+protected:
+    String NodeAdrress;
+    String ID;
+public:
+    dataRemeber();
+    ~dataRemeber();
+};
+
 
 class Remember
 {
 private:
-    String NodeAdrress[5];
+    dataRemeber data[10];
     int count;
     int flag;
 public:
     Remember();
     ~Remember();
-    bool Add(const String Address = "");
-    String GetAddrress(int index = -1);
+    bool Add(const String ID = "", const String From = "");
+    String GetAddrress(const String ID = "");
 };
