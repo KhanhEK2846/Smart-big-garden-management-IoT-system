@@ -10,6 +10,7 @@ private:
     String data;
 public:
     int expired;
+    String NotDirect;
     DataPackage();
     String GetID() const;
     String GetFrom() const;

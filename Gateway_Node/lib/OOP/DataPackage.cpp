@@ -4,6 +4,7 @@ DataPackage ::DataPackage()
 {
     data = "";
     ID = "";
+    NotDirect = "";
     From = "";
     Mode = "";
     expired = 4;
@@ -57,6 +58,7 @@ DataPackage ::~DataPackage()
     ID.remove(0);
     From.remove(0);
     Mode.remove(0);
+    NotDirect.remove(0);
 }
 
 DataPackage& DataPackage::operator=(const DataPackage temp)
@@ -66,6 +68,7 @@ DataPackage& DataPackage::operator=(const DataPackage temp)
     From = temp.From;
     Mode = temp.Mode;
     expired = temp.expired;
+    NotDirect = temp.NotDirect;
     return *this;
 }
 
@@ -96,6 +99,8 @@ String DataPackage::toString(boolean prettier) const
     {
         temp += "\nExpired: ";
         temp += this->expired;
+        temp += "\nNot Direct: ";
+        temp += this->NotDirect;
         temp += "\n}";
     }  
     else

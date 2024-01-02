@@ -218,7 +218,6 @@ void Delivery(void * pvParameters)
   uint8_t DeliveryH;
   uint8_t DeliveryL;
   uint8_t DeliveryChan;
-  String tmpAddress = "";
   while(true)
   {
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
@@ -227,8 +226,8 @@ void Delivery(void * pvParameters)
     {
       if(data.GetMode() == CommandDirect)
       {
-        tmpAddress = Locate.GetAddrress(data.GetID());
-        if(tmpAddress == "")
+        data.NotDirect = Locate.GetAddrress(data.GetID());
+        if(data.NotDirect == "")
           continue; //TODO: Solution for ID not found
         data.ResetExpired();
       }
@@ -259,7 +258,7 @@ void Delivery(void * pvParameters)
         DeCodeAddressChannel(data.GetID(),DeliveryH,DeliveryL,DeliveryChan);
       else if(data.GetMode() == CommandNotDirect)
       {
-        DeCodeAddressChannel(tmpAddress,DeliveryH,DeliveryL,DeliveryChan);
+        DeCodeAddressChannel(data.NotDirect,DeliveryH,DeliveryL,DeliveryChan);
       }else
       {
         CalculateAddressChannel(data.GetID(),DeliveryH,DeliveryL,DeliveryChan);
