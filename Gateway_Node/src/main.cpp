@@ -1119,7 +1119,7 @@ void Init_Task()
   xTaskCreate(
     Delivery,
     "Delivery",
-    3000, //2072B left
+    3000, //2060B left
     NULL,
     0,
     &DeliveryTask

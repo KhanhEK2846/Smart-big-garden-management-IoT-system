@@ -736,24 +736,5 @@
                 "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\@gogovega\\node-red-contrib-firebase-realtime-database\\build\\nodes\\on-disconnect.js"
             }
         }
-    },
-    "node-red-contrib-ui-upload": {
-        "name": "node-red-contrib-ui-upload",
-        "version": "0.8.1",
-        "local": true,
-        "user": true,
-        "nodes": {
-            "ui_upload": {
-                "name": "ui_upload",
-                "types": [
-                    "ui_upload"
-                ],
-                "enabled": true,
-                "local": true,
-                "user": false,
-                "module": "node-red-contrib-ui-upload",
-                "file": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\node_modules\\node-red-contrib-ui-upload\\ui_upload.js"
-            }
-        }
     }
 }
