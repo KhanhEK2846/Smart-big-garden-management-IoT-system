@@ -32,6 +32,14 @@
         "env": []
     },
     {
+        "id": "9f5704f675d02eb6",
+        "type": "tab",
+        "label": "MachineLearning",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
         "id": "7b18e51371b9da08",
         "type": "group",
         "z": "2c7549e3267c360c",
@@ -2892,7 +2900,7 @@
         "path": "payload",
         "pathType": "msg",
         "useConstraint": false,
-        "x": 900,
+        "x": 880,
         "y": 740,
         "wires": [
             [
@@ -2956,11 +2964,11 @@
         "payloadType": "str",
         "topic": "topic",
         "topicType": "msg",
-        "x": 640,
+        "x": 340,
         "y": 740,
         "wires": [
             [
-                "3f3da21ff2f1feef"
+                "8284d3ab790b6727"
             ]
         ]
     },
@@ -3113,6 +3121,25 @@
         "x": 790,
         "y": 220,
         "wires": []
+    },
+    {
+        "id": "8284d3ab790b6727",
+        "type": "function",
+        "z": "3992c3350543bb36",
+        "name": "Refresh Current Table",
+        "func": "var CurrentTree = global.get(\"CurrentTree\") || \"\"\nif (CurrentTree != \"\") {\n    msg.payload += CurrentTree\n    return msg;\n}\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 580,
+        "y": 740,
+        "wires": [
+            [
+                "3f3da21ff2f1feef"
+            ]
+        ]
     },
     {
         "id": "925788d8689ed1fd",
@@ -3772,5 +3799,124 @@
                 "c56ccd9ed01a7af4"
             ]
         ]
+    },
+    {
+        "id": "99e13b1dc7ecaa22",
+        "type": "firebase-get",
+        "z": "9f5704f675d02eb6",
+        "name": "",
+        "constraint": {},
+        "database": "9bdf6ea296ef5609",
+        "outputType": "auto",
+        "passThrough": false,
+        "path": "payload",
+        "pathType": "msg",
+        "useConstraint": false,
+        "x": 570,
+        "y": 340,
+        "wires": [
+            [
+                "857f02fd67b417e4"
+            ]
+        ]
+    },
+    {
+        "id": "2173dfc0ba26c9f8",
+        "type": "inject",
+        "z": "9f5704f675d02eb6",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "DataLog/",
+        "payloadType": "str",
+        "x": 380,
+        "y": 340,
+        "wires": [
+            [
+                "99e13b1dc7ecaa22"
+            ]
+        ]
+    },
+    {
+        "id": "857f02fd67b417e4",
+        "type": "split",
+        "z": "9f5704f675d02eb6",
+        "name": "Split ID & Object",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "topic",
+        "x": 780,
+        "y": 340,
+        "wires": [
+            [
+                "ae8bc9caaa27a38b"
+            ]
+        ]
+    },
+    {
+        "id": "ae8bc9caaa27a38b",
+        "type": "split",
+        "z": "9f5704f675d02eb6",
+        "name": "Split timestamp & Data",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "timestamp",
+        "x": 1000,
+        "y": 340,
+        "wires": [
+            [
+                "f90b96649cef3160"
+            ]
+        ]
+    },
+    {
+        "id": "f90b96649cef3160",
+        "type": "function",
+        "z": "9f5704f675d02eb6",
+        "name": "Convert JSON",
+        "func": "var json = {\n    \"ID\": msg.topic,\n    \"time\": msg.timestamp,\n    \"Error_DHT\": msg.payload.Error.DHT11,\n    \"Error_LDR\": msg.payload.Error.LDR,\n    \"Error_Soil\": msg.payload.Error.Soil,\n    \"Name\": msg.payload.Name,\n    \"Days\": msg.payload.Plant.Days,\n    \"Humidity\": msg.payload.Sensor.DHT11.Humi,\n    \"Temperature\": msg.payload.Sensor.DHT11.Temp,\n    \"Light\": msg.payload.Sensor.Light,\n    \"Solid\": msg.payload.Sensor.Solid,\n    \"LED\": msg.payload.Status.Led,\n    \"MQTT\": msg.payload.Status.MQTT,\n    \"Pump\": msg.payload.Status.Pump\n};\nmsg.payload = json\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1280,
+        "y": 340,
+        "wires": [
+            [
+                "681986b4cb6a83dd"
+            ]
+        ]
+    },
+    {
+        "id": "681986b4cb6a83dd",
+        "type": "debug",
+        "z": "9f5704f675d02eb6",
+        "name": "debug 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1520,
+        "y": 340,
+        "wires": []
     }
 ]

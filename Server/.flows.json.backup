@@ -32,6 +32,14 @@
         "env": []
     },
     {
+        "id": "9f5704f675d02eb6",
+        "type": "tab",
+        "label": "MachineLearning",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
         "id": "7b18e51371b9da08",
         "type": "group",
         "z": "2c7549e3267c360c",
@@ -505,56 +513,6 @@
         "className": ""
     },
     {
-        "id": "0e9f4bb3e5d6a545",
-        "type": "ui_spacer",
-        "z": "2c7549e3267c360c",
-        "name": "spacer",
-        "group": "6b0fc43246790e58",
-        "order": 2,
-        "width": 21,
-        "height": 1
-    },
-    {
-        "id": "c865016473ead551",
-        "type": "ui_spacer",
-        "z": "2c7549e3267c360c",
-        "name": "spacer",
-        "group": "6b0fc43246790e58",
-        "order": 5,
-        "width": 5,
-        "height": 1
-    },
-    {
-        "id": "b8e70ee268668dda",
-        "type": "ui_spacer",
-        "z": "2c7549e3267c360c",
-        "name": "spacer",
-        "group": "6b0fc43246790e58",
-        "order": 7,
-        "width": 4,
-        "height": 1
-    },
-    {
-        "id": "e9eebd66002c4aee",
-        "type": "ui_spacer",
-        "z": "2c7549e3267c360c",
-        "name": "spacer",
-        "group": "6b0fc43246790e58",
-        "order": 9,
-        "width": 4,
-        "height": 1
-    },
-    {
-        "id": "5ea78b89d641c121",
-        "type": "ui_spacer",
-        "z": "2c7549e3267c360c",
-        "name": "spacer",
-        "group": "6b0fc43246790e58",
-        "order": 11,
-        "width": 5,
-        "height": 1
-    },
-    {
         "id": "ce7f5bd5a0d36716",
         "type": "ui_spacer",
         "z": "2c7549e3267c360c",
@@ -582,6 +540,56 @@
         "group": "cc0ce2d6280183e7",
         "order": 8,
         "width": 2,
+        "height": 1
+    },
+    {
+        "id": "a56a83262c3ab588",
+        "type": "ui_spacer",
+        "z": "3992c3350543bb36",
+        "name": "spacer",
+        "group": "6b0fc43246790e58",
+        "order": 2,
+        "width": 20,
+        "height": 1
+    },
+    {
+        "id": "84d595040dc69123",
+        "type": "ui_spacer",
+        "z": "3992c3350543bb36",
+        "name": "spacer",
+        "group": "6b0fc43246790e58",
+        "order": 5,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "f6a4f4d286165f15",
+        "type": "ui_spacer",
+        "z": "3992c3350543bb36",
+        "name": "spacer",
+        "group": "6b0fc43246790e58",
+        "order": 7,
+        "width": 4,
+        "height": 1
+    },
+    {
+        "id": "834910bab4a77db7",
+        "type": "ui_spacer",
+        "z": "3992c3350543bb36",
+        "name": "spacer",
+        "group": "6b0fc43246790e58",
+        "order": 9,
+        "width": 4,
+        "height": 1
+    },
+    {
+        "id": "35d97f3b2f878ac6",
+        "type": "ui_spacer",
+        "z": "3992c3350543bb36",
+        "name": "spacer",
+        "group": "6b0fc43246790e58",
+        "order": 11,
+        "width": 5,
         "height": 1
     },
     {
@@ -2892,12 +2900,13 @@
         "path": "payload",
         "pathType": "msg",
         "useConstraint": false,
-        "x": 900,
+        "x": 880,
         "y": 740,
         "wires": [
             [
                 "ce9f824367f96706",
-                "0e6d4dde7f49cd10"
+                "0e6d4dde7f49cd10",
+                "22b9b6c03c4c66c7"
             ]
         ]
     },
@@ -2943,10 +2952,10 @@
         "name": "Refresh Table",
         "group": "6b0fc43246790e58",
         "order": 3,
-        "width": 1,
+        "width": 2,
         "height": 1,
         "passthru": false,
-        "label": "Refresh Table",
+        "label": "Refresh",
         "tooltip": "",
         "color": "",
         "bgcolor": "",
@@ -2956,11 +2965,11 @@
         "payloadType": "str",
         "topic": "topic",
         "topicType": "msg",
-        "x": 640,
+        "x": 340,
         "y": 740,
         "wires": [
             [
-                "3f3da21ff2f1feef"
+                "8284d3ab790b6727"
             ]
         ]
     },
@@ -3113,6 +3122,42 @@
         "x": 790,
         "y": 220,
         "wires": []
+    },
+    {
+        "id": "22b9b6c03c4c66c7",
+        "type": "debug",
+        "z": "3992c3350543bb36",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1060,
+        "y": 800,
+        "wires": []
+    },
+    {
+        "id": "8284d3ab790b6727",
+        "type": "function",
+        "z": "3992c3350543bb36",
+        "name": "Refresh Current Table",
+        "func": "var CurrentTree = global.get(\"CurrentTree\") || \"\"\nif (CurrentTree != \"\") {\n    msg.payload += CurrentTree\n    return msg;\n}\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 580,
+        "y": 740,
+        "wires": [
+            [
+                "3f3da21ff2f1feef"
+            ]
+        ]
     },
     {
         "id": "925788d8689ed1fd",
@@ -3771,6 +3816,106 @@
             [
                 "c56ccd9ed01a7af4"
             ]
+        ]
+    },
+    {
+        "id": "99e13b1dc7ecaa22",
+        "type": "firebase-get",
+        "z": "9f5704f675d02eb6",
+        "name": "",
+        "constraint": {},
+        "database": "9bdf6ea296ef5609",
+        "outputType": "auto",
+        "passThrough": false,
+        "path": "payload",
+        "pathType": "msg",
+        "useConstraint": false,
+        "x": 570,
+        "y": 340,
+        "wires": [
+            [
+                "857f02fd67b417e4"
+            ]
+        ]
+    },
+    {
+        "id": "2173dfc0ba26c9f8",
+        "type": "inject",
+        "z": "9f5704f675d02eb6",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "DataLog/",
+        "payloadType": "str",
+        "x": 380,
+        "y": 340,
+        "wires": [
+            [
+                "99e13b1dc7ecaa22"
+            ]
+        ]
+    },
+    {
+        "id": "857f02fd67b417e4",
+        "type": "split",
+        "z": "9f5704f675d02eb6",
+        "name": "Split ID & Object",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "topic",
+        "x": 780,
+        "y": 340,
+        "wires": [
+            [
+                "ae8bc9caaa27a38b"
+            ]
+        ]
+    },
+    {
+        "id": "ae8bc9caaa27a38b",
+        "type": "split",
+        "z": "9f5704f675d02eb6",
+        "name": "Split timestamp & Data",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "timestamp",
+        "x": 1000,
+        "y": 340,
+        "wires": [
+            [
+                "f90b96649cef3160"
+            ]
+        ]
+    },
+    {
+        "id": "f90b96649cef3160",
+        "type": "function",
+        "z": "9f5704f675d02eb6",
+        "name": "Convert JSON",
+        "func": "var json = {\n    \"ID\": msg.topic,\n    \"time\": msg.timestamp,\n    \"Error_DHT\": msg.payload.Error.DHT11,\n    \"Error_LDR\": msg.payload.Error.LDR,\n    \"Error_Soil\": msg.payload.Error.Soil,\n    \"Name\": msg.payload.Name,\n    \"Days\": msg.payload.Plant.Days,\n    \"Humidity\": msg.payload.Sensor.DHT11.Humi,\n    \"Temperature\": msg.payload.Sensor.DHT11.Temp,\n    \"Light\": msg.payload.Sensor.Light,\n    \"Solid\": msg.payload.Sensor.Solid,\n    \"LED\": msg.payload.Status.Led,\n    \"MQTT\": msg.payload.Status.MQTT,\n    \"Pump\": msg.payload.Status.Pump\n};\nmsg.payload = json\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1280,
+        "y": 340,
+        "wires": [
+            []
         ]
     }
 ]
