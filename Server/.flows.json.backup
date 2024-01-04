@@ -66,9 +66,7 @@
             "fd18b2e083b8a9cb"
         ],
         "x": 574,
-        "y": 1239,
-        "w": 1072,
-        "h": 222
+        "y": 1239
     },
     {
         "id": "f73c8450eb6f872d",
@@ -97,9 +95,7 @@
             "9b205ea7cb89e8b5"
         ],
         "x": 2134,
-        "y": 1239,
-        "w": 892,
-        "h": 162
+        "y": 1239
     },
     {
         "id": "0768b1be5520f542",
@@ -125,9 +121,7 @@
             "a3aa364077da9daa"
         ],
         "x": 694,
-        "y": 819,
-        "w": 592,
-        "h": 162
+        "y": 819
     },
     {
         "id": "023e8dd112056349",
@@ -165,9 +159,7 @@
             "f4010ba443c8dfe3"
         ],
         "x": 2134,
-        "y": 1459,
-        "w": 1112,
-        "h": 442
+        "y": 1459
     },
     {
         "id": "91e380ed61976399",
@@ -197,9 +189,7 @@
             "19f86b3acfb3afad"
         ],
         "x": 2134,
-        "y": 1919,
-        "w": 772,
-        "h": 262
+        "y": 1919
     },
     {
         "id": "db7606b5814f193e",
@@ -229,9 +219,7 @@
             "c2093c2969c1d22e"
         ],
         "x": 2144,
-        "y": 2199,
-        "w": 762,
-        "h": 282
+        "y": 2199
     },
     {
         "id": "f532af6f73a050bd",
@@ -2905,8 +2893,7 @@
         "wires": [
             [
                 "ce9f824367f96706",
-                "0e6d4dde7f49cd10",
-                "22b9b6c03c4c66c7"
+                "0e6d4dde7f49cd10"
             ]
         ]
     },
@@ -2937,11 +2924,11 @@
         "links": [
             "a132ec7ff53dad98"
         ],
-        "x": 515,
-        "y": 900,
+        "x": 395,
+        "y": 820,
         "wires": [
             [
-                "0bbe3c837d84b32a"
+                "8284d3ab790b6727"
             ]
         ]
     },
@@ -2961,7 +2948,7 @@
         "bgcolor": "",
         "className": "",
         "icon": "",
-        "payload": "DataLog/",
+        "payload": "",
         "payloadType": "str",
         "topic": "topic",
         "topicType": "msg",
@@ -3048,25 +3035,6 @@
         ]
     },
     {
-        "id": "0bbe3c837d84b32a",
-        "type": "function",
-        "z": "3992c3350543bb36",
-        "name": "function 3",
-        "func": "var CurrentTree = global.get(\"CurrentTree\") || \"\"\nif(CurrentTree != \"\")\n{\n    var path = \"DataLog/\";\n    path += CurrentTree;\n    msg.payload = path\n    return msg;\n}",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 690,
-        "y": 900,
-        "wires": [
-            [
-                "3f3da21ff2f1feef"
-            ]
-        ]
-    },
-    {
         "id": "7d78fd684bf83575",
         "type": "function",
         "z": "3992c3350543bb36",
@@ -3124,28 +3092,11 @@
         "wires": []
     },
     {
-        "id": "22b9b6c03c4c66c7",
-        "type": "debug",
-        "z": "3992c3350543bb36",
-        "name": "debug 2",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "true",
-        "targetType": "full",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 1060,
-        "y": 800,
-        "wires": []
-    },
-    {
         "id": "8284d3ab790b6727",
         "type": "function",
         "z": "3992c3350543bb36",
         "name": "Refresh Current Table",
-        "func": "var CurrentTree = global.get(\"CurrentTree\") || \"\"\nif (CurrentTree != \"\") {\n    msg.payload += CurrentTree\n    return msg;\n}\n",
+        "func": "var CurrentTree = global.get(\"CurrentTree\") || \"\"\nif (CurrentTree != \"\") {\n    var path = \"DataLog/\";\n    path += CurrentTree;\n    msg.payload = path\n    return msg;\n}",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -3912,10 +3863,94 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1280,
+        "x": 1240,
         "y": 340,
         "wires": [
+            [
+                "694e7c672a78ac69"
+            ]
+        ]
+    },
+    {
+        "id": "681986b4cb6a83dd",
+        "type": "debug",
+        "z": "9f5704f675d02eb6",
+        "name": "debug 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1060,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "694e7c672a78ac69",
+        "type": "file",
+        "z": "9f5704f675d02eb6",
+        "name": "",
+        "filename": "D:\\UIT\\Project\\Project2\\Clone\\Smart-big-garden-management-IoT-system\\Server\\data\\dataml.txt",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 1830,
+        "y": 380,
+        "wires": [
             []
+        ]
+    },
+    {
+        "id": "1f1b65cb24071c78",
+        "type": "function",
+        "z": "9f5704f675d02eb6",
+        "name": "function 8",
+        "func": "var currentDirectory = __dirname;\nmsg.payload = currentDirectory\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 840,
+        "y": 540,
+        "wires": [
+            [
+                "681986b4cb6a83dd"
+            ]
+        ]
+    },
+    {
+        "id": "fd3a1ea032014625",
+        "type": "inject",
+        "z": "9f5704f675d02eb6",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 620,
+        "y": 540,
+        "wires": [
+            [
+                "1f1b65cb24071c78"
+            ]
         ]
     }
 ]
