@@ -15,15 +15,15 @@
 #include "URL.h"
 #include "html.h"
 #include "CommandCode.h"
-//Port GPIOs
-#define DHTPIN 21 //Read DHT22 Sensor
-#define LDR 34 //Read Light Sensor
-#define Soil_Moisture 35 //Read Soild Sensor
-#define Pumps 22 // Control Pump
-#define Light 23 //Control Light
+//GPIO_PORT
+#define DHTPIN_Port 21 //Read DHT22 Sensor
+#define LDR_Port 34 //Read Light Sensor
+#define Soil_Moisture_Port 35 //Read Soild Sensor
+#define Pumps_Port 22 // Control Pump
+#define Light_Port 23 //Control Light
 //DHT11 Variable
 #define DHTTYPE DHT11 
-DHT dht(DHTPIN, DHTTYPE);
+DHT dht(DHTPIN_Port, DHTTYPE);
 int Humidity = 0; 
 int Temperature = 0;
 //Light Sensor Variable
@@ -1012,9 +1012,9 @@ void Check()// Check error sensor
 }
 void Read_Sensor()//Get Data from All Sensors
 {
-  lumen = Get_Sensor(LDR);
+  lumen = Get_Sensor(LDR_Port);
   delay(500);
-  soilMoist = Get_Sensor(Soil_Moisture);
+  soilMoist = Get_Sensor(Soil_Moisture_Port);
   delay(500);
   Humidity = dht.readHumidity();
   Temperature = dht.readTemperature();
@@ -1050,9 +1050,9 @@ void Pump()//Pump Choice
   else
     Condition_Pump();
   if(PumpsStatus)
-    digitalWrite(Pumps,HIGH);
+    digitalWrite(Pumps_Port,HIGH);
   else 
-    digitalWrite(Pumps,LOW);
+    digitalWrite(Pumps_Port,LOW);
 }
 void Condition_Light()//Check lighting up conditions
 {
@@ -1080,9 +1080,9 @@ void Light_Up()//Light up choice
   else
     Condition_Light();
   if(LightStatus)
-    digitalWrite(Light,HIGH);
+    digitalWrite(Light_Port,HIGH);
   else 
-    digitalWrite(Light,LOW);
+    digitalWrite(Light_Port,LOW);
 }
 #pragma endregion
 #pragma region Main System
@@ -1185,10 +1185,10 @@ void setup()
   Init_LoRa();
   Init_Task();
   initWebSocket();
-  pinMode(Pumps,OUTPUT);
-  pinMode(Light,OUTPUT);
-  digitalWrite(Pumps,LOW);
-  digitalWrite(Light,LOW);
+  pinMode(Pumps_Port,OUTPUT);
+  pinMode(Light_Port,OUTPUT);
+  digitalWrite(Pumps_Port,LOW);
+  digitalWrite(Light_Port,LOW);
   dht.begin();
   Time_Passed = millis();
   WiFi.mode(WIFI_AP_STA);
