@@ -1105,6 +1105,7 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
       }
       form{
         width: 90%;
+        margin-bottom: 20px;
       }
       button{
         background-color: transparent;
@@ -1152,6 +1153,9 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
         width: 100%;
         margin: 40px 0;
         border-bottom: 2px solid #fff;
+      }
+      .input_box:nth-child(2){
+        margin-bottom: 10px;
       }
       .input_box label{
         position: absolute;
@@ -1202,6 +1206,21 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
         z-index: 2;
         background-color: transparent;
         border: none;
+      }
+      .check_input{
+        display: flex;
+        align-items: center;
+      }
+      #final_label{
+        font-weight: bolder;
+        font-size: large;
+        color: azure;
+        pointer-events: none;
+      }
+      #Check{
+        height: 15px;
+        width: 15px;
+        margin-right: 10px;
       }
       #local{
         transition: 0.5s;
@@ -1304,6 +1323,11 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
         <input type="password" id="password" name="password" required><br>
         <label id="last_label" for="password">Password: </label>
       </div>
+      <div class="check_input" id="box">
+        <input id="Check" type="checkbox" onclick="ShowHide()"> 
+        <label id="final_label">Show password</label>
+      </div>
+
     </form>
     <div class="butt_cont">
       <button id="Accept">Accept</button>
@@ -1340,12 +1364,19 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
         document.getElementById("local").style.left = "calc(2*((100% - 4*150px)/8) + 1.15*150px)";
         document.body.style.backgroundPosition = "0% 50%";    
         setTimeout(()=>{
+          document.getElementById("box").style.display = "none";
+          document.getElementById("password").type = "text"
           document.getElementById("Title").innerHTML = "Gateway";
           document.getElementById("first_label").innerHTML = "Address (0000 - FFFF):";
           document.getElementById("last_label").innerHTML = "Channel (00 - 1F):";
           document.getElementById("id").value = DefaultValue[0];
           document.getElementById("password").value = DefaultValue[1];
         },250)
+      }
+      else if(this.id != "Gateway")
+      {
+        document.getElementById("box").style.display = "flex";
+        ShowHide()
       }
 
       if(this.id == "Authentication" && state != "Authentication")
@@ -1395,6 +1426,13 @@ const char Sercurity_html[] PROGMEM = R"rawliteral(
     function Delete(){
       document.getElementById("id").value = ""
       document.getElementById("password").value = ""
+    }
+    function ShowHide()
+    {
+      if(document.getElementById("Check").checked == true)
+        document.getElementById("password").type = "text"
+      if(document.getElementById("Check").checked == false)
+        document.getElementById("password").type = "password"
     }
     function Change(){
       var noti = "Hello";
