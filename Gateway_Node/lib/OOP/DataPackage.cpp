@@ -133,8 +133,10 @@ void DataPackage::DataToJson(FirebaseJson* slave)
     //Serial.println(t_data);
 }
 
-void DataPackage::fromString(const String data)
+boolean DataPackage::fromString(const String data)
 {
+    if(data.indexOf("{") == -1 || data.lastIndexOf("}") == -1)
+        return false;
     String temp = data.substring(data.indexOf("{") + 1, data.lastIndexOf("}"));
     this->ID = temp.substring(0,temp.indexOf(","));
     temp = temp.substring(temp.indexOf(",")+1);
@@ -142,6 +144,7 @@ void DataPackage::fromString(const String data)
     temp = temp.substring(temp.indexOf(",")+1);
     this->Mode = temp.substring(0,temp.indexOf(","));
     this->data = temp.substring(temp.indexOf(",")+1);
+    return true;
 }
 
 void DataPackage::ResetExpired()

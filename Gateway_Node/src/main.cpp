@@ -293,7 +293,8 @@ void Capture(void * pvParameters)
     if(lora.available()>1)
     {
       mess = lora.receiveMessageUntil();
-      D_Pack.fromString(mess.data);
+      if(!D_Pack.fromString(mess.data))
+        continue;
       Serial.print(ID);
       Serial.println(" receive:");
       Serial.println(D_Pack.toString(true));
