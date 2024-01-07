@@ -53,7 +53,7 @@ int ConvertToInt = 0; //DHT_Err LDR_Err Soil_Err LightStatus PumpsStatus
 //WIFI Variable
 String sta_ssid = ""; 
 String sta_password = "" ;
-String ap_ssid = "ESP32_Node";
+String ap_ssid = "ESP_";
 String ap_password = "123456789";
 const unsigned long Network_TimeOut = 5000;// Wait 5 seconds to Connect Wifi
 //LoRa Variable
@@ -230,6 +230,7 @@ void Delivery(void * pvParameters)
         if(data.NotDirect == "")
           continue; //TODO: Solution for ID not found
         data.ResetExpired();
+        data.SetMode(CommandNotDirect); //Direct -> Not Direct
       }
       if(data.GetMode() == CommandNotDirect)
         continue;
@@ -1193,6 +1194,7 @@ void setup()
   Time_Passed = millis();
   WiFi.mode(WIFI_AP_STA);
   Init_Server();
+  ap_ssid += ID;
   WiFi.softAP(ap_ssid.c_str(), ap_password.c_str());
   Connect_Network();
 }
