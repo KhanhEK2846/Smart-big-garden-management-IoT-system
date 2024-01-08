@@ -487,7 +487,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) //Handle messa
     if(String((char*)data).indexOf("Disconnect") >= 0){
       WiFi.disconnect(true,true);
       WiFi.mode(WIFI_AP);
-      gateway_node = 0;
+      gateway_node = 2;
       ping_flag = false;
       notifyClients("Wifi OFF");
       Reset_ConfigurationLoRa(false);
@@ -946,6 +946,7 @@ void SendMess() //Send mess prepared to who
 {
   if(Person>0 && valueChange_flag) //Send thourgh WebSocket
     notifyClients(messanger);
+  
   if(((unsigned long)(millis()- Last_datalogging_time)>time_delay_send_datalogging)||Last_datalogging_time == 0)
   {
     if(((!ping_flag || first_sta) && (gateway_node != 2)))
@@ -1129,7 +1130,7 @@ void Init_Task()
   xTaskCreate(
     Delivery,
     "Delivery",
-    5000, //?B left
+    5000, //3634B left
     NULL,
     0,
     &DeliveryTask
@@ -1137,7 +1138,7 @@ void Init_Task()
   xTaskCreate(
     DataLog,
     "DataLog",
-    8000,//2000B left
+    8000,//1972B left
     NULL,
     0,
     &DatabaseTask
