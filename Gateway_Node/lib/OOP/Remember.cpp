@@ -22,7 +22,7 @@ Remember::~Remember(){}
 
 bool Remember::Add(const String ID, const String From)
 {
-    if(ID == "" || From == "" || From == CalculateToEncode(ID)) //Ignore Command Direct
+    if(ID == "" || From == "")
         return false;
     for(flag = 0; flag<10;flag++)
     {

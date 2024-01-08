@@ -66,7 +66,6 @@ String Own_address = "";
 volatile uint8_t Gateway_AddH = 0;
 volatile uint8_t Gateway_AddL = 0;
 volatile uint8_t Gateway_Channel = 0x17;
-String Gateway_Address = "000017";
 //Ping
 WiFiClient PingClient;
 const unsigned long time_delay_to_ping = 300000; // 5 minutes/ping
@@ -131,8 +130,6 @@ const unsigned long reset_key_time = 300000; // 5 minutes to reset
 unsigned long before_reset_key = 0;
 //ID
 const String ID = WiFi.macAddress();
-//Remember From
-Remember Locate;
 //Slove Command
 String Actuator = "";
 String Require = "";
@@ -218,9 +215,16 @@ void Delivery(void * pvParameters)
   uint8_t DeliveryH;
   uint8_t DeliveryL;
   uint8_t DeliveryChan;
+  Remember Locate;
   while(true)
   {
     xQueueReceive(Queue_Delivery,&data,portMAX_DELAY);
+    /*----------------------Memorize---------------------------*/
+    if(data.GetMode() == Memorize)
+    {
+      Locate.Add(data.GetID(),data.GetFrom());
+      continue;
+    }
     /*-----------------Check Expired---------------------------*/  
     if(data.expired == 0)
     {
@@ -239,7 +243,6 @@ void Delivery(void * pvParameters)
         Gateway_AddH = 0;
         Gateway_AddL = 0;
         Gateway_Channel = 0x17;
-        Gateway_Address = "000017";
         continue;
       }
     };
@@ -283,8 +286,10 @@ void Capture(void * pvParameters)
   UBaseType_t uxHighWaterMark;
   DataPackage ResponseACK;
   DataPackage tempData;
-  String TempAddress;
-  DataPackage D_Pack;
+  String TempAddress = "";
+  DataPackage Receive_Pack;
+  DataPackage Memory_Pack;
+  Memory_Pack.SetMode(Memorize);
   ResponseACK.SetMode(ACK);
   const String Own_Adrress = *((String*)pvParameters);
   while (true)
@@ -293,26 +298,26 @@ void Capture(void * pvParameters)
     if(lora.available()>1)
     {
       mess = lora.receiveMessageUntil();
-      if(!D_Pack.fromString(mess.data))
+      if(!Receive_Pack.fromString(mess.data))
         continue;
       Serial.print(ID);
       Serial.println(" receive:");
-      Serial.println(D_Pack.toString(true));
+      Serial.println(Receive_Pack.toString(true));
       /*------------------------Response------------------------*/
-      if(D_Pack.GetMode() == ACK) //Receive ACK
+      if(Receive_Pack.GetMode() == ACK) //Receive ACK
       {
         Serial.println("Receive ACK");
         for(int i = 0; i<Queue_Length;i++) //Find the data for that ACK
         {
           if(xQueueReceive(Queue_Delivery,&tempData,0) == pdPASS)
           {
-            if(D_Pack.GetID() == tempData.GetFrom() && D_Pack.GetData() == tempData.GetMode())
+            if(Receive_Pack.GetID() == tempData.GetFrom() && Receive_Pack.GetData() == tempData.GetMode())
             {
-              if(D_Pack.GetData() == LogData)
+              if(Receive_Pack.GetData() == LogData)
                 TempAddress = EnCodeAddressChannel(Gateway_AddH,Gateway_AddL,Gateway_Channel);
               else
                 TempAddress = CalculateToEncode(tempData.GetID());
-              if(D_Pack.GetFrom() == TempAddress)
+              if(Receive_Pack.GetFrom() == TempAddress)
               {
                 break;
               }
@@ -323,46 +328,50 @@ void Capture(void * pvParameters)
         }
         continue;//No mess fit ack
       }
-      Locate.Add(D_Pack.GetID(),D_Pack.GetFrom());//Remember
-      if(D_Pack.GetMode() == CommandDirect || D_Pack.GetMode() == CommandNotDirect || D_Pack.GetMode() == LogData) //Send ACK
+      if(Receive_Pack.GetFrom() != CalculateToEncode(Receive_Pack.GetID())) //Ignore Send From Direct
+      {
+        Memory_Pack.SetDataPackage(Receive_Pack.GetID(),Receive_Pack.GetFrom(),"","");
+        xQueueSendToFront(Queue_Delivery,&Memory_Pack,pdMS_TO_TICKS(10));
+      }
+      if(Receive_Pack.GetMode() == CommandDirect || Receive_Pack.GetMode() == CommandNotDirect || Receive_Pack.GetMode() == LogData) //Send ACK
       {
         if(gateway_node == 1)
-          ResponseACK.SetDataPackage(D_Pack.GetFrom(),"000017",D_Pack.GetMode(),"");
+          ResponseACK.SetDataPackage(Receive_Pack.GetFrom(),"000017",Receive_Pack.GetMode(),"");
         if(gateway_node == 2)
-          ResponseACK.SetDataPackage(D_Pack.GetFrom(),Own_Adrress,D_Pack.GetMode(),"");
+          ResponseACK.SetDataPackage(Receive_Pack.GetFrom(),Own_Adrress,Receive_Pack.GetMode(),"");
         Serial.println("Prepare to Send ACK");
         xQueueSendToFront(Queue_Delivery,&ResponseACK,pdMS_TO_TICKS(10));
       }
       /*------------------------Itself or other-----------------*/  
-      if(D_Pack.GetID() == ID) //If message for node 
+      if(Receive_Pack.GetID() == ID) //If message for node 
       {
-        if(D_Pack.GetMode() == CommandDirect || D_Pack.GetMode() == CommandNotDirect) //Receive Command 
+        if(Receive_Pack.GetMode() == CommandDirect || Receive_Pack.GetMode() == CommandNotDirect) //Receive Command 
         {
-          D_Command = D_Pack.GetData();
+          D_Command = Receive_Pack.GetData();
           xQueueSend(Queue_Command,&D_Command,pdMS_TO_TICKS(10));
           continue;
         }
       }
       else
       {
-        if (D_Pack.GetMode() == CommandDirect || D_Pack.GetMode() == CommandNotDirect) //Command for the other node
+        if (Receive_Pack.GetMode() == CommandDirect || Receive_Pack.GetMode() == CommandNotDirect) //Command for the other node
         {
-          D_Pack.SetMode(CommandDirect); //Not direct -> Direct
-          xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(10));    
+          Receive_Pack.SetMode(CommandDirect); //Not direct -> Direct
+          xQueueSend(Queue_Delivery,&Receive_Pack,pdMS_TO_TICKS(10));    
           continue;
         }
-        if(D_Pack.GetMode() == Default || D_Pack.GetMode() == LogData)//Send to gateway or database
+        if(Receive_Pack.GetMode() == Default || Receive_Pack.GetMode() == LogData)//Send to gateway or database
         {
           if(gateway_node == 0)
             continue;
           if(gateway_node == 1)// If it's a gateway -> Send to Database
           {
-            xQueueSend(Queue_Database,&D_Pack,pdMS_TO_TICKS(10));
+            xQueueSend(Queue_Database,&Receive_Pack,pdMS_TO_TICKS(10));
             continue;
           }
           if(gateway_node ==2)//If it's a node -> Delivery to Gateway
           {
-            xQueueSend(Queue_Delivery,&D_Pack,pdMS_TO_TICKS(10));
+            xQueueSend(Queue_Delivery,&Receive_Pack,pdMS_TO_TICKS(10));
             continue;
           }
         }
@@ -722,7 +731,6 @@ void Init_Server()
       Gateway_AddH = tmp0;
       Gateway_AddL = tmp1;
       sscanf(TmpPass.c_str(),"%02x",&Gateway_Channel);
-      Gateway_Address = EnCodeAddressChannel(Gateway_AddH,Gateway_AddL,Gateway_Channel);
       return request->send(No_Content_Code);
     }
     /*--------------------Username & Password---------------------------*/
@@ -1121,7 +1129,7 @@ void Init_Task()
   xTaskCreate(
     Delivery,
     "Delivery",
-    3000, //2060B left
+    5000, //?B left
     NULL,
     0,
     &DeliveryTask
@@ -1129,7 +1137,7 @@ void Init_Task()
   xTaskCreate(
     DataLog,
     "DataLog",
-    7000,//2000B left
+    8000,//2000B left
     NULL,
     0,
     &DatabaseTask
@@ -1137,7 +1145,7 @@ void Init_Task()
   xTaskCreate(
     Capture,
     "Capture",
-    3000, //1940B left
+    5000, //?B left
     (void*)&Own_address,
     0,
     &CaptureTask

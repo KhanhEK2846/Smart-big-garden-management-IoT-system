@@ -15,5 +15,6 @@
 #define Default "1" //Node -> Gateway
 #define Broadcast "2" // Send both except from sender
 #define CommandDirect "3" // Handle command & Broadcast
-#define LogData "4" //Log to Database
-#define CommandNotDirect "5" //Not Direct Command
+#define CommandNotDirect "4" //Not Direct Command
+#define LogData "5" //Log to Database
+#define Memorize "6" // Remember ID & From
