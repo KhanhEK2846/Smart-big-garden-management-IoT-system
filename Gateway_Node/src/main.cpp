@@ -467,7 +467,7 @@ void notifyClient(AsyncWebSocketClient *client)//Notify only one local client
     data += "Wifi ON";
   data += "}";
   ws.text(client->id(),data);
-  data.clear();
+  data.remove(0);
 }
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) //Handle messange from local clients
 {
@@ -700,6 +700,9 @@ void Init_Server()
       return request->requestAuthentication();
       request->send_P(Received_Code, "text/html", main_html);
   });//Home Page Server
+  server.on("/Test",HTTP_GET,[](AsyncWebServerRequest *request){
+    return request->send_P(Received_Code,"text/plain",String(gateway_node).c_str());
+  });
   server.on("/Sercurity",HTTP_GET,[](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request) ) //Only for client from AP Mode
       return request->redirect("/NothingHereForYou");
@@ -853,7 +856,7 @@ void Init_Server()
 void PrepareMess() //Decide what to send
 {
   valueChange_flag = false;
-  messanger.clear();
+  messanger.remove(0);
   messanger = Tree.Name;
   messanger += "/";
   ConvertToInt = 0;
@@ -1120,7 +1123,7 @@ void Solve_Command()
       return;
     }
   }
-  O_Command.clear();
+  O_Command.remove(0);
 }
 void Init_Task()
 {
