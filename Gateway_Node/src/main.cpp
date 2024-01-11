@@ -467,7 +467,7 @@ void notifyClient(AsyncWebSocketClient *client)//Notify only one local client
     data += "Wifi ON";
   data += "}";
   ws.text(client->id(),data);
-  data.remove(0);
+  data.clear();
 }
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) //Handle messange from local clients
 {
@@ -575,7 +575,6 @@ void callback(char* topic, byte *payload, unsigned int length)// Receive Messang
       MQTT_Data.SetDataPackage(t_ID,"",MQTT_Messange.substring(MQTT_Messange.indexOf("/")+1,MQTT_Messange.length()),CommandDirect);
       xQueueSend(Queue_Delivery,&MQTT_Data,pdMS_TO_TICKS(10));
     }
-
 }
 #pragma endregion
 #pragma region Cloud Database
@@ -855,7 +854,7 @@ void Init_Server()
 #pragma region Send Message
 void PrepareMess() //Decide what to send
 {
-  messanger.remove(0);
+  messanger.clear();
   messanger = Tree.Name;
   messanger += "/";
   ConvertToInt = 0;
@@ -1128,7 +1127,7 @@ void Solve_Command()
       return;
     }
   }
-  O_Command.remove(0);
+  O_Command.clear();
 }
 void Init_Task()
 {
