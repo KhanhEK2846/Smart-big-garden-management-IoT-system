@@ -855,7 +855,6 @@ void Init_Server()
 #pragma region Send Message
 void PrepareMess() //Decide what to send
 {
-  valueChange_flag = false;
   messanger.remove(0);
   messanger = Tree.Name;
   messanger += "/";
@@ -981,11 +980,13 @@ void SendMess() //Send mess prepared to who
       {
         own_wait_time = millis();
         xQueueSend(Queue_Delivery,&O_Pack,pdMS_TO_TICKS(10));
+        valueChange_flag = false;
         sent_RTDB = true;
       }
       if(WiFi.status() == WL_CONNECTED && ping_flag && !first_sta && Firebase.ready()) //Send to database
       {
         xQueueSend(Queue_Database,&O_Pack,pdMS_TO_TICKS(10));
+        valueChange_flag = false;
       }  
     }
   }
@@ -1030,8 +1031,12 @@ void Read_Sensor()//Get Data from All Sensors
   delay(500);
   soilMoist = Get_Sensor(Soil_Moisture_Port);
   delay(500);
-  Humidity = dht.readHumidity();
-  Temperature = dht.readTemperature();
+  if(!PumpsStatus)
+  {
+    Humidity = dht.readHumidity();
+    Temperature = dht.readTemperature();
+  }
+
   Check();
 }
 #pragma endregion
