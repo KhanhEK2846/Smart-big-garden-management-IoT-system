@@ -9,7 +9,7 @@ Plant::Plant()
     Save_Humi=50;
     Danger_Humi=70;
     DARK_LIGHT=65; //Change Point
-    DRY_SOIL = 55; //Limit soilMoist Low
+    DRY_SOIL = 20; //Limit soilMoist Low
     WET_SOIL = 80; //Limit soilMoist High
 }
 

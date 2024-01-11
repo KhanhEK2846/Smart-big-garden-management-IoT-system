@@ -24,8 +24,8 @@
 //DHT11 Variable
 #define DHTTYPE DHT11 
 DHT dht(DHTPIN_Port, DHTTYPE);
-int Humidity = 0; 
-int Temperature = 0;
+float Humidity = 0; 
+float Temperature = 0;
 //Light Sensor Variable
 int lumen = 0; //Store value from LDR
 //Soild Sensor Variable
@@ -44,7 +44,7 @@ const unsigned long A_Day_timestamp = 86400;//24 hours
 //Pump
 unsigned long Times_Pumps=0;
 const unsigned long Next_Pump = 43200000; //12 hours
-unsigned long Still_Pumps = 60000; //Water in 1 minute
+unsigned long Still_Pumps = 30000; //Water in 1 minute
 boolean PumpsStatus = false; //Current Status Pump
 //Light
 boolean LightStatus = false; //Current Status Light
@@ -442,12 +442,12 @@ void notifyClient(AsyncWebSocketClient *client)//Notify only one local client
   if(DHT_Err)
     data += String(0);
   else
-    data += String(Humidity);
+    data += String((int)Humidity);
   data += "/";
   if(DHT_Err)
     data += String(0);
   else
-    data += String(Temperature);
+    data += String((int)Temperature);
   data += "/";
   if(LDR_Err)
     data += String(0);
@@ -868,12 +868,12 @@ void PrepareMess() //Decide what to send
   if(DHT_Err)
     messanger += String(0);
   else
-    messanger += String(Humidity);
+    messanger += String((int)Humidity);
   messanger += "/";
   if(DHT_Err)
     messanger += String(0);
   else
-    messanger += String(Temperature);
+    messanger += String((int)Temperature);
   messanger += "/";
   if(LDR_Err)
     messanger += String(0);
