@@ -354,6 +354,7 @@ void Capture(void * pvParameters)
       }
       else
       {
+        Receive_Pack.SetFrom(Own_Adrress);//Set Own From before Delivery
         if (Receive_Pack.GetMode() == CommandDirect || Receive_Pack.GetMode() == CommandNotDirect) //Command for the other node
         {
           Receive_Pack.SetMode(CommandDirect); //Not direct -> Direct
