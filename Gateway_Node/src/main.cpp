@@ -701,7 +701,7 @@ void Init_Server()
       request->send_P(Received_Code, "text/html", main_html);
   });//Home Page Server
   server.on("/Test",HTTP_GET,[](AsyncWebServerRequest *request){
-    return request->send_P(Received_Code,"text/plain",String(gateway_node).c_str());
+    return request->send_P(Received_Code,"text/plain",Own_address.c_str());
   });
   server.on("/Sercurity",HTTP_GET,[](AsyncWebServerRequest *request){
     if(ON_STA_FILTER(request) ) //Only for client from AP Mode
